@@ -190,3 +190,7 @@ Sistema completo para estudo de concursos públicos com NestJS e Supabase, inclu
 **Status**: 🚀 Em desenvolvimento
 **Versão**: 1.0.0
 **Última atualização**: $(date) 
+
+
+
+TESTE OBSIDIAN

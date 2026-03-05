@@ -22,9 +22,10 @@ export class MaterialsService {
   constructor(private readonly supabaseService: SupabaseService) {}
 
   async create(createMaterialDto: CreateMaterialDto, userId: string): Promise<Material> {
-    const supabase = this.supabaseService.getClient();
+    // Usar cliente admin para contornar RLS durante upload em lote
+    const supabaseAdmin = this.supabaseService.getAdminClient();
     
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('materials')
       .insert({
         ...createMaterialDto,

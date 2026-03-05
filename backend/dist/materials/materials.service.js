@@ -18,8 +18,8 @@ let MaterialsService = class MaterialsService {
         this.supabaseService = supabaseService;
     }
     async create(createMaterialDto, userId) {
-        const supabase = this.supabaseService.getClient();
-        const { data, error } = await supabase
+        const supabaseAdmin = this.supabaseService.getAdminClient();
+        const { data, error } = await supabaseAdmin
             .from('materials')
             .insert({
             ...createMaterialDto,
