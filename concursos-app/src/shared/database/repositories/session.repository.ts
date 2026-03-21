@@ -114,32 +114,33 @@ export const SessionRepository = {
 
   async getSessionsGroupedByISOWeek(): Promise<SessionsByWeek[]> {
     const db = await getDatabase()
+    // Group by the Monday of the week (ISO week starts Monday)
     const rows = await db.getAllAsync<{
-      iso_year: number
-      iso_week: number
+      week_start: string
       subject_name: string
       total_seconds: number
     }>(`
       SELECT
-        CAST(strftime('%Y', ss.started_at) AS INTEGER) AS iso_year,
-        CAST(strftime('%W', ss.started_at) AS INTEGER) AS iso_week,
+        date(ss.started_at, 'weekday 1', '-6 days') AS week_start,
         sub.name AS subject_name,
         SUM(ss.study_seconds + ss.review_seconds) AS total_seconds
       FROM study_sessions ss
       JOIN subjects sub ON sub.id = ss.subject_id
-      GROUP BY iso_year, iso_week, ss.subject_id
-      ORDER BY iso_year DESC, iso_week DESC
+      GROUP BY week_start, ss.subject_id
+      ORDER BY week_start DESC
     `)
 
     const map = new Map<string, WeeklySubjectTotal[]>()
     for (const row of rows) {
-      const key = `${row.iso_year}-W${String(row.iso_week).padStart(2, '0')}`
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push({ subjectName: row.subject_name, totalSeconds: row.total_seconds })
+      if (!map.has(row.week_start)) map.set(row.week_start, [])
+      map.get(row.week_start)!.push({
+        subjectName: row.subject_name,
+        totalSeconds: row.total_seconds,
+      })
     }
 
     return Array.from(map.entries()).map(([weekKey, subjects]) => ({
-      weekKey,
+      weekKey, // e.g. '2026-03-16' (the Monday)
       subjects,
       totalSeconds: subjects.reduce((acc, s) => acc + s.totalSeconds, 0),
     }))
@@ -147,7 +148,13 @@ export const SessionRepository = {
 
   async getCycleComplianceStats(concursoId: string): Promise<CycleComplianceStat[]> {
     const db = await getDatabase()
-    return db.getAllAsync<CycleComplianceStat>(`
+    const rows = await db.getAllAsync<{
+      cycle_id: string
+      cycle_number: number
+      planned_hours: number
+      completed_hours: number
+      status: string
+    }>(`
       SELECT
         c.id AS cycle_id,
         c.cycle_number,
@@ -161,6 +168,14 @@ export const SessionRepository = {
       ORDER BY c.cycle_number DESC
       LIMIT 10
     `, [concursoId])
+
+    return rows.map((row) => ({
+      cycleId: row.cycle_id,
+      cycleNumber: row.cycle_number,
+      plannedHours: row.planned_hours,
+      completedHours: row.completed_hours,
+      status: row.status as CycleComplianceStat['status'],
+    }))
   },
 
   // SyncLog methods

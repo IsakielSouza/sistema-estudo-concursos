@@ -38,15 +38,15 @@ export interface WeeklySubjectTotal {
 }
 
 export interface SessionsByWeek {
-  weekKey: string
+  weekKey: string               // ISO week Monday date, e.g. '2026-03-16'
   subjects: WeeklySubjectTotal[]
   totalSeconds: number
 }
 
 export interface CycleComplianceStat {
-  cycle_id: string
-  cycle_number: number
-  planned_hours: number
-  completed_hours: number
+  cycleId: string
+  cycleNumber: number
+  plannedHours: number
+  completedHours: number
   status: 'active' | 'completed' | 'late'
 }
