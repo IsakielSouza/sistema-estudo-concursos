@@ -429,7 +429,17 @@ Tela de sessão ativa, aberta ao pressionar ▷ em um bloco da lista do ciclo.
 
 **Controles:**
 - ⏸ Pausar / ▶ Retomar
-- ⏹ Encerrar sessão → modal de confirmação → salva e volta para /cycle
+- ⏹ Encerrar sessão antecipadamente → modal de confirmação → salva parcialmente e volta para /cycle
+
+**Encerramento automático por conclusão:**
+- Quando `tempo_restante = allocated_seconds - study_seconds` chega a **0:00:00**:
+  - Haptic feedback de sucesso
+  - Animação de conclusão
+  - `planned_session.status = 'done'` automaticamente
+  - `study_session` salvo no SQLite com `study_seconds = allocated_seconds` (descontando pausas)
+  - `cycle_subjects.completed_hours` atualizado
+  - App retorna para `/cycle` com a sessão marcada como concluída
+  - **Sem modal de confirmação** — conclusão natural não interrompe o fluxo
 
 **Mecanismo de timer (wall-clock):**
 - Ao pressionar ▷, salva `session_start_timestamp = Date.now()` em `session.store`
