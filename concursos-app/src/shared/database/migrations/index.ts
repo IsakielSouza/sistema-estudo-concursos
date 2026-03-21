@@ -22,11 +22,13 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
 
   for (const migration of MIGRATIONS) {
     if (!appliedIds.has(migration.id)) {
-      await migration.fn(db)
-      await db.runAsync(
-        'INSERT INTO migrations (id, name, applied_at) VALUES (?, ?, ?)',
-        [migration.id, migration.name, new Date().toISOString()]
-      )
+      await db.withTransactionAsync(async () => {
+        await migration.fn(db)
+        await db.runAsync(
+          'INSERT INTO migrations (id, name, applied_at) VALUES (?, ?, ?)',
+          [migration.id, migration.name, new Date().toISOString()]
+        )
+      })
     }
   }
 }

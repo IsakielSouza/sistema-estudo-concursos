@@ -15,19 +15,25 @@ interface SessionStore {
   pause: () => void
   resume: () => void
   setIncludeReview: (value: boolean) => void
+  /** Ends the session but preserves user preferences (includeReview). */
   clearSession: () => void
+  /** Full reset: clears everything including preferences. Used after DB restore. */
   reset: () => void
+}
+
+const sessionDefaults = {
+  activePlannedSessionId: null,
+  activeCycleSubjectId: null,
+  sessionStartTimestamp: null,
+  pausedAt: null,
+  pausedTotalMs: 0,
+  isRunning: false,
 }
 
 export const useSessionStore = create<SessionStore>()(
   persist(
     (set, get) => ({
-      activePlannedSessionId: null,
-      activeCycleSubjectId: null,
-      sessionStartTimestamp: null,
-      pausedAt: null,
-      pausedTotalMs: 0,
-      isRunning: false,
+      ...sessionDefaults,
       includeReview: true,
       startSession: (activePlannedSessionId, activeCycleSubjectId) =>
         set({
@@ -53,25 +59,8 @@ export const useSessionStore = create<SessionStore>()(
         })
       },
       setIncludeReview: (includeReview) => set({ includeReview }),
-      clearSession: () =>
-        set({
-          activePlannedSessionId: null,
-          activeCycleSubjectId: null,
-          sessionStartTimestamp: null,
-          pausedAt: null,
-          pausedTotalMs: 0,
-          isRunning: false,
-        }),
-      reset: () =>
-        set({
-          activePlannedSessionId: null,
-          activeCycleSubjectId: null,
-          sessionStartTimestamp: null,
-          pausedAt: null,
-          pausedTotalMs: 0,
-          isRunning: false,
-          includeReview: true,
-        }),
+      clearSession: () => set(sessionDefaults),
+      reset: () => set({ ...sessionDefaults, includeReview: true }),
     }),
     {
       name: '@concursos:session',

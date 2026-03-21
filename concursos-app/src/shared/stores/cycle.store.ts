@@ -8,7 +8,6 @@ interface CycleStore {
   activeConcursoId: string | null
   setActiveCycle: (cycleId: string, concursoId: string) => void
   clearActiveCycle: () => void
-  reset: () => void
 }
 
 export const useCycleStore = create<CycleStore>()(
@@ -20,7 +19,6 @@ export const useCycleStore = create<CycleStore>()(
         set({ activeCycleId, activeConcursoId }),
       clearActiveCycle: () =>
         set({ activeCycleId: null, activeConcursoId: null }),
-      reset: () => set({ activeCycleId: null, activeConcursoId: null }),
     }),
     {
       name: '@concursos:cycle',

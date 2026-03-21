@@ -35,6 +35,7 @@ export const useAuthStore = create<AuthStore>()(
       logout: () =>
         set({
           user: null,
+          spreadsheetId: null,
           googleAccessToken: null,
           googleRefreshToken: null,
         }),
