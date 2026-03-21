@@ -21,6 +21,7 @@ interface SaveSessionInput {
 export function useSaveSessionMutation() {
   const queryClient = useQueryClient()
   const spreadsheetId = useAuthStore((s) => s.spreadsheetId)
+  const googleAccessToken = useAuthStore((s) => s.googleAccessToken)
   const autoBackupEnabled = useSettingsStore((s) => s.autoBackupEnabled)
 
   return useMutation({
@@ -48,8 +49,13 @@ export function useSaveSessionMutation() {
         await SyncService.writeDirtyTopics(spreadsheetId, input.subjectId)
       }
 
-      if (autoBackupEnabled) {
-        await BackupService.backup().catch(() => {})
+      if (autoBackupEnabled && googleAccessToken) {
+        try {
+          await BackupService.backupNow(googleAccessToken)
+          useSettingsStore.getState().setLastBackupAt(new Date().toISOString())
+        } catch {
+          // Silent fail — backup is best-effort
+        }
       }
 
       return { endedAt }
