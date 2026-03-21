@@ -93,10 +93,7 @@ export const CycleView = () => {
       </ScrollView>
 
       <BottomSheet ref={bottomSheetRef} index={-1} snapPoints={['85%']} enablePanDownToClose>
-        <View style={styles.sheetContent}>
-          <Text style={styles.sheetTitle}>Novo Ciclo</Text>
-          <Text style={styles.sheetSubtitle}>Em breve — Task 25</Text>
-        </View>
+        <NewCycleBottomSheetView onClose={() => bottomSheetRef.current?.close()} />
       </BottomSheet>
     </SafeAreaView>
   )
