@@ -2,7 +2,7 @@
 export interface Topic {
   id: string
   subjectId: string
-  code: string
+  code: string | null
   title: string
   level: number
   order: number

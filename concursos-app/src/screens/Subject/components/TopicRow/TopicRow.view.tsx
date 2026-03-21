@@ -6,11 +6,12 @@ import type { Topic } from '@/shared/interfaces/topic'
 interface Props {
   topic: Topic
   onToggle: (id: string, status: 'pending' | 'done') => void
+  disabled?: boolean
 }
 
 const INDENT = [0, 0, 16, 32]
 
-export const TopicRowView = ({ topic, onToggle }: Props) => {
+export const TopicRowView = ({ topic, onToggle, disabled }: Props) => {
   const isDone = topic.status === 'done'
   const indent = INDENT[topic.level] ?? 32
 
@@ -19,6 +20,7 @@ export const TopicRowView = ({ topic, onToggle }: Props) => {
       style={[styles.row, { paddingLeft: 16 + indent }]}
       onPress={() => onToggle(topic.id, topic.status)}
       activeOpacity={0.7}
+      disabled={disabled}
     >
       <View style={[styles.checkbox, isDone && styles.checkboxDone]}>
         {isDone && <Ionicons name="checkmark" size={14} color={colors.grayscale.gray100} />}

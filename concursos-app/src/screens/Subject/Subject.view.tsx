@@ -9,7 +9,7 @@ import { useSubjectViewModel } from './useSubject.viewModel'
 export const SubjectView = () => {
   const {
     subject, topics, progress, progressRatio,
-    handleTopicToggle, handleEditalComplete,
+    handleTopicToggle, handleEditalComplete, isUpdating,
   } = useSubjectViewModel()
 
   if (!subject) return null
@@ -63,6 +63,7 @@ export const SubjectView = () => {
             key={topic.id}
             topic={topic}
             onToggle={handleTopicToggle}
+            disabled={isUpdating}
           />
         ))}
       </ScrollView>
