@@ -4,6 +4,7 @@ import BottomSheet from '@gorhom/bottom-sheet'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CycleResumoView } from './components/CycleResumo/CycleResumo.view'
+import { NewCycleBottomSheetView } from './components/NewCycleBottomSheet/NewCycleBottomSheet.view'
 import { SessionRowView } from './components/SessionRow/SessionRow.view'
 import { useCycleViewModel } from './useCycle.viewModel'
 
@@ -47,10 +48,7 @@ export const CycleView = () => {
           </TouchableOpacity>
         </View>
         <BottomSheet ref={bottomSheetRef} index={-1} snapPoints={['85%']} enablePanDownToClose>
-          <View style={styles.sheetContent}>
-            <Text style={styles.sheetTitle}>Novo Ciclo</Text>
-            <Text style={styles.sheetSubtitle}>Em breve — Task 25</Text>
-          </View>
+          <NewCycleBottomSheetView onClose={() => bottomSheetRef.current?.close()} />
         </BottomSheet>
       </SafeAreaView>
     )
