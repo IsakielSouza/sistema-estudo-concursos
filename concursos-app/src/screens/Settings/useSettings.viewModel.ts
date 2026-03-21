@@ -1,27 +1,40 @@
 // src/screens/Settings/useSettings.viewModel.ts
-import { yupResolver } from '@hookform/resolvers/yup'
-import { useAuthStore } from '@/shared/stores/auth.store'
-import {
-  extractSpreadsheetId,
-  spreadsheetSchema,
-  type SpreadsheetFormData,
-} from '@/shared/schemas/spreadsheet.schema'
-import { SheetsService } from '@/shared/services/sheets.service'
-import { router } from 'expo-router'
-import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { object, string } from 'yup'
+import { useAuthStore } from '@/shared/stores/auth.store'
+import { useSettingsStore } from '@/shared/stores/settings.store'
+import { useSyncSheetsMutation } from '@/shared/queries/sheets/use-sync-sheets.mutation'
+import { router } from 'expo-router'
+import { Alert } from 'react-native'
+
+const settingsSchema = object({
+  spreadsheetUrl: string()
+    .required('URL obrigatória')
+    .matches(
+      /docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/,
+      'URL inválida — use a URL completa da planilha Google'
+    ),
+})
+
+function extractSpreadsheetId(url: string): string | null {
+  const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/)
+  return match?.[1] ?? null
+}
 
 export const useSettingsViewModel = () => {
+  const user = useAuthStore((s) => s.user)
   const spreadsheetId = useAuthStore((s) => s.spreadsheetId)
-  const googleAccessToken = useAuthStore((s) => s.googleAccessToken)
   const setSpreadsheetId = useAuthStore((s) => s.setSpreadsheetId)
   const logout = useAuthStore((s) => s.logout)
 
-  const [isValidating, setIsValidating] = useState(false)
-  const [validationError, setValidationError] = useState<string | null>(null)
+  const notificationsEnabled = useSettingsStore((s) => s.notificationsEnabled)
+  const setNotificationsEnabled = useSettingsStore((s) => s.setNotificationsEnabled)
 
-  const form = useForm<SpreadsheetFormData>({
-    resolver: yupResolver(spreadsheetSchema),
+  const syncMutation = useSyncSheetsMutation()
+
+  const form = useForm({
+    resolver: yupResolver(settingsSchema),
     defaultValues: {
       spreadsheetUrl: spreadsheetId
         ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}`
@@ -29,48 +42,42 @@ export const useSettingsViewModel = () => {
     },
   })
 
-  const handleSave = useCallback(
-    async (data: SpreadsheetFormData) => {
-      const id = extractSpreadsheetId(data.spreadsheetUrl)
-      if (!id) return
+  const handleSaveSpreadsheet = form.handleSubmit((values) => {
+    const id = extractSpreadsheetId(values.spreadsheetUrl)
+    if (!id) {
+      Alert.alert('Erro', 'Não foi possível extrair o ID da planilha.')
+      return
+    }
+    setSpreadsheetId(id)
+    Alert.alert('Salvo', 'ID da planilha atualizado.')
+  })
 
-      setIsValidating(true)
-      setValidationError(null)
+  const handleSyncNow = () => {
+    syncMutation.mutate()
+  }
 
-      if (!googleAccessToken) {
-        setValidationError('Sessão expirada. Faça login novamente.')
-        setIsValidating(false)
-        return
-      }
-
-      const hasAccess = await SheetsService.validateSpreadsheetAccess(id)
-
-      if (!hasAccess) {
-        setValidationError(
-          'Não foi possível acessar a planilha. Verifique o link e as permissões.'
-        )
-        setIsValidating(false)
-        return
-      }
-
-      setSpreadsheetId(id)
-      setIsValidating(false)
-      router.replace('/(private)/(tabs)/home')
-    },
-    [googleAccessToken, setSpreadsheetId, setIsValidating, setValidationError]
-  )
-
-  const handleLogout = useCallback(() => {
-    logout()
-    router.replace('/(public)/login')
-  }, [logout])
+  const handleLogout = () => {
+    Alert.alert('Sair', 'Deseja realmente sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: () => {
+          logout()
+          router.replace('/(public)/login')
+        },
+      },
+    ])
+  }
 
   return {
+    user,
     form,
-    handleSave,
+    handleSaveSpreadsheet,
+    handleSyncNow,
+    isSyncing: syncMutation.isPending,
+    notificationsEnabled,
+    setNotificationsEnabled,
     handleLogout,
-    isValidating,
-    validationError,
-    spreadsheetId,
   }
 }
