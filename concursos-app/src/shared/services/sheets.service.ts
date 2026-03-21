@@ -7,16 +7,10 @@ const STATUS_DONE = 'FEITO'
 const STATUS_HEADER = 'STATUS'
 
 export const SheetsService = {
-  async validateSpreadsheetAccess(
-    spreadsheetId: string,
-    accessToken: string
-  ): Promise<boolean> {
+  async validateSpreadsheetAccess(spreadsheetId: string): Promise<boolean> {
     try {
-      const res = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=spreadsheetId`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      )
-      return res.ok
+      await sheetsClient.get(`/${spreadsheetId}?fields=spreadsheetId`)
+      return true
     } catch {
       return false
     }
@@ -51,8 +45,10 @@ export const SheetsService = {
 
       const topics: TopicSyncRow[] = []
       let orderCounter = 0
+      let absoluteRowIndex = 0  // tracks all rows including skipped ones
 
       for (const row of values) {
+        absoluteRowIndex++ // increment before any skip — counts every row
         if (!row[0] && !row[1]) continue
         const code = (row[0] ?? '').trim()
         const rowTitle = (row[1] ?? row[0] ?? '').trim()
@@ -70,6 +66,7 @@ export const SheetsService = {
           title: rowTitle,
           level,
           order: orderCounter++,
+          sheetRow: absoluteRowIndex - 1,  // 0-based absolute row index
           status,
         })
       }

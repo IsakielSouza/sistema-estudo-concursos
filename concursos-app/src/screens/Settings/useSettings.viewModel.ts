@@ -43,10 +43,7 @@ export const useSettingsViewModel = () => {
         return
       }
 
-      const hasAccess = await SheetsService.validateSpreadsheetAccess(
-        id,
-        googleAccessToken
-      )
+      const hasAccess = await SheetsService.validateSpreadsheetAccess(id)
 
       if (!hasAccess) {
         setValidationError(

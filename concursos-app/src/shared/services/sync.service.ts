@@ -19,9 +19,11 @@ export const SyncService = {
     try {
       const sheetsData = await SheetsService.readAllSubjects(spreadsheetId)
 
+      const allExistingSubjects = await SubjectRepository.getSubjectsByConcurso(concursoId)
+      const subjectByName = new Map(allExistingSubjects.map((s) => [s.name, s]))
+
       for (const subjectData of sheetsData) {
-        const existing = (await SubjectRepository.getSubjectsByConcurso(concursoId))
-          .find((s) => s.name === subjectData.name)
+        const existing = subjectByName.get(subjectData.name)
 
         const subject = await SubjectRepository.upsertSubject({
           id: existing?.id,
@@ -52,7 +54,7 @@ export const SyncService = {
             code: topicRow.code,
             title: topicRow.title,
             level: topicRow.level,
-            order: topicRow.order,
+            order: topicRow.sheetRow,
             status: sheetsStatus,
             isDirty: false,
             localUpdatedAt: null,
