@@ -3,6 +3,7 @@ import { useGetCycleSubjectsQuery } from '@/shared/queries/subjects/use-get-cycl
 import { PlannedSessionRepository } from '@/shared/database/repositories/planned-session.repository'
 import { useCycleStore } from '@/shared/stores/cycle.store'
 import { router } from 'expo-router'
+import { Alert } from 'react-native'
 import { useCallback, useRef } from 'react'
 import type BottomSheet from '@gorhom/bottom-sheet'
 import { useQueryClient } from '@tanstack/react-query'
@@ -22,9 +23,13 @@ export const useCycleViewModel = () => {
 
   const handlePlaySession = useCallback(
     async (plannedSessionId: string) => {
-      await PlannedSessionRepository.updateStatus(plannedSessionId, 'in_progress')
-      queryClient.invalidateQueries({ queryKey: ['planned-sessions'] })
-      router.push({ pathname: '/(private)/session', params: { plannedSessionId } })
+      try {
+        await PlannedSessionRepository.updateStatus(plannedSessionId, 'in_progress')
+        queryClient.invalidateQueries({ queryKey: ['planned-sessions'] })
+        router.push({ pathname: '/(private)/session', params: { plannedSessionId } })
+      } catch (e) {
+        Alert.alert('Erro ao iniciar sessão', e instanceof Error ? e.message : 'Tente novamente.')
+      }
     },
     [queryClient]
   )

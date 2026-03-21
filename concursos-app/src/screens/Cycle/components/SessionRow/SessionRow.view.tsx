@@ -26,16 +26,6 @@ export const SessionRowView = ({ session, onPlay }: Props) => {
       <Text style={[styles.sessionTime, isDone && styles.textDone]}>
         {formatSeconds(session.allocatedSeconds)}
       </Text>
-      <View style={styles.remaining}>
-        <Ionicons
-          name="time-outline"
-          size={14}
-          color={isDone ? colors.grayscale.gray600 : colors.grayscale.gray400}
-        />
-        <Text style={[styles.remainingText, isDone && styles.textDone]}>
-          {formatSeconds(session.allocatedSeconds)}
-        </Text>
-      </View>
       <TouchableOpacity
         style={[styles.playButton, isDone && styles.playButtonDone]}
         onPress={() => !isDone && onPlay(session.id)}
@@ -64,8 +54,6 @@ const styles = StyleSheet.create({
   rowDone: { opacity: 0.5 },
   subjectName: { flex: 1, color: colors.grayscale.gray100, fontSize: 15, fontWeight: '600' },
   sessionTime: { color: colors.grayscale.gray100, fontSize: 15, fontWeight: '600', minWidth: 70, textAlign: 'center' },
-  remaining: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 90 },
-  remainingText: { color: colors.grayscale.gray300, fontSize: 14, fontWeight: '600' },
   textDone: { color: colors.grayscale.gray600 },
   playButton: {
     width: 36,

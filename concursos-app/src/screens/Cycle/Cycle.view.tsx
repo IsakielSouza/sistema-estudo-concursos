@@ -25,12 +25,14 @@ export const CycleView = () => {
 
   const resumoRows = [
     {
+      id: 'total',
       label: 'Total',
       allocatedSeconds: Math.round(totalAllocatedHours * 3600),
       completedSeconds: Math.round(totalCompletedHours * 3600),
       isTotal: true,
     },
     ...cycleSubjects.map((cs) => ({
+      id: cs.id,
       label: cs.subject?.name ?? '',
       allocatedSeconds: Math.round(cs.allocatedHours * 3600),
       completedSeconds: Math.round(cs.completedHours * 3600),
@@ -71,7 +73,6 @@ export const CycleView = () => {
       <View style={styles.columnHeaders}>
         <Text style={[styles.colHeader, { flex: 1 }]}>Matéria</Text>
         <Text style={[styles.colHeader, { minWidth: 70, textAlign: 'center' }]}>Sessão</Text>
-        <Text style={[styles.colHeader, { minWidth: 100 }]}>Tempo restante</Text>
         <View style={{ width: 36 + 8 }} />
       </View>
 
@@ -132,7 +133,4 @@ const styles = StyleSheet.create({
   newButtonText: { color: colors.grayscale.gray100, fontWeight: '600' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   emptyTitle: { fontSize: 18, color: colors.grayscale.gray400 },
-  sheetContent: { padding: 24, alignItems: 'center' },
-  sheetTitle: { fontSize: 20, color: colors.grayscale.gray100, fontFamily: 'Baloo2_800ExtraBold' },
-  sheetSubtitle: { fontSize: 14, color: colors.grayscale.gray400, marginTop: 8 },
 })

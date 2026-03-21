@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { StyleSheet, Text, View } from 'react-native'
 
 interface ResumoRow {
+  id: string
   label: string
   allocatedSeconds: number
   completedSeconds: number
@@ -25,7 +26,7 @@ export const CycleResumoView = ({ rows }: Props) => (
     <Text style={styles.heading}>Resumo</Text>
     <View style={styles.table}>
       {rows.map((row) => (
-        <View key={row.label} style={[styles.row, row.isTotal && styles.totalRow]}>
+        <View key={row.id} style={[styles.row, row.isTotal && styles.totalRow]}>
           <Text style={[styles.label, row.isTotal && styles.totalLabel]} numberOfLines={1}>
             {row.label}
           </Text>

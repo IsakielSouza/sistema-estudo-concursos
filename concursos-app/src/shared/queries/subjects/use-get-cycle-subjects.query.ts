@@ -13,10 +13,10 @@ export function useGetCycleSubjectsQuery() {
       const enriched = await Promise.all(
         cycleSubjects.map(async (cs) => {
           const subject = await SubjectRepository.getSubjectById(cs.subjectId)
-          return { ...cs, subject: subject! }
+          return subject ? { ...cs, subject } : null
         })
       )
-      return enriched
+      return enriched.filter((item): item is NonNullable<typeof item> => item !== null)
     },
     enabled: !!activeCycleId,
   })

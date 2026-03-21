@@ -40,7 +40,10 @@ export const NewCycleBottomSheetView = ({ onClose }: Props) => {
             <TextInput
               style={styles.input}
               value={String(value)}
-              onChangeText={(v) => onChange(Number(v))}
+              onChangeText={(v) => {
+                const parsed = parseFloat(v)
+                onChange(Number.isNaN(parsed) ? '' : parsed)
+              }}
               keyboardType="numeric"
               placeholderTextColor={colors.grayscale.gray600}
             />

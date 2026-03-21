@@ -4,7 +4,7 @@ import { cycleSchema, type CycleFormData } from '@/shared/schemas/cycle.schema'
 import { SubjectRepository } from '@/shared/database/repositories/subject.repository'
 import { useCycleStore } from '@/shared/stores/cycle.store'
 import { useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const useNewCycleBottomSheetViewModel = (onClose: () => void) => {
@@ -17,18 +17,24 @@ export const useNewCycleBottomSheetViewModel = (onClose: () => void) => {
     enabled: !!activeConcursoId,
   })
 
-  const defaultSelectedIds = subjects
-    .filter((s) => !s.isFreeStudy)
-    .map((s) => s.id)
-
   const form = useForm<CycleFormData>({
     resolver: yupResolver(cycleSchema),
     defaultValues: {
       name: `Ciclo ${new Date().toLocaleDateString('pt-BR')}`,
       plannedHours: 21,
-      selectedSubjectIds: defaultSelectedIds,
+      selectedSubjectIds: [],
     },
   })
+
+  useEffect(() => {
+    if (subjects.length > 0) {
+      const ids = subjects.filter((s) => !s.isFreeStudy).map((s) => s.id)
+      form.reset({
+        ...form.getValues(),
+        selectedSubjectIds: ids,
+      })
+    }
+  }, [subjects]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = useCallback(
     async (data: CycleFormData) => {
