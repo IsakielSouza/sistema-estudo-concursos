@@ -37,9 +37,15 @@ export const useSettingsViewModel = () => {
       setIsValidating(true)
       setValidationError(null)
 
+      if (!googleAccessToken) {
+        setValidationError('Sessão expirada. Faça login novamente.')
+        setIsValidating(false)
+        return
+      }
+
       const hasAccess = await SheetsService.validateSpreadsheetAccess(
         id,
-        googleAccessToken ?? ''
+        googleAccessToken
       )
 
       if (!hasAccess) {
@@ -54,7 +60,7 @@ export const useSettingsViewModel = () => {
       setIsValidating(false)
       router.replace('/(private)/(tabs)/home')
     },
-    [googleAccessToken, setSpreadsheetId]
+    [googleAccessToken, setSpreadsheetId, setIsValidating, setValidationError]
   )
 
   const handleLogout = useCallback(() => {

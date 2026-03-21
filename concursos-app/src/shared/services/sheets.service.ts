@@ -12,6 +12,7 @@ export class SheetsService {
       )
       return res.ok
     } catch {
+      // TODO Phase 4: distinguish network errors from permission errors
       return false
     }
   }

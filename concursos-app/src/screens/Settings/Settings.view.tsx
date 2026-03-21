@@ -57,6 +57,7 @@ export const SettingsView = () => {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.spacer} />
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Sair da conta</Text>
       </TouchableOpacity>
@@ -95,6 +96,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveButtonText: { color: colors.grayscale.gray100, fontWeight: '600' },
-  logoutButton: { marginTop: 'auto', marginBottom: 24, alignItems: 'center' },
+  spacer: { flex: 1 },
+  logoutButton: { marginBottom: 24, alignItems: 'center' },
   logoutText: { color: colors.status.error, fontSize: 16 },
 })

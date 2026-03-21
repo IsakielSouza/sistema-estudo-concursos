@@ -6,6 +6,7 @@ import {
 } from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser'
 import { useCallback } from 'react'
+import { Platform } from 'react-native'
 import { useAuthStore } from '@/shared/stores/auth.store'
 
 WebBrowser.maybeCompleteAuthSession()
@@ -14,16 +15,27 @@ const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? ''
 const GOOGLE_CLIENT_ID_ANDROID =
   process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ?? ''
 
+interface GoogleUserInfo {
+  sub: string
+  name: string
+  email: string
+  picture?: string
+}
+
 export function useGoogleAuth() {
-  const { setUser, setTokens } = useAuthStore()
+  const setUser = useAuthStore((s) => s.setUser)
+  const setTokens = useAuthStore((s) => s.setTokens)
 
   const discovery = useAutoDiscovery('https://accounts.google.com')
-
   const redirectUri = makeRedirectUri({ scheme: 'concursos-app' })
+
+  // Select the correct client ID based on platform
+  const clientId =
+    Platform.OS === 'android' ? GOOGLE_CLIENT_ID_ANDROID : GOOGLE_CLIENT_ID_IOS
 
   const [, , promptAsync] = useAuthRequest(
     {
-      clientId: GOOGLE_CLIENT_ID_IOS,
+      clientId,
       scopes: [
         'openid',
         'profile',
@@ -46,17 +58,18 @@ export function useGoogleAuth() {
       'https://www.googleapis.com/oauth2/v3/userinfo',
       { headers: { Authorization: `Bearer ${access_token}` } }
     )
-    const userInfo = await userRes.json()
+    const userInfo = (await userRes.json()) as GoogleUserInfo
 
     setUser({
-      id: userInfo.sub as string,
-      name: userInfo.name as string,
-      email: userInfo.email as string,
-      photoUrl: (userInfo.picture as string) ?? null,
+      id: userInfo.sub,
+      name: userInfo.name,
+      email: userInfo.email,
+      photoUrl: userInfo.picture ?? null,
     })
-    setTokens(access_token as string, (refresh_token as string) ?? '')
+    // refresh_token is absent in some flows; store empty string as sentinel
+    setTokens(access_token, refresh_token ?? '')
 
-    return access_token as string
+    return access_token
   }, [promptAsync, setUser, setTokens])
 
   return { signIn }
