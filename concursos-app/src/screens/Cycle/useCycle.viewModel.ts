@@ -38,6 +38,10 @@ export const useCycleViewModel = () => {
     bottomSheetRef.current?.expand()
   }, [])
 
+  const handleViewSubject = useCallback((subjectId: string) => {
+    router.push({ pathname: '/(private)/subject/[id]', params: { id: subjectId } })
+  }, [])
+
   return {
     plannedSessions,
     cycleSubjects,
@@ -50,5 +54,6 @@ export const useCycleViewModel = () => {
     bottomSheetRef,
     handlePlaySession,
     handleOpenNewCycle,
+    handleViewSubject,
   }
 }
