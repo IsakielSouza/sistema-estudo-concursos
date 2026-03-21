@@ -74,7 +74,7 @@ export const SessionRepository = {
     return row?.total ?? 0
   },
 
-  async getAllSessionsGroupedByDate(): Promise<SessionsByDate[]> {
+  async getAllSessionsGroupedByDate(concursoId?: string): Promise<SessionsByDate[]> {
     const db = await getDatabase()
     const rows = await db.getAllAsync<{
       date: string
@@ -82,7 +82,22 @@ export const SessionRepository = {
       study_seconds: number
       review_seconds: number
       session_id: string
-    }>(`
+    }>(
+      concursoId
+        ? `
+      SELECT
+        date(ss.started_at) AS date,
+        sub.name AS subject_name,
+        ss.study_seconds,
+        ss.review_seconds,
+        ss.id AS session_id
+      FROM study_sessions ss
+      JOIN subjects sub ON sub.id = ss.subject_id
+      JOIN cycles c ON c.id = ss.cycle_id
+      WHERE c.concurso_id = ?
+      ORDER BY ss.started_at DESC
+    `
+        : `
       SELECT
         date(ss.started_at) AS date,
         sub.name AS subject_name,
@@ -92,7 +107,9 @@ export const SessionRepository = {
       FROM study_sessions ss
       JOIN subjects sub ON sub.id = ss.subject_id
       ORDER BY ss.started_at DESC
-    `)
+    `,
+      concursoId ? [concursoId] : []
+    )
 
     const map = new Map<string, SessionHistoryItem[]>()
     for (const row of rows) {
@@ -112,14 +129,28 @@ export const SessionRepository = {
     }))
   },
 
-  async getSessionsGroupedByISOWeek(): Promise<SessionsByWeek[]> {
+  async getSessionsGroupedByISOWeek(concursoId?: string): Promise<SessionsByWeek[]> {
     const db = await getDatabase()
     // Group by the Monday of the week (ISO week starts Monday)
     const rows = await db.getAllAsync<{
       week_start: string
       subject_name: string
       total_seconds: number
-    }>(`
+    }>(
+      concursoId
+        ? `
+      SELECT
+        date(ss.started_at, 'weekday 1', '-6 days') AS week_start,
+        sub.name AS subject_name,
+        SUM(ss.study_seconds + ss.review_seconds) AS total_seconds
+      FROM study_sessions ss
+      JOIN subjects sub ON sub.id = ss.subject_id
+      JOIN cycles c ON c.id = ss.cycle_id
+      WHERE c.concurso_id = ?
+      GROUP BY week_start, ss.subject_id
+      ORDER BY week_start DESC
+    `
+        : `
       SELECT
         date(ss.started_at, 'weekday 1', '-6 days') AS week_start,
         sub.name AS subject_name,
@@ -128,7 +159,9 @@ export const SessionRepository = {
       JOIN subjects sub ON sub.id = ss.subject_id
       GROUP BY week_start, ss.subject_id
       ORDER BY week_start DESC
-    `)
+    `,
+      concursoId ? [concursoId] : []
+    )
 
     const map = new Map<string, WeeklySubjectTotal[]>()
     for (const row of rows) {
