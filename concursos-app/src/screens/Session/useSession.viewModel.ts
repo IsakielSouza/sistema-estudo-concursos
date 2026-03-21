@@ -8,15 +8,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useLocalSearchParams, router } from 'expo-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as Haptics from 'expo-haptics'
+import { Alert } from 'react-native'
 
 export const useSessionViewModel = () => {
   const { plannedSessionId } = useLocalSearchParams<{ plannedSessionId: string }>()
-  const { startSession, clearSession, includeReview, setIncludeReview, sessionStartTimestamp } =
+  const { startSession, clearSession, includeReview, setIncludeReview, sessionStartTimestamp, pausedTotalMs } =
     useSessionStore()
   const { startBackgroundTimer, stopBackgroundTimer } = useBackgroundTask()
   const saveSessionMutation = useSaveSessionMutation()
   const [showExitModal, setShowExitModal] = useState(false)
-  const startedAt = useRef(new Date().toISOString())
   const autoCompleted = useRef(false)
 
   const { data: plannedSession } = useQuery({
@@ -52,20 +52,25 @@ export const useSessionViewModel = () => {
   }, [remainingSeconds, elapsedSeconds]) // eslint-disable-line
 
   const handleAutoComplete = useCallback(async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    await stopBackgroundTimer()
-    await saveSessionMutation.mutateAsync({
-      plannedSessionId: plannedSession!.id,
-      cycleSubjectId: plannedSession!.cycleSubjectId,
-      subjectId: plannedSession!.subjectId,
-      startedAt: startedAt.current,
-      studySeconds: allocatedSeconds - reviewSeconds,
-      reviewSeconds,
-      pausedSeconds: 0,
-    })
-    clearSession()
-    router.back()
-  }, [plannedSession, allocatedSeconds, reviewSeconds]) // eslint-disable-line
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      await stopBackgroundTimer()
+      await saveSessionMutation.mutateAsync({
+        plannedSessionId: plannedSession!.id,
+        cycleSubjectId: plannedSession!.cycleSubjectId,
+        subjectId: plannedSession!.subjectId,
+        startedAt: sessionStartTimestamp ? new Date(sessionStartTimestamp).toISOString() : new Date().toISOString(),
+        studySeconds: allocatedSeconds - reviewSeconds,
+        reviewSeconds,
+        pausedSeconds: Math.round(pausedTotalMs / 1000),
+      })
+      clearSession()
+      router.back()
+    } catch (e) {
+      autoCompleted.current = false // allow retry
+      Alert.alert('Erro ao salvar sessão', e instanceof Error ? e.message : 'Tente novamente.')
+    }
+  }, [plannedSession, allocatedSeconds, reviewSeconds, stopBackgroundTimer, saveSessionMutation, clearSession, sessionStartTimestamp, pausedTotalMs]) // eslint-disable-line
 
   const handleEarlyExit = useCallback(async () => {
     pause()
@@ -73,19 +78,23 @@ export const useSessionViewModel = () => {
   }, [pause])
 
   const confirmExit = useCallback(async () => {
-    await stopBackgroundTimer()
-    await saveSessionMutation.mutateAsync({
-      plannedSessionId: plannedSession!.id,
-      cycleSubjectId: plannedSession!.cycleSubjectId,
-      subjectId: plannedSession!.subjectId,
-      startedAt: startedAt.current,
-      studySeconds: Math.max(0, elapsedSeconds - reviewSeconds),
-      reviewSeconds: Math.min(reviewSeconds, elapsedSeconds),
-      pausedSeconds: 0,
-    })
-    clearSession()
-    router.back()
-  }, [elapsedSeconds, reviewSeconds, plannedSession]) // eslint-disable-line
+    try {
+      await stopBackgroundTimer()
+      await saveSessionMutation.mutateAsync({
+        plannedSessionId: plannedSession!.id,
+        cycleSubjectId: plannedSession!.cycleSubjectId,
+        subjectId: plannedSession!.subjectId,
+        startedAt: sessionStartTimestamp ? new Date(sessionStartTimestamp).toISOString() : new Date().toISOString(),
+        studySeconds: Math.max(0, elapsedSeconds - reviewSeconds),
+        reviewSeconds: Math.min(reviewSeconds, elapsedSeconds),
+        pausedSeconds: Math.round(pausedTotalMs / 1000),
+      })
+      clearSession()
+      router.back()
+    } catch (e) {
+      Alert.alert('Erro ao salvar sessão', e instanceof Error ? e.message : 'Tente novamente.')
+    }
+  }, [elapsedSeconds, reviewSeconds, plannedSession, stopBackgroundTimer, saveSessionMutation, clearSession, sessionStartTimestamp, pausedTotalMs]) // eslint-disable-line
 
   return {
     subject,

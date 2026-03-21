@@ -6,6 +6,7 @@ import { SyncService } from '@/shared/services/sync.service'
 import { BackupService } from '@/shared/services/backup.service'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { useSettingsStore } from '@/shared/stores/settings.store'
+import { getDatabase } from '@/shared/database/database'
 
 interface SaveSessionInput {
   plannedSessionId: string
@@ -24,19 +25,24 @@ export function useSaveSessionMutation() {
 
   return useMutation({
     mutationFn: async (input: SaveSessionInput) => {
+      const db = await getDatabase()
       const endedAt = new Date().toISOString()
       const studyHours = input.studySeconds / 3600
 
-      await SessionRepository.create({
-        ...input,
-        endedAt,
-        reviewSeconds: input.reviewSeconds,
-        pausedSeconds: input.pausedSeconds,
+      await db.withTransactionAsync(async () => {
+        await SessionRepository.create({
+          plannedSessionId: input.plannedSessionId,
+          cycleSubjectId: input.cycleSubjectId,
+          subjectId: input.subjectId,
+          startedAt: input.startedAt,
+          endedAt,
+          studySeconds: input.studySeconds,
+          reviewSeconds: input.reviewSeconds,
+          pausedSeconds: input.pausedSeconds,
+        })
+        await CycleRepository.incrementCycleSubjectHours(input.cycleSubjectId, studyHours)
+        await PlannedSessionRepository.updateStatus(input.plannedSessionId, 'done')
       })
-
-      await CycleRepository.incrementCycleSubjectHours(input.cycleSubjectId, studyHours)
-
-      await PlannedSessionRepository.updateStatus(input.plannedSessionId, 'done')
 
       if (spreadsheetId) {
         await SyncService.writeDirtyTopics(spreadsheetId, input.subjectId)
