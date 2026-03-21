@@ -85,12 +85,14 @@ src/
 │   │   │   └── use-get-spreadsheet.query.ts
 │   │   ├── subjects/
 │   │   │   ├── use-get-subjects.query.ts
-│   │   │   ├── use-get-cycle-subjects.query.ts   # subjects do ciclo ativo
+│   │   │   ├── use-get-cycle-subjects.query.ts   # subjects do ciclo ativo com horas
 │   │   │   └── use-update-topic-status.mutation.ts
 │   │   ├── cycles/
-│   │   │   └── use-create-cycle.mutation.ts      # cria ciclo + aloca horas
+│   │   │   ├── use-create-cycle.mutation.ts      # cria ciclo + aloca horas + gera planned_sessions
+│   │   │   └── use-get-planned-sessions.query.ts # lista blocos do ciclo ativo ordenados
 │   │   └── sessions/
-│   │       └── use-save-session.mutation.ts
+│   │       ├── use-save-session.mutation.ts
+│   │       └── use-update-planned-session.mutation.ts  # marca bloco como done/in_progress
 │   │
 │   ├── services/
 │   │   ├── sync.service.ts           # Sheets ↔ SQLite diff/merge
@@ -107,6 +109,7 @@ src/
 │   │       ├── subject.repository.ts
 │   │       ├── topic.repository.ts
 │   │       ├── session.repository.ts
+│   │       ├── planned-session.repository.ts
 │   │       └── cycle.repository.ts
 │   │
 │   ├── hooks/
@@ -226,15 +229,35 @@ src/
 | allocated_hours | REAL | Calculado pelo `cycle.service.ts` na criação do ciclo |
 | completed_hours | REAL | Acumulado das sessões. Atualizado por `use-save-session.mutation.ts` ao finalizar cada sessão (segundos → horas: `study_seconds / 3600`). |
 
-### study_sessions
+### planned_sessions
+Blocos de sessão gerados automaticamente pelo `cycle.service.ts` na criação do ciclo. Cada `cycle_subject` tem seu `allocated_hours` dividido em blocos de duração máxima configurável (padrão 2h).
+
 | Campo | Tipo | Descrição |
 |---|---|---|
 | id | TEXT PK | UUID |
 | cycle_subject_id | TEXT FK | |
+| subject_id | TEXT FK | Desnormalizado para queries rápidas |
+| cycle_id | TEXT FK | Desnormalizado para queries rápidas |
+| position | INTEGER | Ordem de exibição na lista (global dentro do ciclo) |
+| allocated_seconds | INTEGER | Duração planejada do bloco (ex: 7200 = 2h) |
+| status | TEXT | `pending` / `in_progress` / `done` |
+
+**Regras:**
+- Ao criar o ciclo, `cycle.service.ts` divide `allocated_hours` de cada matéria em blocos de até 2h (configurável futuramente). Ex: 9:30h de Legislação → 4 blocos de 2h + 1 bloco de 1:30h.
+- A ordenação dos blocos na lista intercala matérias (não empilha todos os blocos da mesma matéria juntos), para variedade na sessão de estudos.
+- `position` define a ordem global de exibição na lista do ciclo.
+- Apenas um bloco pode ter `status = 'in_progress'` por vez.
+
+### study_sessions
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | TEXT PK | UUID |
+| planned_session_id | TEXT FK | Bloco planejado que originou esta sessão |
+| cycle_subject_id | TEXT FK | |
 | subject_id | TEXT FK | Desnormalizado para preservar contexto mesmo se o ciclo for arquivado |
 | started_at | TEXT | |
 | ended_at | TEXT | |
-| study_seconds | INTEGER NOT NULL DEFAULT 0 | Tempo de estudo puro |
+| study_seconds | INTEGER NOT NULL DEFAULT 0 | Tempo de estudo puro (conta para cima desde 0) |
 | review_seconds | INTEGER NOT NULL DEFAULT 0 | Tempo de revisão. 0 quando toggle de revisão está desativado. |
 | paused_seconds | INTEGER NOT NULL DEFAULT 0 | Tempo em pausa |
 
@@ -304,15 +327,46 @@ src/
 - Botão "Iniciar Sessão" → /session
 
 ### (tabs)/cycle — Ciclo
-- Ciclo ativo: nome, ciclo #N, progresso geral
-- Cards de matérias com horas alocadas vs. concluídas
+A tela tem duas seções, exibidas em scroll vertical:
+
+**Seção 1 — Lista de sessões planejadas** (referência visual: image copy.png)
+```
+Header: Matéria | Sessão | Tempo restante
+─────────────────────────────────────────────────────
+Legislação de Trânsito   02:00:00   🕐 02:00:00   ▷  ⋮
+Estudo Livre             01:00:00   🕐 01:00:00   ▷  ⋮
+Legislação de Trânsito   02:00:00   🕐 02:00:00   ▷  ⋮
+Português                02:00:00   🕐 02:00:00   ▷  ⋮
+...
+```
+- Cada linha = um `planned_session` ordenado por `position`
+- **Sessão**: `allocated_seconds` do bloco (fixo)
+- **Tempo restante**: `allocated_seconds - study_seconds` do bloco. Antes de iniciar = igual à coluna Sessão. Conta para baixo enquanto a sessão roda.
+- **Timer**: conta para CIMA desde 00:00:00 ao pressionar ▷
+- **▷ (play)**: inicia a sessão desse bloco. Transiciona para /session passando o `planned_session_id`
+- **⋮ (menu)**: opções — Pular sessão / Ver matéria
+- Indicador de progresso no topo: **"N de M sessões concluídas"** (ex: "4 de 12 sessões")
+
+**Seção 2 — Resumo** (referência visual: image copy 2.png)
+```
+Resumo
+┌─────────────────────────────────────────────────────┐
+│ Total           26:00:00          🕐 00:00:00        │
+├─────────────────────────────────────────────────────┤
+│ Estudo Livre    04:00:00          🕐 00:00:00        │
+│ Leg. Trânsito   09:30:00          🕐 00:00:00        │
+│ Português       05:30:00          🕐 00:00:00        │
+│ ...                                                  │
+└─────────────────────────────────────────────────────┘
+```
+- Linha **Total** destacada (fundo diferente)
+- Por matéria: `allocated_hours` | `completed_hours` (tempo já estudado)
 - FAB "Novo Ciclo" → `@gorhom/bottom-sheet` com `react-hook-form`:
   - Campo: nome do ciclo
   - Campo: horas disponíveis/semana (editável, sugestão futura via MCP Calendar)
-  - Seleção de matérias (`is_slow_build` destacadas com aviso: *"Matéria de construção lenta — recomendamos priorizar nas primeiras semanas"*)
+  - Seleção de matérias (`is_slow_build` destacadas com aviso)
   - "Estudo Livre" sempre visível e não removível
-  - Ao confirmar: `use-create-cycle.mutation.ts` → `cycle.service.ts` calcula `allocated_hours` → persiste `cycle` + `cycle_subjects`
-- Toque em matéria → /subject/[id]
+  - Ao confirmar: `use-create-cycle.mutation.ts` → `cycle.service.ts` calcula `allocated_hours`, divide em `planned_sessions` → persiste tudo
 
 ### /subject/[id]
 - Nome, pontos (peso), experiência (1–5 estrelas), `cycle_status`
@@ -323,14 +377,50 @@ src/
 - Sync ao sair da tela: `use-update-topic-status.mutation.ts` escreve no Sheets os tópicos com `is_dirty = 1` e zerá a flag
 
 ### /session
-- Seleção de matéria: usa `use-get-cycle-subjects.query.ts` — retorna `{ subject_id, name, allocated_hours, completed_hours, cycle_subject_id }` das matérias do ciclo ativo
-- Toggle: "Incluir revisão?" (padrão: ativado — 1/3 do tempo programado como revisão)
-  - Se desativado: `review_seconds = 0`
-- Cronômetro: play / pause / encerrar
-- Display: tempo de estudo | tempo de revisão | total
-- **Mecanismo de timer:** ao pressionar play, salva `session_start_timestamp` no `session.store`. O timer é calculado como `Date.now() - session_start_timestamp`, ajustando por tempo de pausas acumuladas. Isso garante precisão mesmo com app em background ou tela de bloqueio — não depende de tick contínuo.
-- **Background + tela de bloqueio:** `expo-task-manager` registra uma tarefa que, ao ser chamada, lê o `session_start_timestamp` do store e atualiza a notificação. `expo-notifications` exibe notificação persistente com tempo decorrido e botões play/pause. Permissão solicitada na primeira sessão.
-- Ao finalizar: salva `study_session` no SQLite → atualiza `cycle_subjects.completed_hours` → sync planilha → backup automático se habilitado
+Tela de sessão ativa, aberta ao pressionar ▷ em um bloco da lista do ciclo.
+
+**Header:**
+- Nome da matéria
+- Indicador de posição: **"Sessão N de M"** — N = posição do bloco (`planned_session.position`) no ciclo, M = total de `planned_sessions` do ciclo
+
+**Corpo:**
+- **Cronômetro principal** (conta para CIMA desde 00:00:00):
+  ```
+       00:47:23   ← tempo decorrido de estudo
+  ```
+- Barra de progresso: `study_seconds / allocated_seconds` (0% → 100%)
+- Tempo alocado: "Meta: 02:00:00"
+- Tempo restante: "Restam 01:12:37" (conta para baixo)
+
+**Toggle revisão** (configurável antes de iniciar ou durante):
+- "Incluir revisão?" (padrão: ativado)
+- Se ativado: separa automaticamente 1/3 do `allocated_seconds` como revisão
+- Display adicional: "Revisão: 00:15:00 / 00:40:00"
+- Se desativado: `review_seconds = 0`
+
+**Controles:**
+- ⏸ Pausar / ▶ Retomar
+- ⏹ Encerrar sessão → modal de confirmação → salva e volta para /cycle
+
+**Mecanismo de timer (wall-clock):**
+- Ao pressionar ▷, salva `session_start_timestamp = Date.now()` em `session.store`
+- Elapsed = `Date.now() - session_start_timestamp - paused_total_ms`
+- Ao pausar: salva `paused_at = Date.now()`; ao retomar: `paused_total_ms += Date.now() - paused_at`
+- Preciso em background e tela de bloqueio — não perde tempo mesmo com app suspenso
+
+**Background + tela de bloqueio:**
+- `expo-task-manager` registra task `STUDY_TIMER_TASK`
+- Task lê `session_start_timestamp` + `paused_total_ms` do AsyncStorage, recalcula elapsed, atualiza notificação
+- `expo-notifications` exibe notificação persistente: `"[Matéria] — 00:47:23"` com botões ⏸/▶
+- Permissão solicitada na primeira sessão
+
+**Ao encerrar:**
+- Persiste `study_session` no SQLite com `planned_session_id`
+- Marca `planned_session.status = 'done'`
+- Atualiza `cycle_subjects.completed_hours`
+- Sync para planilha
+- Backup automático se `settings.store.auto_backup_enabled = true`
+- Retorna para `/cycle` com lista atualizada
 
 ### /history (via Drawer)
 - Lista de sessões por data
