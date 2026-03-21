@@ -242,11 +242,40 @@ Blocos de sessão gerados automaticamente pelo `cycle.service.ts` na criação d
 | allocated_seconds | INTEGER | Duração planejada do bloco (ex: 7200 = 2h) |
 | status | TEXT | `pending` / `in_progress` / `done` |
 
-**Regras:**
-- Ao criar o ciclo, `cycle.service.ts` divide `allocated_hours` de cada matéria em blocos de até 2h (configurável futuramente). Ex: 9:30h de Legislação → 4 blocos de 2h + 1 bloco de 1:30h.
-- A ordenação dos blocos na lista intercala matérias (não empilha todos os blocos da mesma matéria juntos), para variedade na sessão de estudos.
-- `position` define a ordem global de exibição na lista do ciclo.
+**Regras de divisão em blocos (`cycle.service.ts` — `splitIntoBlocks`):**
+
+```
+Para cada cycle_subject:
+  Se is_free_study = 1:
+    block_size = 3600s (1h)       ← Estudo Livre sempre usa blocos de 1h
+  Senão:
+    block_size = 7200s (2h)       ← demais matérias usam blocos de 2h
+
+  remaining = allocated_seconds
+  Enquanto remaining > 0:
+    block = min(remaining, block_size)
+    Criar planned_session com allocated_seconds = block
+    remaining -= block
+```
+
+**Exemplo com 26h (referência visual):**
+| Matéria | Alocado | Blocos |
+|---|---|---|
+| Estudo Livre | 4:00h | 4 × 1:00h |
+| Leg. Trânsito | 9:30h | 4 × 2:00h + 1 × 1:30h |
+| Português | 5:30h | 2 × 2:00h + 1 × 1:30h |
+| RLM | 2:00h | 1 × 2:00h |
+| Dir. Constitucional | 2:00h | 1 × 2:00h |
+| Informática | 1:30h | 1 × 1:30h |
+| Dir. Administrativo | 1:30h | 1 × 1:30h |
+
+**Ordenação dos blocos na lista (intercalação):**
+Os blocos são distribuídos na lista de forma intercalada — não empilha todos os blocos da mesma matéria juntos. Algoritmo round-robin: para cada posição, pega o próximo bloco da matéria com mais blocos restantes não posicionados. Isso garante variedade na sessão de estudos.
+
+**Outras regras:**
+- `position` define a ordem global de exibição (imutável após criação do ciclo).
 - Apenas um bloco pode ter `status = 'in_progress'` por vez.
+- Blocos com `status = 'done'` continuam visíveis na lista (com visual diferenciado), para o usuário ter histórico visual do progresso.
 
 ### study_sessions
 | Campo | Tipo | Descrição |
