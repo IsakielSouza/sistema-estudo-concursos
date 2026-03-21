@@ -38,11 +38,23 @@ export const useHomeViewModel = () => {
   // Recompute recommendations when subjects or dayAvailableHours change
   useEffect(() => {
     if (!cycleSubjects.length || !activeCycle) return
+    let cancelled = false
+
     RecommendationService.recommend({
       cycleSubjects,
       dayAvailableHours,
       cycleStartedAt: activeCycle.startedAt,
-    }).then(setRecommendations)
+    })
+      .then((result) => {
+        if (!cancelled) setRecommendations(result)
+      })
+      .catch((e) => {
+        if (!cancelled) console.error('Recommendation error:', e)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [cycleSubjects, dayAvailableHours, activeCycle])
 
   const cycleProgress =

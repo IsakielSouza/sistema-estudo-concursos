@@ -8,7 +8,7 @@ export const CycleProgressCardView = ({ cycle, progressRatio, statusLabel }: Pro
   const statusColor =
     statusLabel === 'Atrasado' ? (colors.status.late ?? colors.status.error) :
     statusLabel === 'Concluído' ? colors.status.success :
-    colors.status.success
+    colors.brand.primary  // 'Em dia' / active = brand blue
 
   return (
     <View style={styles.card}>

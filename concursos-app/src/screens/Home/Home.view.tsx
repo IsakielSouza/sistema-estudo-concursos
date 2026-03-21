@@ -45,7 +45,7 @@ export const HomeView = () => {
                 value={String(dayAvailableHours)}
                 onChangeText={(v) => {
                   const n = parseFloat(v)
-                  if (!Number.isNaN(n) && n >= 0) setDayAvailableHours(n)
+                  if (!Number.isNaN(n) && n > 0) setDayAvailableHours(n)
                 }}
                 keyboardType="decimal-pad"
                 selectTextOnFocus

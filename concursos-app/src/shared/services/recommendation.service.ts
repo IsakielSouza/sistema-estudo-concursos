@@ -94,15 +94,13 @@ export const RecommendationService = {
   },
 
   async estimateWeeksToComplete(
-    subjectId: string,
+    _subjectId: string,
     doneTopic: number,
     totalTopics: number
   ): Promise<number | null> {
     if (totalTopics === 0) return null
     const remaining = totalTopics - doneTopic
     if (remaining === 0) return 0
-    const allSessions = await SessionRepository.getBySubject(subjectId)
-    if (allSessions.length === 0) return null
-    return null // Phase 9 enhancement
+    return null // Phase 9: implement with session history
   },
 }
