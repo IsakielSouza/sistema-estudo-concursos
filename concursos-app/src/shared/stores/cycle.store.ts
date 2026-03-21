@@ -8,17 +8,23 @@ interface CycleStore {
   activeConcursoId: string | null
   setActiveCycle: (cycleId: string, concursoId: string) => void
   clearActiveCycle: () => void
+  reset: () => void
+}
+
+const cycleInitialState = {
+  activeCycleId: null,
+  activeConcursoId: null,
 }
 
 export const useCycleStore = create<CycleStore>()(
   persist(
     (set) => ({
-      activeCycleId: null,
-      activeConcursoId: null,
+      ...cycleInitialState,
       setActiveCycle: (activeCycleId, activeConcursoId) =>
         set({ activeCycleId, activeConcursoId }),
       clearActiveCycle: () =>
         set({ activeCycleId: null, activeConcursoId: null }),
+      reset: () => set(cycleInitialState),
     }),
     {
       name: '@concursos:cycle',
