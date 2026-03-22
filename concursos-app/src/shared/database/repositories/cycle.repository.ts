@@ -37,6 +37,15 @@ export const CycleRepository = {
     return row ? rowToCycle(row) : null
   },
 
+  async getById(id: string): Promise<Cycle | null> {
+    const db = await getDatabase()
+    const row = await db.getFirstAsync<Record<string, unknown>>(
+      'SELECT * FROM cycles WHERE id = ?',
+      [id]
+    )
+    return row ? rowToCycle(row) : null
+  },
+
   async getNextCycleNumber(concursoId: string): Promise<number> {
     const db = await getDatabase()
     const row = await db.getFirstAsync<{ max_num: number | null }>(
