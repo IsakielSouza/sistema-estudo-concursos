@@ -1,8 +1,10 @@
 // src/app/(private)/_layout.tsx
 import { Drawer } from 'expo-router/drawer'
 import { colors } from '@/constants/colors'
+import { useAppBootstrap } from '@/shared/hooks/useAppBootstrap'
 
 export default function PrivateLayout() {
+  useAppBootstrap()
   return (
     <Drawer
       screenOptions={{
