@@ -90,7 +90,7 @@ export const CycleRepository = {
   async getCycleSubjects(cycleId: string): Promise<CycleSubject[]> {
     const db = await getDatabase()
     const rows = await db.getAllAsync<Record<string, unknown>>(
-      'SELECT * FROM cycle_subjects WHERE cycle_id = ?',
+      'SELECT * FROM cycle_subjects WHERE cycle_id = ? ORDER BY id ASC',
       [cycleId]
     )
     return rows.map(rowToCycleSubject)
@@ -100,6 +100,14 @@ export const CycleRepository = {
     const db = await getDatabase()
     await db.runAsync(
       'UPDATE cycle_subjects SET completed_hours = completed_hours + ? WHERE id = ?',
+      [hours, cycleSubjectId]
+    )
+  },
+
+  async decrementCycleSubjectHours(cycleSubjectId: string, hours: number): Promise<void> {
+    const db = await getDatabase()
+    await db.runAsync(
+      'UPDATE cycle_subjects SET completed_hours = MAX(0, completed_hours - ?) WHERE id = ?',
       [hours, cycleSubjectId]
     )
   },
