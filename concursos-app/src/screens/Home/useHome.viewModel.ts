@@ -34,8 +34,8 @@ export const useHomeViewModel = () => {
   const { data: plannedSessions = [], isLoading } = useGetPlannedSessionsQuery()
   const { data: cycleSubjects = [] } = useGetCycleSubjectsQuery()
 
-  const registerManualMutation = useRegisterManualSessionMutation()
-  const undoMutation = useUndoSessionMutation()
+  const { mutate: registerManual, isPending: isRegisteringManual } = useRegisterManualSessionMutation()
+  const { mutate: undo } = useUndoSessionMutation()
 
   const bottomSheetRef = useRef<BottomSheet>(null)
   const [modalSession, setModalSession] = useState<PlannedSession | null>(null)
@@ -56,9 +56,11 @@ export const useHomeViewModel = () => {
       setElapsedSeconds(0)
       return
     }
+    let cancelled = false
     SessionRepository.getInProgressByPlannedSession(inProgressSession.id).then((ss) => {
-      setInProgressStartedAt(ss?.startedAt ?? null)
+      if (!cancelled) setInProgressStartedAt(ss?.startedAt ?? null)
     })
+    return () => { cancelled = true }
   }, [inProgressSession?.id])
 
   // Tick every second when in_progress
@@ -130,15 +132,15 @@ export const useHomeViewModel = () => {
   }, [inProgressSession])
 
   const handleRegisterManual = useCallback((plannedSessionId: string, minutes: number) => {
-    registerManualMutation.mutate(
+    registerManual(
       { plannedSessionId, minutes },
       { onSuccess: () => setModalSession(null) }
     )
-  }, [registerManualMutation])
+  }, [registerManual])
 
   const handleUndoSession = useCallback((plannedSessionId: string) => {
-    undoMutation.mutate({ plannedSessionId })
-  }, [undoMutation])
+    undo({ plannedSessionId })
+  }, [undo])
 
   const handleOpenModal = useCallback((session: PlannedSession) => {
     setModalSession(session)
@@ -166,7 +168,7 @@ export const useHomeViewModel = () => {
     inProgressElapsedSeconds: elapsedSeconds,
     modalSession,
     modalSubjectName: modalSession ? (subjectNameMap.get(modalSession.subjectId) ?? '') : '',
-    isRegisteringManual: registerManualMutation.isPending,
+    isRegisteringManual,
     bottomSheetRef,
     handlePlaySession,
     handleContinueSession,
