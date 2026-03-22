@@ -11,7 +11,7 @@ interface Props {
   inProgressSessionId: string | null    // which session is in_progress (if any)
   onPlay: (id: string) => void
   onOpenManualModal: (session: PlannedSession) => void
-  onUndo: (id: string) => void
+  onUndo: (plannedSessionId: string) => void
 }
 
 export const SessionListView = ({

@@ -1,6 +1,6 @@
 import { colors } from '@/constants/colors'
 import type { PlannedSession } from '@/shared/interfaces/cycle'
-import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Animated, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native'
 import { useEffect, useRef, useMemo } from 'react'
 import Svg, { Circle, Path } from 'react-native-svg'
 
@@ -53,7 +53,8 @@ export const CycleCircleView = ({
   onStart,
   onContinue,
 }: Props) => {
-  const size = Dimensions.get('window').width * 0.80
+  const { width } = useWindowDimensions()
+  const size = width * 0.80
   const cx = size / 2
   const cy = size / 2
   const strokeWidth = 20

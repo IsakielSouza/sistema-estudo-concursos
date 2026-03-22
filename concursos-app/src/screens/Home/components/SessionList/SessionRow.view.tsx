@@ -17,7 +17,7 @@ interface Props {
   elapsedSeconds: number   // Only meaningful for in_progress; 0 otherwise
   onPlay: (id: string) => void
   onOpenManualModal: (session: PlannedSession) => void
-  onUndo: (id: string) => void
+  onUndo: (plannedSessionId: string) => void
 }
 
 export const SessionRowView = ({
