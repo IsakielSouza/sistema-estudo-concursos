@@ -22,6 +22,7 @@ function rowToStudySession(row: Record<string, unknown>): StudySession {
     studySeconds: row.study_seconds as number,
     reviewSeconds: row.review_seconds as number,
     pausedSeconds: row.paused_seconds as number,
+    isManual: (row.is_manual as number) === 1,
   }
 }
 

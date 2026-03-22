@@ -21,7 +21,7 @@ interface SaveSessionInput {
 export function useSaveSessionMutation() {
   const queryClient = useQueryClient()
   const spreadsheetId = useAuthStore((s) => s.spreadsheetId)
-  const googleAccessToken = useAuthStore((s) => s.googleAccessToken)
+  const isLoggedIn = useAuthStore((s) => !!s.user)
   const autoBackupEnabled = useSettingsStore((s) => s.autoBackupEnabled)
 
   return useMutation({
@@ -40,6 +40,7 @@ export function useSaveSessionMutation() {
           studySeconds: input.studySeconds,
           reviewSeconds: input.reviewSeconds,
           pausedSeconds: input.pausedSeconds,
+          isManual: false,
         })
         await CycleRepository.incrementCycleSubjectHours(input.cycleSubjectId, studyHours)
         await PlannedSessionRepository.updateStatus(input.plannedSessionId, 'done')
@@ -49,9 +50,9 @@ export function useSaveSessionMutation() {
         await SyncService.writeDirtyTopics(spreadsheetId, input.subjectId)
       }
 
-      if (autoBackupEnabled && googleAccessToken) {
+      if (autoBackupEnabled && isLoggedIn) {
         try {
-          await BackupService.backupNow(googleAccessToken)
+          await BackupService.backupNow()
           useSettingsStore.getState().setLastBackupAt(new Date().toISOString())
         } catch {
           // Silent fail — backup is best-effort
