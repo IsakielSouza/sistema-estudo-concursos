@@ -32,11 +32,13 @@ export const SessionRepository = {
     const id = randomUUID()
     await db.runAsync(
       `INSERT INTO study_sessions
-       (id, planned_session_id, cycle_subject_id, subject_id, started_at, ended_at, study_seconds, review_seconds, paused_seconds)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, planned_session_id, cycle_subject_id, subject_id, started_at, ended_at,
+        study_seconds, review_seconds, paused_seconds, is_manual)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, data.plannedSessionId, data.cycleSubjectId, data.subjectId,
-        data.startedAt, data.endedAt, data.studySeconds, data.reviewSeconds, data.pausedSeconds,
+        data.startedAt, data.endedAt, data.studySeconds, data.reviewSeconds,
+        data.pausedSeconds, data.isManual ? 1 : 0,
       ]
     )
     return { ...data, id }
@@ -58,6 +60,33 @@ export const SessionRepository = {
       [from, to]
     )
     return rows.map(rowToStudySession)
+  },
+
+  async getInProgressByPlannedSession(plannedSessionId: string): Promise<StudySession | null> {
+    const db = await getDatabase()
+    const row = await db.getFirstAsync<Record<string, unknown>>(
+      `SELECT * FROM study_sessions
+       WHERE planned_session_id = ? AND ended_at IS NULL
+       ORDER BY started_at DESC LIMIT 1`,
+      [plannedSessionId]
+    )
+    return row ? rowToStudySession(row) : null
+  },
+
+  async getByPlannedSessionId(plannedSessionId: string): Promise<StudySession | null> {
+    const db = await getDatabase()
+    const row = await db.getFirstAsync<Record<string, unknown>>(
+      `SELECT * FROM study_sessions
+       WHERE planned_session_id = ?
+       ORDER BY started_at DESC LIMIT 1`,
+      [plannedSessionId]
+    )
+    return row ? rowToStudySession(row) : null
+  },
+
+  async deleteById(id: string): Promise<void> {
+    const db = await getDatabase()
+    await db.runAsync('DELETE FROM study_sessions WHERE id = ?', [id])
   },
 
   async getWeeklySecondsBySubject(
