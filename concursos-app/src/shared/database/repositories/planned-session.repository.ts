@@ -57,6 +57,14 @@ export const PlannedSessionRepository = {
     )
   },
 
+  async resetStatus(id: string): Promise<void> {
+    const db = await getDatabase()
+    await db.runAsync(
+      "UPDATE planned_sessions SET status = 'pending' WHERE id = ?",
+      [id]
+    )
+  },
+
   async getCountByCycle(cycleId: string): Promise<{ total: number; done: number }> {
     const db = await getDatabase()
     const row = await db.getFirstAsync<{ total: number; done: number | null }>(
