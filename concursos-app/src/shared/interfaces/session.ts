@@ -9,6 +9,7 @@ export interface StudySession {
   studySeconds: number
   reviewSeconds: number
   pausedSeconds: number
+  isManual: boolean
 }
 
 export interface SyncLog {

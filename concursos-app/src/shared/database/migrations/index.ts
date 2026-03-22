@@ -1,9 +1,11 @@
 // src/shared/database/migrations/index.ts
 import type { SQLiteDatabase } from 'expo-sqlite'
 import { migration001 } from './001_initial'
+import { migration002 } from './002_add_is_manual'
 
 const MIGRATIONS = [
   { id: 1, name: '001_initial', fn: migration001 },
+  { id: 2, name: '002_add_is_manual', fn: migration002 },
 ]
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
