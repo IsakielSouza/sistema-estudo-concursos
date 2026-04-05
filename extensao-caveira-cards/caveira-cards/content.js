@@ -98,6 +98,21 @@
         mostrarOverlay(questao);
       });
     }
+
+    // Deltinha: múltiplas questões por página
+    if (adapter.nomePlataforma === "Deltinha") {
+      document.querySelectorAll(adapter.seletorQuestao).forEach(questaoEl => {
+        if (!adapter.questaoRespondida(questaoEl)) return;
+        const enuncEl = questaoEl.querySelector(".text-base.leading-relaxed");
+        if (!enuncEl) return;
+        const chave = enuncEl.innerText.trim().substring(0, 80);
+        if (!chave || processadas.has(chave)) return;
+        const questao = adapter.capturarQuestao(questaoEl);
+        if (!questao) return;
+        processadas.add(chave);
+        mostrarOverlay(questao);
+      });
+    }
   }
 
   // ── Overlay ──

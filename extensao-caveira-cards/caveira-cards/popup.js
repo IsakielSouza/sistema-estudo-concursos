@@ -15,6 +15,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
   setBadge("badge-tec",       url.includes("tecconcursos.com.br"));
   setBadge("badge-gran",      url.includes("grancursosonline.com.br"));
   setBadge("badge-qconcurso", url.includes("qconcursos.com"));
+  setBadge("badge-deltinha",  url.includes("deltinha.com.br"));
 });
 
 // ── Toggle liga/desliga ──
