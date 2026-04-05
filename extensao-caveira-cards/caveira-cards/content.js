@@ -32,11 +32,11 @@
   });
 
   // ── Setup automático do Anki (só roda até conseguir) ──
-  chrome.storage.local.get("ankiSetupDone_v5", async ({ ankiSetupDone_v5 }) => {
-    if (ankiSetupDone_v5) return;
+  chrome.storage.local.get("ankiSetupDone_v6", async ({ ankiSetupDone_v6 }) => {
+    if (ankiSetupDone_v6) return;
     try {
       await window.CaveiraAnki.configurarAnki();
-      chrome.storage.local.set({ ankiSetupDone_v5: true });
+      chrome.storage.local.set({ ankiSetupDone_v6: true });
     } catch (e) {
       console.warn("[CaveiraCards] configurarAnki falhou:", e);
     }
@@ -66,6 +66,29 @@
       const questoesEl = document.querySelectorAll(".ds-question--answered");
       questoesEl.forEach(questaoEl => {
         const enuncEl = questaoEl.querySelector(".ds-question__body__statement");
+        if (!enuncEl) return;
+        const chave = enuncEl.innerText.trim().substring(0, 80);
+        if (!chave || processadas.has(chave)) return;
+        const questao = adapter.capturarQuestao(questaoEl);
+        if (!questao) return;
+        processadas.add(chave);
+        mostrarOverlay(questao);
+      });
+    }
+
+    // QConcursos: múltiplas questões por página (suporta app. e www.)
+    if (adapter.nomePlataforma === "QConcursos") {
+      const seletor = adapter.seletorQuestao;
+      const questoesEl = document.querySelectorAll(seletor);
+
+      // Seletor do enunciado varia conforme interface
+      const seletorEnunc = adapter.interface === "www"
+        ? ".q-question-enunciation"
+        : ".statement-container";
+
+      questoesEl.forEach(questaoEl => {
+        if (!adapter.questaoRespondida(questaoEl)) return;
+        const enuncEl = questaoEl.querySelector(seletorEnunc);
         if (!enuncEl) return;
         const chave = enuncEl.innerText.trim().substring(0, 80);
         if (!chave || processadas.has(chave)) return;

@@ -13,6 +13,8 @@
   "host_permissions": [
     "https://www.tecconcursos.com.br/*",
     "https://*.grancursosonline.com.br/*",
+    "https://app.qconcursos.com/*",
+    "https://www.qconcursos.com/*",
     "http://localhost:8765/*"
   ],
   "content_scripts": [
@@ -33,6 +35,20 @@
         "shared/anki.js",
         "shared/card-builder.js",
         "sites/gran.js",
+        "content.js"
+      ],
+      "css": ["shared/overlay.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://app.qconcursos.com/*",
+        "https://www.qconcursos.com/*"
+      ],
+      "js": [
+        "shared/anki.js",
+        "shared/card-builder.js",
+        "sites/qconcurso.js",
         "content.js"
       ],
       "css": ["shared/overlay.css"],
@@ -60,7 +76,9 @@
       "resources": ["CaveiraCards.png", "icons/*", "libs/*", "CaveiraCards.apkg"],
       "matches": [
         "https://www.tecconcursos.com.br/*",
-        "https://*.grancursosonline.com.br/*"
+        "https://*.grancursosonline.com.br/*",
+        "https://app.qconcursos.com/*",
+        "https://www.qconcursos.com/*"
       ]
     }
   ]
