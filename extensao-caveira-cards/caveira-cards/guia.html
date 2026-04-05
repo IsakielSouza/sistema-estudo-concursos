@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Guia de Instalação — CaveiraCards</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f8fafc; color: #1e293b;
+    max-width: 680px; margin: 0 auto; padding: 40px 24px;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+  .logo img { width: 48px; height: 48px; border-radius: 50%; }
+  .logo h1 { font-size: 22px; font-weight: 800; }
+  .logo span { font-size: 13px; color: #6366f1; display: block; }
+  h2 { font-size: 16px; font-weight: 700; color: #1a1a2e; margin: 24px 0 8px; }
+  p { font-size: 14px; color: #475569; line-height: 1.7; margin-bottom: 12px; }
+  ol { padding-left: 20px; }
+  ol li { font-size: 14px; color: #475569; line-height: 1.7; margin-bottom: 6px; }
+  .code {
+    background: #1e293b; color: #e2e8f0;
+    padding: 12px 16px; border-radius: 8px;
+    font-family: monospace; font-size: 13px;
+    margin: 12px 0;
+  }
+  .btn {
+    display: inline-block; padding: 12px 24px;
+    background: #3b6ff5; color: white; border-radius: 10px;
+    text-decoration: none; font-weight: 700; font-size: 14px;
+    margin-top: 8px;
+  }
+  .btn:hover { background: #2d5ce0; }
+  .alerta {
+    background: #fffbeb; border: 1px solid #fcd34d;
+    border-radius: 10px; padding: 14px 16px; margin: 16px 0;
+    font-size: 13px; color: #92400e;
+  }
+</style>
+</head>
+<body>
+  <div class="logo">
+    <img src="CaveiraCards.png" alt="CaveiraCards">
+    <div>
+      <h1>CaveiraCards</h1>
+      <span>Guia de instalação</span>
+    </div>
+  </div>
+
+  <div class="alerta">
+    ⚠️ O CaveiraCards precisa do <strong>Anki</strong> e do plugin <strong>AnkiConnect</strong> instalados no seu computador para funcionar.
+  </div>
+
+  <h2>Passo 1 — Instale o Anki</h2>
+  <p>Baixe e instale o Anki gratuitamente no site oficial:</p>
+  <a class="btn" href="https://apps.ankiweb.net" target="_blank">Baixar Anki</a>
+
+  <h2>Passo 2 — Instale o AnkiConnect</h2>
+  <ol>
+    <li>Abra o Anki</li>
+    <li>Vá em <strong>Ferramentas → Complementos → Baixar complementos</strong></li>
+    <li>Cole o código abaixo e clique em OK:</li>
+  </ol>
+  <div class="code">2055492159</div>
+  <p>Ou instale diretamente pelo AnkiWeb:</p>
+  <a class="btn" href="https://ankiweb.net/shared/info/2055492159" target="_blank">Instalar AnkiConnect</a>
+
+  <h2>Passo 3 — Reinicie o Anki</h2>
+  <p>Após instalar o AnkiConnect, feche e abra o Anki novamente para o plugin ser ativado.</p>
+
+  <h2>Passo 4 — Crie o modelo de card "CaveiraCards"</h2>
+  <p>O CaveiraCards usa um modelo chamado <strong>CaveiraCards</strong> com os campos <strong>Frente</strong>, <strong>Verso</strong> e <strong>Extra</strong>.</p>
+  <ol>
+    <li>No Anki, vá em <strong>Ferramentas → Gerenciar tipos de notas</strong></li>
+    <li>Clique em <strong>Adicionar</strong> → selecione "Básico"</li>
+    <li>Renomeie para <strong>CaveiraCards</strong></li>
+    <li>Edite os campos para ter: <strong>Frente</strong>, <strong>Verso</strong>, <strong>Extra</strong></li>
+    <li>Salve</li>
+  </ol>
+
+  <h2>Pronto!</h2>
+  <p>Com o Anki aberto, acesse o TEC Concursos ou Gran Questões, responda uma questão e o botão do CaveiraCards aparecerá automaticamente.</p>
+</body>
+</html>
