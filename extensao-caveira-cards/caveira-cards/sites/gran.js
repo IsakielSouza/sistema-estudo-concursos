@@ -95,5 +95,9 @@
         return null;
       }
     },
+
+    capturarComentarios() {
+      return null;
+    },
   };
 })();
