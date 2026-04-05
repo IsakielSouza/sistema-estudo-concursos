@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "TEC Concursos → Anki Caderno de Erros",
+  "version": "1.0.0",
+  "description": "Captura questões erradas no TEC Concursos e envia para o Anki",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://www.tecconcursos.com.br/*",
+    "http://localhost:8765/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.tecconcursos.com.br/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "overlay.css"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "author": "@concurseiroti2025",
+  "homepage_url": "https://www.instagram.com/concurseiroti2025/"
+}
