@@ -53,7 +53,7 @@
         fields: {
           Frente: frente,
           Verso: verso,
-          Extra: questao.banca || "",
+          Extra: [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>"),
         },
         tags,
         options: { allowDuplicate: false, duplicateScope: "deck" },

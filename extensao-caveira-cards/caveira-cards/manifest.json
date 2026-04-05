@@ -57,7 +57,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["CaveiraCards.png", "icons/*", "libs/*"],
+      "resources": ["CaveiraCards.png", "icons/*", "libs/*", "CaveiraCards.apkg"],
       "matches": [
         "https://www.tecconcursos.com.br/*",
         "https://*.grancursosonline.com.br/*"
