@@ -148,6 +148,12 @@
       } else if (err.message.includes("duplicate")) {
         titleEl.textContent = "Já existe no deck";
         subEl.textContent = "Questão duplicada";
+        setTimeout(() => {
+          if (!overlay.isConnected) return;
+          overlay.remove();
+          overlayEl = null;
+        }, 1000);
+        return;
       } else {
         titleEl.textContent = "Erro ao enviar";
         subEl.textContent = err.message.substring(0, 40);
