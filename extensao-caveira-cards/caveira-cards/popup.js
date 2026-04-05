@@ -40,8 +40,8 @@ toggle.addEventListener("change", () => {
 const statusEl = document.getElementById("setup-status");
 const btnSetup = document.getElementById("btn-setup");
 
-chrome.storage.local.get("ankiSetupDone_v2", ({ ankiSetupDone_v2 }) => {
-  if (ankiSetupDone_v2) {
+chrome.storage.local.get("ankiSetupDone_v5", ({ ankiSetupDone_v5 }) => {
+  if (ankiSetupDone_v5) {
     statusEl.textContent = "OK";
     statusEl.className = "setup-status ok";
   }
@@ -60,7 +60,7 @@ btnSetup.addEventListener("click", async () => {
     if (data.result) {
       statusEl.textContent = "OK";
       statusEl.className = "setup-status ok";
-      chrome.storage.local.set({ ankiSetupDone_v2: true });
+      chrome.storage.local.set({ ankiSetupDone_v5: true });
     }
   } catch (e) {
     statusEl.textContent = "Anki fechado";

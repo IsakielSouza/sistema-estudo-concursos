@@ -22,21 +22,23 @@
     }).join("");
   }
 
-  function altVerso(alternativas, idxCorreta, idxErrada) {
+  function altVerso(alternativas, idxCorreta) {
     const ic = Number(idxCorreta);
-    const ie = Number(idxErrada);
     return alternativas.map((a, i) => {
-      const classe = i === ic ? "cc-alt correta" : i === ie ? "cc-alt errada" : "cc-alt";
+      const classe = i === ic ? "cc-alt correta" : "cc-alt";
       const letra = LETRAS[i] || String(i + 1);
       return `<div class="${classe}"><span class="cc-letra">${letra}</span><span>${a.replace(/\s+/g, " ").trim()}</span></div>`;
     }).join("");
   }
 
   function montarCard(questao) {
-    const frente = `<div class="cc-wrap">
+    const frente = `<div class="cc-header">
+      <img class="cc-logo" src="_CaveiraCards.png" alt="">
+      <span class="cc-materia-texto">${questao.materia}</span>
+    </div>
+    <div class="cc-wrap">
       <div class="cc-meta">
         <span class="cc-tag-plataforma">${questao.plataforma}</span>
-        <span class="cc-tag-materia">${questao.materia}</span>
         ${questao.assunto ? `<span class="cc-tag-assunto">${questao.assunto}</span>` : ""}
       </div>
       ${questao.banca ? `<div class="cc-banca">${questao.banca}</div>` : ""}
@@ -46,7 +48,7 @@
 
     const verso = `<div class="cc-wrap">
       <div class="cc-gabarito-label">Gabarito</div>
-      <div class="cc-alts">${altVerso(questao.alternativas, questao.idxCorreta, questao.idxErrada)}</div>
+      <div class="cc-alts">${altVerso(questao.alternativas, questao.idxCorreta)}</div>
       ${questao.explicacao ? `<div class="cc-explicacao"><strong>Comentário:</strong><br>${sanitizar(questao.explicacao)}</div>` : ""}
       <div class="cc-fonte">
         <a href="${questao.url}" target="_blank">Ver questão — ${questao.plataforma}</a>

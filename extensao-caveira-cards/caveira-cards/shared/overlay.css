@@ -89,33 +89,6 @@
 /* Estado carregando */
 #cc-overlay.loading .cc-title { color: #93c5fd; }
 
-/* ── Estado MINIMIZADO ── */
-/* Quando tem a classe .minimizado, esconde o cc-card e mostra só o ícone */
-#cc-overlay.minimizado .cc-card {
-  display: none;
-}
-
-#cc-overlay .cc-mini {
-  display: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-  border: 2px solid #1e2d4d;
-  object-fit: cover;
-  transition: transform 0.2s;
-}
-
-#cc-overlay.minimizado .cc-mini {
-  display: block;
-}
-
-#cc-overlay .cc-mini:hover {
-  transform: scale(1.1);
-  border-color: #3b6ff5;
-}
-
 /* Botão de comentários */
 #cc-overlay .cc-btn-comentarios {
   position: absolute;
@@ -139,7 +112,4 @@
 }
 #cc-overlay .cc-btn-comentarios:hover {
   background: #e5e7eb;
-}
-#cc-overlay.minimizado .cc-btn-comentarios {
-  display: none;
 }

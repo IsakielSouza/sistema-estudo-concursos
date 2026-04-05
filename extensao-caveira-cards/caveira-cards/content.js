@@ -13,7 +13,6 @@
   // Rastro de questões já processadas (evita duplicar overlays)
   const processadas = new Set();
   let overlayEl = null;
-  let timerMinimizar = null;
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
@@ -26,17 +25,18 @@
       if (!extensaoAtiva && overlayEl) {
         overlayEl.remove();
         overlayEl = null;
-        clearTimeout(timerMinimizar);
+      } else if (extensaoAtiva) {
+        verificar();
       }
     }
   });
 
   // ── Setup automático do Anki (só roda até conseguir) ──
-  chrome.storage.local.get("ankiSetupDone_v2", async ({ ankiSetupDone_v2 }) => {
-    if (ankiSetupDone_v2) return;
+  chrome.storage.local.get("ankiSetupDone_v5", async ({ ankiSetupDone_v5 }) => {
+    if (ankiSetupDone_v5) return;
     try {
       await window.CaveiraAnki.configurarAnki();
-      chrome.storage.local.set({ ankiSetupDone_v2: true });
+      chrome.storage.local.set({ ankiSetupDone_v5: true });
     } catch (e) {
       console.warn("[CaveiraCards] configurarAnki falhou:", e);
     }
@@ -82,7 +82,6 @@
   function mostrarOverlay(questao) {
     // Remove overlay anterior se existir
     if (overlayEl) overlayEl.remove();
-    clearTimeout(timerMinimizar);
 
     const overlay = document.createElement("div");
     overlay.id = "cc-overlay";
@@ -97,7 +96,6 @@
         </div>
         <button class="cc-close" title="Fechar">✕</button>
       </div>
-      <img class="cc-mini" src="${LOGO_URL}" alt="CaveiraCards" title="CaveiraCards — clique para expandir">
     `;
 
     document.body.appendChild(overlay);
@@ -115,23 +113,7 @@
       e.stopPropagation();
       overlay.remove();
       overlayEl = null;
-      clearTimeout(timerMinimizar);
     });
-
-    // Clique no ícone minimizado → expande de volta
-    overlay.querySelector(".cc-mini").addEventListener("click", () => {
-      overlay.classList.remove("minimizado");
-      clearTimeout(timerMinimizar);
-      timerMinimizar = setTimeout(() => minimizar(overlay), 5000);
-    });
-
-    // Minimiza automaticamente após 5s
-    timerMinimizar = setTimeout(() => minimizar(overlay), 5000);
-  }
-
-  function minimizar(overlay) {
-    if (!overlay.isConnected) return;
-    overlay.classList.add("minimizado");
   }
 
   function formatarComentarios(comentarios) {
@@ -201,10 +183,6 @@
         });
       }
 
-      // Após 2.5s minimiza (não remove — fica como ícone)
-      clearTimeout(timerMinimizar);
-      timerMinimizar = setTimeout(() => minimizar(overlay), 2500);
-
     } catch (err) {
       overlay.classList.remove("loading");
       overlay.classList.add("falha");
@@ -220,13 +198,12 @@
         subEl.textContent = err.message.substring(0, 40);
       }
 
-      // Após 4s volta ao estado normal e minimiza
+      // Após 4s volta ao estado normal
       setTimeout(() => {
         if (!overlay.isConnected) return;
         overlay.classList.remove("falha");
         titleEl.textContent = "Adicionar ao Anki";
         subEl.textContent = `${questao.resultado} · ${questao.materia}`;
-        minimizar(overlay);
       }, 4000);
     }
   }
