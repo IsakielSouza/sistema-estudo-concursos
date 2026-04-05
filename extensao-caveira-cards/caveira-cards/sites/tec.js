@@ -119,5 +119,28 @@
         return null;
       }
     },
+
+    capturarComentarios() {
+      const ul = document.querySelector("ul.discussao-comentarios");
+      if (!ul || ul.offsetParent === null) return null;
+
+      const items = Array.from(ul.querySelectorAll("li"));
+      if (!items.length) return null;
+
+      const comentarios = items.map(li => {
+        const scoreEl = li.querySelector(".discussao-comentario-nota-numero .ng-binding");
+        const textoEl = li.querySelector(".discussao-comentario-post-texto");
+        if (!scoreEl || !textoEl) return null;
+        const score = parseInt(scoreEl.textContent.trim(), 10) || 0;
+        const html = textoEl.innerHTML.trim();
+        if (!html) return null;
+        return { score, html };
+      }).filter(Boolean);
+
+      if (!comentarios.length) return null;
+
+      comentarios.sort((a, b) => b.score - a.score);
+      return comentarios.slice(0, 3);
+    },
   };
 })();
