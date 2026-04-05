@@ -16,11 +16,11 @@
   let timerMinimizar = null;
 
   // ── Setup automático do Anki (só roda até conseguir) ──
-  chrome.storage.local.get("ankiSetupDone", async ({ ankiSetupDone }) => {
-    if (ankiSetupDone) return;
+  chrome.storage.local.get("ankiSetupDone_v2", async ({ ankiSetupDone_v2 }) => {
+    if (ankiSetupDone_v2) return;
     try {
       await window.CaveiraAnki.configurarAnki();
-      chrome.storage.local.set({ ankiSetupDone: true });
+      chrome.storage.local.set({ ankiSetupDone_v2: true });
     } catch (e) {
       // Anki fechado — tenta na próxima visita
     }
