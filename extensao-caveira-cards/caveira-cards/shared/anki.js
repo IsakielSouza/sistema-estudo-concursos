@@ -63,5 +63,24 @@
     return deckName;
   }
 
-  window.CaveiraAnki = { enviarQuestao };
+  // Verifica se o modelo "CaveiraCards" existe no Anki e cria se necessário
+  async function configurarAnki() {
+    const modelos = await ankiRequest("modelNames", {});
+    if (modelos.includes("CaveiraCards")) return "ja_existe";
+
+    await ankiRequest("createModel", {
+      modelName: "CaveiraCards",
+      inOrderFields: ["Frente", "Verso", "Extra"],
+      css: ".card { font-family: 'Segoe UI', system-ui, sans-serif; background: white; margin: 0; padding: 8px; }",
+      cardTemplates: [{
+        Name: "CaveiraCards",
+        Front: "{{Frente}}",
+        Back: "{{Verso}}",
+      }],
+    });
+
+    return "criado";
+  }
+
+  window.CaveiraAnki = { enviarQuestao, configurarAnki };
 })();

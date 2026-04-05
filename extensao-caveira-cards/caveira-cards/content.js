@@ -15,6 +15,17 @@
   let overlayEl = null;
   let timerMinimizar = null;
 
+  // ── Setup automático do Anki (só roda até conseguir) ──
+  chrome.storage.local.get("ankiSetupDone", async ({ ankiSetupDone }) => {
+    if (ankiSetupDone) return;
+    try {
+      await window.CaveiraAnki.configurarAnki();
+      chrome.storage.local.set({ ankiSetupDone: true });
+    } catch (e) {
+      // Anki fechado — tenta na próxima visita
+    }
+  });
+
   // ── Observador de mudanças no DOM ──
   const observer = new MutationObserver(() => verificar());
   observer.observe(document.body, { childList: true, subtree: true });

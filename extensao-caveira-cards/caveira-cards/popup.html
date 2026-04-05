@@ -76,6 +76,34 @@
     font-weight: 700;
   }
   .btn.destaque:hover { background: #2d5ce0; }
+  .setup-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    background: #0f1729;
+    border: 1px solid #1e2d4d;
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: border-color .2s, color .2s;
+    text-align: left;
+  }
+  .setup-btn:hover { border-color: #3b6ff5; color: #e2e8f0; }
+  .setup-status {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .setup-status.ok { background: #14532d; color: #4ade80; }
+  .setup-status.pendente { background: #1e2d4d; color: #475569; }
+  .setup-status.erro { background: #3b0a0a; color: #f87171; }
+  .setup-status.carregando { background: #1e2d4d; color: #93c5fd; }
   .footer {
     margin-top: 14px;
     text-align: center;
@@ -110,6 +138,10 @@
     </div>
   </div>
 
+  <button class="setup-btn" id="btn-setup">
+    <span>⚙️ Configurar Anki</span>
+    <span class="setup-status pendente" id="setup-status">pendente</span>
+  </button>
   <a class="btn" href="guia.html" target="_blank">📖 Guia de instalação</a>
   <a class="btn destaque" href="doacao.html" target="_blank">❤️ Apoiar o projeto</a>
 
@@ -119,7 +151,7 @@
   </div>
 
   <script>
-    // Detecta a aba atual e atualiza os badges
+    // ── Badges de plataforma ──
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (!tabs[0]) return;
       const url = tabs[0].url || "";
@@ -132,6 +164,68 @@
 
       setBadge("badge-tec", url.includes("tecconcursos.com.br"));
       setBadge("badge-gran", url.includes("grancursosonline.com.br"));
+    });
+
+    // ── Setup Anki ──
+    const statusEl = document.getElementById("setup-status");
+    const btnSetup = document.getElementById("btn-setup");
+
+    // Mostra status atual (se já foi configurado)
+    chrome.storage.local.get("ankiSetupDone", ({ ankiSetupDone }) => {
+      if (ankiSetupDone) {
+        statusEl.textContent = "OK";
+        statusEl.className = "setup-status ok";
+      }
+    });
+
+    // Botão: executa setup manualmente
+    btnSetup.addEventListener("click", async () => {
+      statusEl.textContent = "...";
+      statusEl.className = "setup-status carregando";
+
+      try {
+        const resp = await fetch("http://localhost:8765", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "modelNames", version: 6, params: {} }),
+        });
+        const data = await resp.json();
+        const modelos = data.result || [];
+
+        if (modelos.includes("CaveiraCards")) {
+          statusEl.textContent = "OK";
+          statusEl.className = "setup-status ok";
+          chrome.storage.local.set({ ankiSetupDone: true });
+          return;
+        }
+
+        // Cria o modelo
+        await fetch("http://localhost:8765", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "createModel", version: 6,
+            params: {
+              modelName: "CaveiraCards",
+              inOrderFields: ["Frente", "Verso", "Extra"],
+              css: ".card { font-family: 'Segoe UI', system-ui, sans-serif; background: white; }",
+              cardTemplates: [{
+                Name: "CaveiraCards",
+                Front: "{{Frente}}",
+                Back: "{{Verso}}",
+              }],
+            }
+          }),
+        });
+
+        statusEl.textContent = "OK";
+        statusEl.className = "setup-status ok";
+        chrome.storage.local.set({ ankiSetupDone: true });
+
+      } catch (e) {
+        statusEl.textContent = "Anki fechado";
+        statusEl.className = "setup-status erro";
+      }
     });
   </script>
 </body>
