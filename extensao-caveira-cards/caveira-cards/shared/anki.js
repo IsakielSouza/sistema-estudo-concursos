@@ -119,11 +119,12 @@
       await ankiRequest("updateModelTemplates", {
         model: {
           name: "CaveiraCards",
-          templates: [{
-            name: "CaveiraCards",
-            qfmt: "{{Frente}}",
-            afmt: BACK_TEMPLATE,
-          }],
+          templates: {
+            "CaveiraCards": {
+              Front: "{{Frente}}",
+              Back: BACK_TEMPLATE,
+            },
+          },
         },
       });
     }
