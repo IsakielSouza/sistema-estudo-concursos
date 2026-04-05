@@ -67,6 +67,10 @@
         const feedbackText = feedbackEl?.innerText || "";
         const resultado = feedbackText.includes("incorreta") ? "Erros" : "Revisão";
 
+        // ── Comentário da comunidade Deltinha ──
+        const comentarioEl = feedbackEl?.querySelector(".ql-editor-display");
+        const explicacao = comentarioEl?.innerHTML?.trim() || "";
+
         // ── Metadados: disciplina, assunto ──
         const header   = questaoEl.children[0];
         const metaText = header?.innerText?.trim() || "";
@@ -98,7 +102,7 @@
           materiaLimpa,
           assunto,
           banca,
-          explicacao: "",
+          explicacao,
           resultado,
           plataforma: this.nomePlataforma,
           url: window.location.href,
