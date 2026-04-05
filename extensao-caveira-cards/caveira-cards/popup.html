@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 280px;
+    background: #080d1a;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 20px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .header img { width: 40px; height: 40px; border-radius: 50%; }
+  .header-text h1 { font-size: 15px; font-weight: 700; color: #fff; }
+  .header-text p { font-size: 11px; color: #3b6ff5; margin-top: 2px; }
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #334155;
+    margin-bottom: 8px;
+  }
+  .platforms { margin-bottom: 16px; }
+  .platform {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #0f1729;
+    border: 1px solid #1e2d4d;
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .platform-name { font-size: 12px; color: #cbd5e1; }
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .badge.ativo { background: #14532d; color: #4ade80; }
+  .badge.inativo { background: #1e2d4d; color: #475569; }
+  .badge.breve { background: #1e1a2d; color: #7c3aed; font-style: italic; }
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    background: #0f1729;
+    border: 1px solid #1e2d4d;
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 8px;
+    transition: border-color .2s, color .2s;
+  }
+  .btn:hover { border-color: #3b6ff5; color: #e2e8f0; }
+  .btn.destaque {
+    background: #3b6ff5;
+    border-color: #3b6ff5;
+    color: white;
+    font-weight: 700;
+  }
+  .btn.destaque:hover { background: #2d5ce0; }
+  .footer {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 10px;
+    color: #1e2d4d;
+  }
+  .footer a { color: #3b6ff5; text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <img src="CaveiraCards.png" alt="CaveiraCards">
+    <div class="header-text">
+      <h1>CaveiraCards</h1>
+      <p>@isakielsouza</p>
+    </div>
+  </div>
+
+  <p class="section-title">Plataformas</p>
+  <div class="platforms">
+    <div class="platform">
+      <span class="platform-name">TEC Concursos</span>
+      <span class="badge" id="badge-tec">inativo</span>
+    </div>
+    <div class="platform">
+      <span class="platform-name">Gran Questões</span>
+      <span class="badge" id="badge-gran">inativo</span>
+    </div>
+    <div class="platform">
+      <span class="platform-name">QConcurso</span>
+      <span class="badge breve">em breve</span>
+    </div>
+  </div>
+
+  <a class="btn" href="guia.html" target="_blank">📖 Guia de instalação</a>
+  <a class="btn destaque" href="doacao.html" target="_blank">❤️ Apoiar o projeto</a>
+
+  <div class="footer">
+    Projeto livre &nbsp;·&nbsp;
+    <a href="https://github.com/isakielsouza" target="_blank">GitHub</a>
+  </div>
+
+  <script>
+    // Detecta a aba atual e atualiza os badges
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (!tabs[0]) return;
+      const url = tabs[0].url || "";
+
+      function setBadge(id, ativo) {
+        const el = document.getElementById(id);
+        el.textContent = ativo ? "ATIVO" : "inativo";
+        el.className = "badge " + (ativo ? "ativo" : "inativo");
+      }
+
+      setBadge("badge-tec", url.includes("tecconcursos.com.br"));
+      setBadge("badge-gran", url.includes("grancursosonline.com.br"));
+    });
+  </script>
+</body>
+</html>
