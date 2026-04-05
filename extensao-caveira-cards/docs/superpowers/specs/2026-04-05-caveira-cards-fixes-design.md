@@ -92,12 +92,12 @@ Cards já existentes no Anki recebem o CSS atualizado automaticamente (Anki apli
   - Chama `updateNoteFields` com `{ Extra: extraHtml }`
 
 **`caveira-cards/content.js`:**
-- `enviarParaAnki`: armazena o `noteId` retornado por `CaveiraAnki.enviarQuestao`
+- `enviarParaAnki`: armazena o `noteId` **e o `extraOriginal`** (`[questao.banca, questao.explicacao].filter(Boolean).join("<br><br>")`) retornados/calculados após o envio
 - Após sucesso: renderiza botão `📎` no overlay
 - Clique no `📎`:
-  - Chama `adapter.capturarComentarios()` 
+  - Chama `adapter.capturarComentarios()`
   - Se retorna `null`: mostra toast "Abra o painel de comentários"
-  - Se retorna comentários: formata em HTML, chama `CaveiraAnki.atualizarExtra(noteId, extra)`
+  - Se retorna comentários: monta `extraFinal = extraOriginal + comentariosHtml` (concatena, não substitui), chama `CaveiraAnki.atualizarExtra(noteId, extraFinal)`
   - Após sucesso: botão vira `✓`, some após 1s
 
 **`caveira-cards/shared/overlay.css`:**
@@ -106,9 +106,20 @@ Cards já existentes no Anki recebem o CSS atualizado automaticamente (Anki apli
 **`caveira-cards/shared/anki.js` — `enviarQuestao`:**
 - Retorna o `noteId` (resultado do `addNote`)
 
-### Formato dos comentários no campo Extra
+### Formato do campo Extra após atualização
+
+O campo `Extra` final será a concatenação de:
+
+1. Conteúdo original (`banca` + `explicacao`, já gravado no `addNote`)
+2. Bloco de comentários adicionado pelo `📎`
 
 ```html
+<!-- conteúdo original já gravado -->
+Banca: CESPE | Prova: ...
+<br><br>
+Resolução oficial...
+
+<!-- bloco adicionado pelo botão 📎 -->
 <hr>
 <div class="cc-comentarios">
   <strong>💬 Top comentários</strong>
