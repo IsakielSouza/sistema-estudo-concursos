@@ -7,6 +7,13 @@
 
   const LETRAS = ["A", "B", "C", "D", "E", "F"];
 
+  function sanitizar(html) {
+    return html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/\s+on\w+="[^"]*"/gi, "")
+      .replace(/\s+on\w+='[^']*'/gi, "");
+  }
+
   const CSS = `<style>
 .cc-wrap{font-family:'Segoe UI',system-ui,sans-serif !important;max-width:640px;margin:0 auto;padding:4px;background:#fff !important;color:#1f2937 !important}
 .cc-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
@@ -54,14 +61,14 @@
         ${questao.assunto ? `<span class="cc-tag-assunto">${questao.assunto}</span>` : ""}
       </div>
       ${questao.banca ? `<div class="cc-banca">${questao.banca}</div>` : ""}
-      <div class="cc-enunciado">${questao.enunciado}</div>
+      <div class="cc-enunciado">${sanitizar(questao.enunciado)}</div>
       <div class="cc-alts">${altFrente(questao.alternativas)}</div>
     </div>`;
 
     const verso = CSS + `<div class="cc-wrap">
       <div class="cc-gabarito-label">Gabarito</div>
       <div class="cc-alts">${altVerso(questao.alternativas, questao.idxCorreta, questao.idxErrada)}</div>
-      ${questao.explicacao ? `<div class="cc-explicacao"><strong>Comentário:</strong><br>${questao.explicacao}</div>` : ""}
+      ${questao.explicacao ? `<div class="cc-explicacao"><strong>Comentário:</strong><br>${sanitizar(questao.explicacao)}</div>` : ""}
       <div class="cc-fonte">
         <a href="${questao.url}" target="_blank">Ver questão — ${questao.plataforma}</a>
         &nbsp;|&nbsp; ${questao.timestamp}

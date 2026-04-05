@@ -106,28 +106,30 @@
   }
 
   async function enviarParaAnki(questao) {
-    const titleEl = overlayEl.querySelector(".cc-title");
-    const subEl = overlayEl.querySelector(".cc-sub");
+    const overlay = overlayEl;
+    if (!overlay) return;
+    const titleEl = overlay.querySelector(".cc-title");
+    const subEl = overlay.querySelector(".cc-sub");
 
     titleEl.textContent = "Enviando...";
-    overlayEl.classList.add("loading");
+    overlay.classList.add("loading");
 
     try {
       const { frente, verso } = window.CaveiraCardBuilder.montarCard(questao);
       await window.CaveiraAnki.enviarQuestao(questao, frente, verso);
 
-      overlayEl.classList.remove("loading", "errou", "acertou");
-      overlayEl.classList.add("sucesso");
+      overlay.classList.remove("loading", "errou", "acertou");
+      overlay.classList.add("sucesso");
       titleEl.textContent = "Adicionado! ✓";
       subEl.textContent = questao.materia;
 
       // Após 2.5s minimiza (não remove — fica como ícone)
       clearTimeout(timerMinimizar);
-      timerMinimizar = setTimeout(() => minimizar(overlayEl), 2500);
+      timerMinimizar = setTimeout(() => minimizar(overlay), 2500);
 
     } catch (err) {
-      overlayEl.classList.remove("loading");
-      overlayEl.classList.add("falha");
+      overlay.classList.remove("loading");
+      overlay.classList.add("falha");
 
       if (err.message.includes("Failed to fetch")) {
         titleEl.textContent = "Anki fechado!";
@@ -142,11 +144,11 @@
 
       // Após 4s volta ao estado normal e minimiza
       setTimeout(() => {
-        if (!overlayEl) return;
-        overlayEl.classList.remove("falha");
+        if (!overlay.isConnected) return;
+        overlay.classList.remove("falha");
         titleEl.textContent = "Adicionar ao Anki";
         subEl.textContent = `${questao.resultado} · ${questao.materia}`;
-        minimizar(overlayEl);
+        minimizar(overlay);
       }, 4000);
     }
   }
