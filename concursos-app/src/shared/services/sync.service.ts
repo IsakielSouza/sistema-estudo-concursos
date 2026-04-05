@@ -63,19 +63,21 @@ export const SyncService = {
         }
       }
 
-      const dirtyTopics = await TopicRepository.getAllDirtyTopics()
-      for (const topic of dirtyTopics) {
-        const subject = await SubjectRepository.getSubjectById(topic.subjectId)
-        if (!subject) continue
-        await SheetsService.updateTopicStatus(
-          spreadsheetId,
-          subject.name,
-          topic.order,
-          topic.status === 'done' ? 'FEITO' : 'PENDENTE'
-        )
-        result.topicsWrittenBack++
+      // Write dirty topics back to the actual data sheet (not subject.name)
+      const dataSheetName = await SheetsService.getDataSheetName(spreadsheetId)
+      if (dataSheetName) {
+        const dirtyTopics = await TopicRepository.getAllDirtyTopics()
+        for (const topic of dirtyTopics) {
+          await SheetsService.updateTopicStatus(
+            spreadsheetId,
+            dataSheetName,
+            topic.order,
+            topic.status === 'done' ? 'FEITO' : 'PENDENTE'
+          )
+          result.topicsWrittenBack++
+        }
+        await TopicRepository.clearDirtyFlag(dirtyTopics.map((t) => t.id))
       }
-      await TopicRepository.clearDirtyFlag(dirtyTopics.map((t) => t.id))
 
       await SessionRepository.createSyncLog({
         syncedAt: new Date().toISOString(),
@@ -100,13 +102,14 @@ export const SyncService = {
     const dirtyTopics = await TopicRepository.getDirtyTopics(subjectId)
     if (!dirtyTopics.length) return
 
-    const subject = await SubjectRepository.getSubjectById(subjectId)
-    if (!subject) return
+    // Use the actual data sheet name, not the subject name
+    const dataSheetName = await SheetsService.getDataSheetName(spreadsheetId)
+    if (!dataSheetName) return
 
     for (const topic of dirtyTopics) {
       await SheetsService.updateTopicStatus(
         spreadsheetId,
-        subject.name,
+        dataSheetName,
         topic.order,
         topic.status === 'done' ? 'FEITO' : 'PENDENTE'
       )

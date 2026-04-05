@@ -4,7 +4,7 @@ export interface TopicSyncRow {
   title: string
   level: number
   order: number
-  sheetRow: number  // absolute 0-based row index in the sheet (sheetRow + 2 = 1-indexed Sheets row)
+  sheetRow: number  // absolute 0-based row index in the sheet (sheetRow + 1 = 1-indexed Sheets row)
   status: 'FEITO' | 'PENDENTE'
 }
 

@@ -1,7 +1,9 @@
 // src/app/_layout.tsx
+// Must be first import for react-native-gesture-handler to initialize properly
+import 'react-native-gesture-handler'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useFonts, Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2'
-import { Stack } from 'expo-router'
+import { Slot } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -18,12 +20,10 @@ export default function RootLayout() {
     if (loaded) SplashScreen.hideAsync()
   }, [loaded])
 
-  if (!loaded) return null
-
   return (
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Slot />
       </QueryClientProvider>
     </GestureHandlerRootView>
   )

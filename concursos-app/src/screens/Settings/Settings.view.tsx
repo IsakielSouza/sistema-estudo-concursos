@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Controller } from 'react-hook-form'
 import { Ionicons } from '@expo/vector-icons'
 import { useSettingsViewModel } from './useSettings.viewModel'
+import { SpreadsheetPicker } from './components/SpreadsheetPicker/SpreadsheetPicker.view'
 
 export const SettingsView = () => {
   const {
@@ -26,6 +27,9 @@ export const SettingsView = () => {
     notificationsEnabled,
     setNotificationsEnabled,
     handleLogout,
+    pickerVisible,
+    setPickerVisible,
+    handleSelectFromDrive,
   } = useSettingsViewModel()
 
   return (
@@ -53,6 +57,14 @@ export const SettingsView = () => {
         {/* Spreadsheet URL */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Planilha Google</Text>
+          <TouchableOpacity
+            style={styles.driveBtn}
+            onPress={() => setPickerVisible(true)}
+          >
+            <Ionicons name="folder-open-outline" size={18} color={colors.brand.primary} />
+            <Text style={styles.driveBtnText}>Buscar no Google Drive</Text>
+          </TouchableOpacity>
+          <Text style={styles.orText}>ou cole o link manualmente</Text>
           <Controller
             control={form.control}
             name="spreadsheetUrl"
@@ -77,6 +89,12 @@ export const SettingsView = () => {
             <Text style={styles.saveBtnText}>Salvar planilha</Text>
           </TouchableOpacity>
         </View>
+
+        <SpreadsheetPicker
+          visible={pickerVisible}
+          onSelect={handleSelectFromDrive}
+          onClose={() => setPickerVisible(false)}
+        />
 
         {/* Sync */}
         <TouchableOpacity
@@ -148,6 +166,24 @@ const styles = StyleSheet.create({
     color: colors.grayscale.gray400,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  driveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.brand.primary + '15',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.brand.primary + '40',
+  },
+  driveBtnText: { fontSize: 14, fontWeight: '600', color: colors.brand.primary },
+  orText: {
+    fontSize: 12,
+    color: colors.grayscale.gray500,
+    textAlign: 'center',
+    marginVertical: 4,
   },
   inputWrapper: { gap: 4 },
   input: {

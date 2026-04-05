@@ -15,16 +15,21 @@ export const useLoginViewModel = () => {
     setError(null)
     try {
       const token = await signIn()
+      console.log('[Login] token:', token ? 'ok' : 'null')
       if (!token) {
         setError('Login cancelado.')
         return
       }
+      console.log('[Login] spreadsheetId:', spreadsheetId)
       if (!spreadsheetId) {
+        console.log('[Login] → settings')
         router.replace('/(private)/settings')
       } else {
+        console.log('[Login] → home')
         router.replace('/(private)/(tabs)/home')
       }
-    } catch {
+    } catch (e) {
+      console.log('[Login] error:', e)
       setError('Erro ao fazer login. Tente novamente.')
     } finally {
       setIsLoading(false)

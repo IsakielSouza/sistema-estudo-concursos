@@ -1,6 +1,7 @@
 // src/shared/services/backup.service.ts
 import * as FileSystem from 'expo-file-system'
 import { driveClient } from '@/shared/api/drive.client'
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { format } from 'date-fns'
 
 const DB_PATH = `${FileSystem.documentDirectory}SQLite/concursos.db`
@@ -60,12 +61,10 @@ export const BackupService = {
     const downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`
     const tempPath = `${FileSystem.cacheDirectory}restore-temp.db`
 
-    // Get the token from the store for the download header
-    const { useAuthStore } = await import('@/shared/stores/auth.store')
-    const token = useAuthStore.getState().googleAccessToken
+    const { accessToken } = await GoogleSignin.getTokens()
 
     const result = await FileSystem.downloadAsync(downloadUrl, tempPath, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     })
 
     if (result.status !== 200) {

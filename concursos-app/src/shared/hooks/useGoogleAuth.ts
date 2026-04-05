@@ -1,76 +1,59 @@
 // src/shared/hooks/useGoogleAuth.ts
 import {
-  makeRedirectUri,
-  useAuthRequest,
-  useAutoDiscovery,
-} from 'expo-auth-session'
-import * as WebBrowser from 'expo-web-browser'
-import { useCallback } from 'react'
-import { Platform } from 'react-native'
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin'
+import { useCallback, useEffect } from 'react'
 import { useAuthStore } from '@/shared/stores/auth.store'
 
-WebBrowser.maybeCompleteAuthSession()
+const GOOGLE_WEB_CLIENT_ID =
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? ''
 
-const GOOGLE_CLIENT_ID_IOS = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS ?? ''
-const GOOGLE_CLIENT_ID_ANDROID =
-  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID ?? ''
-
-interface GoogleUserInfo {
-  sub: string
-  name: string
-  email: string
-  picture?: string
-}
+GoogleSignin.configure({
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+  scopes: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.appdata',
+    'https://www.googleapis.com/auth/drive.metadata.readonly',
+  ],
+  offlineAccess: true,
+})
 
 export function useGoogleAuth() {
   const setUser = useAuthStore((s) => s.setUser)
   const setTokens = useAuthStore((s) => s.setTokens)
 
-  const discovery = useAutoDiscovery('https://accounts.google.com')
-  const redirectUri = makeRedirectUri({ scheme: 'concursos-app' })
-
-  // Select the correct client ID based on platform
-  const clientId =
-    Platform.OS === 'android' ? GOOGLE_CLIENT_ID_ANDROID : GOOGLE_CLIENT_ID_IOS
-
-  const [, , promptAsync] = useAuthRequest(
-    {
-      clientId,
-      scopes: [
-        'openid',
-        'profile',
-        'email',
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive.appdata',
-      ],
-      redirectUri,
-    },
-    discovery
-  )
-
   const signIn = useCallback(async () => {
-    const result = await promptAsync()
-    if (result?.type !== 'success') return null
+    try {
+      console.log('[GoogleAuth] hasPlayServices...')
+      await GoogleSignin.hasPlayServices()
+      console.log('[GoogleAuth] signIn...')
+      const userInfo = await GoogleSignin.signIn()
+      console.log('[GoogleAuth] signIn result type:', userInfo?.type)
+      console.log('[GoogleAuth] signIn data:', JSON.stringify(userInfo?.data?.user))
+      const tokens = await GoogleSignin.getTokens()
+      console.log('[GoogleAuth] tokens accessToken:', tokens.accessToken ? 'ok' : 'missing')
 
-    const { access_token, refresh_token } = result.params
+      const user = userInfo.data?.user ?? (userInfo as any).user
 
-    const userRes = await fetch(
-      'https://www.googleapis.com/oauth2/v3/userinfo',
-      { headers: { Authorization: `Bearer ${access_token}` } }
-    )
-    const userInfo = (await userRes.json()) as GoogleUserInfo
+      setUser({
+        id: user.id,
+        name: user.name ?? '',
+        email: user.email,
+        photoUrl: user.photo ?? null,
+      })
+      setTokens(tokens.accessToken, tokens.idToken ?? '')
+      console.log('[GoogleAuth] store updated, returning token')
 
-    setUser({
-      id: userInfo.sub,
-      name: userInfo.name,
-      email: userInfo.email,
-      photoUrl: userInfo.picture ?? null,
-    })
-    // refresh_token is absent in some flows; store empty string as sentinel
-    setTokens(access_token, refresh_token ?? '')
-
-    return access_token
-  }, [promptAsync, setUser, setTokens])
+      return tokens.accessToken
+    } catch (error: any) {
+      console.log('[GoogleAuth] error code:', error.code, 'message:', error.message)
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) return null
+      if (error.code === statusCodes.IN_PROGRESS) return null
+      if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) return null
+      throw error
+    }
+  }, [setUser, setTokens])
 
   return { signIn }
 }
