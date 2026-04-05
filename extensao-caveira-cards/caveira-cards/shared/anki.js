@@ -1,6 +1,6 @@
 // shared/anki.js
 // Comunicação com AnkiConnect (http://localhost:8765)
-// Expõe: window.CaveiraAnki = { enviarQuestao, configurarAnki, atualizarExtra }
+// Expõe: window.CaveiraAnki = { enviarQuestao, configurarAnki, atualizarExtra, buscarNotas }
 
 (function () {
   "use strict";
@@ -99,6 +99,10 @@
     });
   }
 
+  async function buscarNotas(query) {
+    return await ankiRequest("findNotes", { query });
+  }
+
   async function configurarAnki() {
     const modelos = await ankiRequest("modelNames", {});
 
@@ -131,5 +135,5 @@
     }
   }
 
-  window.CaveiraAnki = { enviarQuestao, configurarAnki, atualizarExtra };
+  window.CaveiraAnki = { enviarQuestao, configurarAnki, atualizarExtra, buscarNotas };
 })();

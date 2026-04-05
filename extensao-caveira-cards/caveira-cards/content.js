@@ -10,9 +10,11 @@
 
   const LOGO_URL = chrome.runtime.getURL("CaveiraCards.png");
 
-  // Rastro de questões já processadas (evita duplicar overlays)
+  // Controle de estado
   const processadas = new Set();
   let overlayEl = null;
+  let ultimaChaveTEC = null;
+  let noteIdAtual = null; // Guarda o ID da nota da questão atual
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
@@ -42,26 +44,60 @@
     }
   });
 
+
   // ── Observador de mudanças no DOM ──
   const observer = new MutationObserver(() => verificar());
   observer.observe(document.body, { childList: true, subtree: true });
-  setTimeout(verificar, 2000);
+  setInterval(verificar, 1000); 
 
   function verificar() {
     if (!extensaoAtiva) return;
-    // TEC: uma questão por vez na página
+    
     if (adapter.nomePlataforma === "TEC Concursos") {
-      if (!adapter.detectarErro() && !adapter.detectarAcerto()) return;
+      const idEl = document.querySelector(".id-questao");
+      const idAtual = idEl ? idEl.innerText.replace("#", "").trim() : null;
+
+      if (idAtual !== ultimaChaveTEC) {
+        if (overlayEl) {
+          overlayEl.remove();
+          overlayEl = null;
+        }
+        ultimaChaveTEC = idAtual;
+        noteIdAtual = null; // Reset do ID da nota ao mudar de questão
+      }
+
+      if (!idAtual) return;
+
+      const errou = adapter.detectarErro();
+      const acertou = adapter.detectarAcerto();
+      
+      if (!errou && !acertou) {
+        if (overlayEl) {
+          overlayEl.remove();
+          overlayEl = null;
+        }
+        return;
+      }
+      
       const questao = adapter.capturarQuestao();
-      if (!questao) return;
-      const chave = questao.enunciado.substring(0, 80);
-      if (processadas.has(chave)) return;
-      processadas.add(chave);
-      mostrarOverlay(questao);
+      if (!overlayEl && questao) {
+        mostrarOverlay(questao);
+      }
+
+      // ── Lógica Dinâmica do Botão de Comentários (TEC) ──
+      if (overlayEl && overlayEl.classList.contains("sucesso")) {
+        const painelAberto = !!document.querySelector(".questao-complementos-cabecalho");
+        const btnExistente = overlayEl.querySelector(".cc-btn-comentarios");
+
+        if (painelAberto && !btnExistente) {
+          injetarBotaoComentarios(overlayEl, questao, noteIdAtual);
+        } else if (!painelAberto && btnExistente) {
+          btnExistente.remove();
+        }
+      }
       return;
     }
 
-    // Gran: múltiplas questões por página
     if (adapter.nomePlataforma === "Gran Questões") {
       const questoesEl = document.querySelectorAll(".ds-question--answered");
       questoesEl.forEach(questaoEl => {
@@ -118,47 +154,85 @@
   // ── Overlay ──
 
   function mostrarOverlay(questao) {
-    // Remove overlay anterior se existir
-    if (overlayEl) overlayEl.remove();
+    const antigo = document.getElementById("cc-overlay");
+    if (antigo) antigo.remove();
 
     const overlay = document.createElement("div");
     overlay.id = "cc-overlay";
     overlay.classList.add(questao.resultado === "Erros" ? "errou" : "acertou");
 
-    overlay.innerHTML = `
-      <div class="cc-card">
-        <img class="cc-icon" src="${LOGO_URL}" alt="CaveiraCards">
-        <div class="cc-text">
-          <span class="cc-title">Adicionar ao Anki</span>
-          <span class="cc-sub">${questao.resultado} · ${questao.materia}</span>
-        </div>
-        <button class="cc-close" title="Fechar">✕</button>
-      </div>
-    `;
+    overlay.innerHTML = `<div class="cc-card"><img class="cc-icon" src="${LOGO_URL}" alt="CaveiraCards"><div class="cc-text"><span class="cc-title">Adicionar ao Anki</span><span class="cc-sub">${questao.resultado} · ${questao.materia}</span></div><button class="cc-close" title="Fechar">✕</button></div>`;
 
     document.body.appendChild(overlay);
     overlayEl = overlay;
 
-    // Clique no card → enviar para Anki (bloqueado após sucesso)
     overlay.querySelector(".cc-card").addEventListener("click", e => {
-      if (e.target.classList.contains("cc-close")) return;
+      if (e.target.classList.contains("cc-close") || e.target.classList.contains("cc-btn-comentarios")) return;
       if (overlay.classList.contains("sucesso")) return;
       enviarParaAnki(questao);
     });
 
-    // Clique no X → remove definitivamente
     overlay.querySelector(".cc-close").addEventListener("click", e => {
       e.stopPropagation();
       overlay.remove();
       overlayEl = null;
+      processadas.add(questao.idQuestao || questao.enunciado.substring(0, 100));
     });
   }
 
   function formatarComentarios(comentarios) {
     const items = comentarios.map(c =>
-      `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}</span><div>${c.html}</div></div>`
+      `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}</span><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
     ).join("");
     return `<hr style="border:1px solid #e5e7eb;margin:12px 0"><div class="cc-comentarios"><strong>💬 Top comentários</strong>${items}</div>`;
+  }
+
+  function injetarBotaoComentarios(overlay, questao, noteIdPredefinido = null) {
+    if (typeof adapter.capturarComentarios !== "function") return;
+    if (overlay.querySelector(".cc-btn-comentarios")) return;
+
+    const btnComent = document.createElement("button");
+    btnComent.className = "cc-btn-comentarios";
+    btnComent.title = "Capturar comentários";
+    btnComent.textContent = "📎";
+    overlay.querySelector(".cc-card").appendChild(btnComent);
+
+    btnComent.addEventListener("click", async e => {
+      e.stopPropagation();
+      const comentarios = adapter.capturarComentarios();
+      
+      if (!comentarios) {
+        btnComent.textContent = "⚠️";
+        setTimeout(() => { if (btnComent.isConnected) btnComent.textContent = "📎"; }, 2000);
+        return;
+      }
+      
+      btnComent.disabled = true;
+      btnComent.textContent = "...";
+
+      try {
+        let noteId = noteIdPredefinido;
+        if (!noteId) {
+          const query = `deck:"CaveiraCards" "Frente:${questao.enunciado.substring(0, 30)}*"`;
+          const notes = await window.CaveiraAnki.buscarNotas(query);
+          if (notes && notes.length > 0) noteId = notes[0];
+        }
+
+        if (!noteId) throw new Error("Nota não encontrada");
+
+        const extraOriginal = [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>");
+        const comentariosHtml = formatarComentarios(comentarios);
+        const extraFinal = extraOriginal ? extraOriginal + comentariosHtml : comentariosHtml.replace(/^<hr[^>]*>/, "");
+        
+        await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
+        btnComent.textContent = "✓";
+        setTimeout(() => { if (btnComent.isConnected) btnComent.remove(); }, 1500);
+      } catch (err) {
+        btnComent.disabled = false;
+        btnComent.textContent = "❌";
+        setTimeout(() => { if (btnComent.isConnected) btnComent.textContent = "📎"; }, 2000);
+      }
+    });
   }
 
   async function enviarParaAnki(questao) {
@@ -173,76 +247,37 @@
     try {
       const { frente, verso } = window.CaveiraCardBuilder.montarCard(questao);
       const noteId = await window.CaveiraAnki.enviarQuestao(questao, frente, verso);
-      const extraOriginal = [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>");
-
+      
+      noteIdAtual = noteId;
       overlay.classList.remove("loading", "errou", "acertou");
       overlay.classList.add("sucesso");
       titleEl.textContent = "Adicionado! ✓";
-      subEl.textContent = questao.materia;
-
-      // Botão 📎 para capturar comentários
-      if (typeof adapter.capturarComentarios === "function") {
-        const btnComent = document.createElement("button");
-        btnComent.className = "cc-btn-comentarios";
-        btnComent.title = "Capturar comentários";
-        btnComent.textContent = "📎";
-        overlay.querySelector(".cc-card").appendChild(btnComent);
-
-        btnComent.addEventListener("click", async e => {
-          e.stopPropagation();
-          const comentarios = adapter.capturarComentarios();
-          if (!comentarios) {
-            btnComent.textContent = "⚠️";
-            btnComent.title = "Abra o painel de comentários primeiro";
-            setTimeout(() => {
-              if (!btnComent.isConnected) return;
-              btnComent.textContent = "📎";
-              btnComent.title = "Capturar comentários";
-            }, 2000);
-            return;
-          }
-          const comentariosHtml = formatarComentarios(comentarios);
-          const extraFinal = extraOriginal
-            ? extraOriginal + comentariosHtml
-            : comentariosHtml.replace(/^<hr[^>]*>/, "");
-          btnComent.disabled = true;
-          try {
-            await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
-            btnComent.textContent = "✓";
-            setTimeout(() => { if (btnComent.isConnected) btnComent.remove(); }, 1000);
-          } catch (err) {
-            btnComent.disabled = false;
-            btnComent.textContent = "❌";
-            setTimeout(() => {
-              if (!btnComent.isConnected) return;
-              btnComent.textContent = "📎";
-            }, 2000);
-          }
-        });
-      }
 
     } catch (err) {
       overlay.classList.remove("loading");
-      overlay.classList.add("falha");
-
-      if (err.message.includes("Failed to fetch")) {
-        titleEl.textContent = "Anki fechado!";
-        subEl.textContent = "Abra o Anki e tente de novo";
-      } else if (err.message.includes("duplicate")) {
-        titleEl.textContent = "Já existe no deck";
+      
+      if (err.message.includes("duplicate")) {
+        overlay.classList.remove("errou", "acertou");
+        overlay.classList.add("sucesso");
+        titleEl.textContent = "Já está no Anki ✓";
         subEl.textContent = "Questão duplicada";
       } else {
-        titleEl.textContent = "Erro ao enviar";
-        subEl.textContent = err.message.substring(0, 40);
-      }
+        overlay.classList.add("falha");
+        if (err.message.includes("Failed to fetch")) {
+          titleEl.textContent = "Anki Fechado";
+          subEl.textContent = "Abra o Anki e tente novamente";
+        } else {
+          titleEl.textContent = "Erro ao enviar";
+          subEl.textContent = err.message.substring(0, 40);
+        }
 
-      // Após 4s volta ao estado normal
-      setTimeout(() => {
-        if (!overlay.isConnected) return;
-        overlay.classList.remove("falha");
-        titleEl.textContent = "Adicionar ao Anki";
-        subEl.textContent = `${questao.resultado} · ${questao.materia}`;
-      }, 4000);
+        setTimeout(() => {
+          if (!overlay.isConnected) return;
+          overlay.classList.remove("falha");
+          titleEl.textContent = "Adicionar ao Anki";
+          subEl.textContent = `${questao.resultado} · ${questao.materia}`;
+        }, 4000);
+      }
     }
   }
 })();

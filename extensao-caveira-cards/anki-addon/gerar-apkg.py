@@ -18,7 +18,7 @@ import os
 MODEL_ID = 1_747_382_910
 DECK_ID  = 1_747_382_911
 
-LOGO_REF = "_CaveiraCards.png"  # prefixo _ = Anki não apaga na limpeza de media
+LOGO_REF = "_CaveiraCards.ico"  # prefixo _ = Anki não apaga na limpeza de media
 
 # CSS em sincronia com shared/anki.js → MODEL_CSS
 CSS = """\
@@ -84,7 +84,7 @@ deck = genanki.Deck(DECK_ID, "CaveiraCards")
 import shutil
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-logo_src  = os.path.join(script_dir, "..", "caveira-cards", "CaveiraCards.png")
+logo_src  = os.path.join(script_dir, "..", "logo.ico")
 logo_tmp  = os.path.join(script_dir, LOGO_REF)  # cópia com nome correto (_CaveiraCards.png)
 shutil.copy(logo_src, logo_tmp)
 

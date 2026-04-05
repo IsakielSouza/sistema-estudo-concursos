@@ -8,10 +8,14 @@
   const LETRAS = ["A", "B", "C", "D", "E", "F"];
 
   function sanitizar(html) {
-    return html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-      .replace(/\s+on\w+="[^"]*"/gi, "")
-      .replace(/\s+on\w+='[^']*'/gi, "");
+    if (!html) return "";
+    // Remove tags de script e seus conteúdos
+    let limpo = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+    // Remove atributos de evento (onmouseover, onclick, onerror, etc.)
+    limpo = limpo.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    // Remove links javascript:
+    limpo = limpo.replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)/gi, "");
+    return limpo;
   }
 
   function altFrente(alternativas) {
@@ -33,7 +37,7 @@
 
   function montarCard(questao) {
     const frente = `<div class="cc-header">
-      <img class="cc-logo" src="_CaveiraCards.png" alt="">
+      <img class="cc-logo" src="_CaveiraCards.ico" alt="">
       <span class="cc-materia-texto">${questao.materia}</span>
     </div>
     <div class="cc-wrap">
@@ -59,5 +63,5 @@
     return { frente, verso };
   }
 
-  window.CaveiraCardBuilder = { montarCard };
+  window.CaveiraCardBuilder = { montarCard, sanitizar };
 })();

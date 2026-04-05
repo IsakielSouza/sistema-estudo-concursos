@@ -11,19 +11,16 @@
     tags: ["tec-concursos", "caveira-cards"],
 
     detectarErro() {
-      return !!document.querySelector("li.erro, li.ng-scope.erro");
+      return !!document.querySelector("li.erro, .questao-enunciado-resolucao-errou");
     },
 
     detectarAcerto() {
-      return (
-        !!document.querySelector("li.correcao") &&
-        !document.querySelector("li.erro, li.ng-scope.erro")
-      );
+      return !!document.querySelector("li.acerto, .questao-enunciado-resolucao-acertou");
     },
 
     capturarQuestao() {
       try {
-        // Enunciado
+        // ... (código anterior igual até a parte de alternativas)
         const enunciadoEl = document.querySelector(
           ".questao-enunciado-comando, [class*='questao-enunciado-comando'], .questao-enunciado"
         );
@@ -40,7 +37,6 @@
         }
         if (!enunciado) return null;
 
-        // Alternativas (deduplicadas)
         const todosLis = Array.from(document.querySelectorAll("li[ng-repeat*='alternativa']"));
         const textos = [];
         const vistos = new Set();
@@ -56,20 +52,18 @@
           }
         });
 
-        // Índice correta/errada
+        // Índice correta/errada — ATUALIZADO para aceitar .acerto e .correcao
         let idxCorreta = -1;
         let idxErrada = -1;
         todosLis.filter(el =>
-          el.classList.contains("correcao") || el.classList.contains("erro")
+          el.classList.contains("correcao") || el.classList.contains("acerto") || el.classList.contains("erro")
         ).forEach(el => {
           const divTexto = el.querySelector(".questao-enunciado-alternativa-texto");
           if (!divTexto) return;
-          const clone = divTexto.cloneNode(true);
-          clone.querySelectorAll("p.elemento-vazio, p[size]").forEach(p => p.remove());
-          const texto = clone.innerText.trim();
+          const texto = divTexto.innerText.trim();
           const idx = textos.indexOf(texto);
           if (idx === -1) return;
-          if (el.classList.contains("correcao")) idxCorreta = idx;
+          if (el.classList.contains("correcao") || el.classList.contains("acerto")) idxCorreta = idx;
           if (el.classList.contains("erro")) idxErrada = idx;
         });
 
@@ -91,6 +85,11 @@
         const bancaEl = document.querySelector(".questao-titulo, [class*='questao-titulo']");
         if (bancaEl) banca = bancaEl.innerText.trim();
 
+        // ID da Questão (NOVO)
+        let idQuestao = "";
+        const idEl = document.querySelector(".id-questao");
+        if (idEl) idQuestao = idEl.innerText.replace("#", "").trim();
+
         // Resolução
         let explicacao = "";
         const explicacaoEl = document.querySelector(".questao-enunciado-resolucao, [class*='resolucao']");
@@ -110,6 +109,7 @@
           banca,
           explicacao,
           resultado,
+          idQuestao,
           plataforma: this.nomePlataforma,
           url: window.location.href,
           timestamp: new Date().toLocaleDateString("pt-BR"),
