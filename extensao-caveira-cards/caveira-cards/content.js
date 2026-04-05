@@ -103,9 +103,10 @@
     document.body.appendChild(overlay);
     overlayEl = overlay;
 
-    // Clique no card → enviar para Anki
+    // Clique no card → enviar para Anki (bloqueado após sucesso)
     overlay.querySelector(".cc-card").addEventListener("click", e => {
       if (e.target.classList.contains("cc-close")) return;
+      if (overlay.classList.contains("sucesso")) return;
       enviarParaAnki(questao);
     });
 
@@ -214,13 +215,6 @@
       } else if (err.message.includes("duplicate")) {
         titleEl.textContent = "Já existe no deck";
         subEl.textContent = "Questão duplicada";
-        const thisOverlay = overlay;
-        setTimeout(() => {
-          if (!thisOverlay.isConnected) return;
-          thisOverlay.remove();
-          if (overlayEl === thisOverlay) overlayEl = null;
-        }, 1000);
-        return;
       } else {
         titleEl.textContent = "Erro ao enviar";
         subEl.textContent = err.message.substring(0, 40);
