@@ -116,6 +116,13 @@
     overlay.classList.add("minimizado");
   }
 
+  function formatarComentarios(comentarios) {
+    const items = comentarios.map(c =>
+      `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}</span><div>${c.html}</div></div>`
+    ).join("");
+    return `<hr style="border:1px solid #e5e7eb;margin:12px 0"><div class="cc-comentarios"><strong>💬 Top comentários</strong>${items}</div>`;
+  }
+
   async function enviarParaAnki(questao) {
     const overlay = overlayEl;
     if (!overlay) return;
@@ -127,12 +134,52 @@
 
     try {
       const { frente, verso } = window.CaveiraCardBuilder.montarCard(questao);
-      await window.CaveiraAnki.enviarQuestao(questao, frente, verso);
+      const noteId = await window.CaveiraAnki.enviarQuestao(questao, frente, verso);
+      const extraOriginal = [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>");
 
       overlay.classList.remove("loading", "errou", "acertou");
       overlay.classList.add("sucesso");
       titleEl.textContent = "Adicionado! ✓";
       subEl.textContent = questao.materia;
+
+      // Botão 📎 para capturar comentários
+      if (typeof adapter.capturarComentarios === "function") {
+        const btnComent = document.createElement("button");
+        btnComent.className = "cc-btn-comentarios";
+        btnComent.title = "Capturar comentários";
+        btnComent.textContent = "📎";
+        overlay.querySelector(".cc-card").appendChild(btnComent);
+
+        btnComent.addEventListener("click", async e => {
+          e.stopPropagation();
+          const comentarios = adapter.capturarComentarios();
+          if (!comentarios) {
+            btnComent.textContent = "⚠️";
+            btnComent.title = "Abra o painel de comentários primeiro";
+            setTimeout(() => {
+              if (!btnComent.isConnected) return;
+              btnComent.textContent = "📎";
+              btnComent.title = "Capturar comentários";
+            }, 2000);
+            return;
+          }
+          const comentariosHtml = formatarComentarios(comentarios);
+          const extraFinal = extraOriginal
+            ? extraOriginal + comentariosHtml
+            : comentariosHtml.replace(/^<hr[^>]*>/, "");
+          try {
+            await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
+            btnComent.textContent = "✓";
+            setTimeout(() => { if (btnComent.isConnected) btnComent.remove(); }, 1000);
+          } catch (err) {
+            btnComent.textContent = "❌";
+            setTimeout(() => {
+              if (!btnComent.isConnected) return;
+              btnComent.textContent = "📎";
+            }, 2000);
+          }
+        });
+      }
 
       // Após 2.5s minimiza (não remove — fica como ícone)
       clearTimeout(timerMinimizar);
