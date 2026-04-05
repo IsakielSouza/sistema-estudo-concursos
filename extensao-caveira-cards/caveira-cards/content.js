@@ -22,7 +22,7 @@
       await window.CaveiraAnki.configurarAnki();
       chrome.storage.local.set({ ankiSetupDone_v2: true });
     } catch (e) {
-      // Anki fechado — tenta na próxima visita
+      console.warn("[CaveiraCards] configurarAnki falhou:", e);
     }
   });
 
@@ -197,10 +197,11 @@
       } else if (err.message.includes("duplicate")) {
         titleEl.textContent = "Já existe no deck";
         subEl.textContent = "Questão duplicada";
+        const thisOverlay = overlay;
         setTimeout(() => {
-          if (!overlay.isConnected) return;
-          overlay.remove();
-          overlayEl = null;
+          if (!thisOverlay.isConnected) return;
+          thisOverlay.remove();
+          if (overlayEl === thisOverlay) overlayEl = null;
         }, 1000);
         return;
       } else {
