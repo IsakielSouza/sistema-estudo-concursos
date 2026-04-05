@@ -132,7 +132,10 @@
         const textoEl = li.querySelector(".discussao-comentario-post-texto");
         if (!scoreEl || !textoEl) return null;
         const score = parseInt(scoreEl.textContent.trim(), 10) || 0;
-        const html = textoEl.innerHTML.trim();
+        const html = textoEl.innerHTML.trim()
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+          .replace(/\s+on\w+="[^"]*"/gi, "")
+          .replace(/\s+on\w+='[^']*'/gi, "");
         if (!html) return null;
         return { score, html };
       }).filter(Boolean);

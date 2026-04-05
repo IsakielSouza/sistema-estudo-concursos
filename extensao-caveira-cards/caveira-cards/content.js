@@ -167,11 +167,13 @@
           const extraFinal = extraOriginal
             ? extraOriginal + comentariosHtml
             : comentariosHtml.replace(/^<hr[^>]*>/, "");
+          btnComent.disabled = true;
           try {
             await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
             btnComent.textContent = "✓";
             setTimeout(() => { if (btnComent.isConnected) btnComent.remove(); }, 1000);
           } catch (err) {
+            btnComent.disabled = false;
             btnComent.textContent = "❌";
             setTimeout(() => {
               if (!btnComent.isConnected) return;
