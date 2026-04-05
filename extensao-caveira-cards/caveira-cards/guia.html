@@ -250,7 +250,7 @@
       </ol>
       <div class="copy-wrap">
         <div class="code" id="code-plugin">2055492159</div>
-        <button class="copy-btn" onclick="copiar('code-plugin', this)">Copiar</button>
+        <button class="copy-btn" data-target="code-plugin">Copiar</button>
       </div>
       <a class="btn secondary" href="https://ankiweb.net/shared/info/2055492159" target="_blank">Ver no AnkiWeb</a>
     </div>
@@ -280,7 +280,7 @@
         "https://www.grancursosonline.com.br"
     ]
 }</div>
-        <button class="copy-btn" onclick="copiar('code-config', this)">Copiar</button>
+        <button class="copy-btn" data-target="code-config">Copiar</button>
       </div>
     </div>
   </div>
@@ -316,19 +316,7 @@
 
 </div>
 
-<script>
-  function copiar(elementId, btn) {
-    const texto = document.getElementById(elementId).innerText.trim();
-    navigator.clipboard.writeText(texto).then(() => {
-      btn.textContent = "Copiado!";
-      btn.classList.add("copiado");
-      setTimeout(() => {
-        btn.textContent = "Copiar";
-        btn.classList.remove("copiado");
-      }, 2000);
-    });
-  }
-</script>
+<script src="guia.js"></script>
 
 </body>
 </html>

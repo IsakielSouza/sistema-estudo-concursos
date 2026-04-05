@@ -15,6 +15,22 @@
   let overlayEl = null;
   let timerMinimizar = null;
 
+  // ── Toggle liga/desliga ──
+  let extensaoAtiva = true;
+  chrome.storage.local.get("caveiraCardsEnabled", ({ caveiraCardsEnabled }) => {
+    extensaoAtiva = caveiraCardsEnabled !== false;
+  });
+  chrome.storage.onChanged.addListener((changes) => {
+    if ("caveiraCardsEnabled" in changes) {
+      extensaoAtiva = changes.caveiraCardsEnabled.newValue !== false;
+      if (!extensaoAtiva && overlayEl) {
+        overlayEl.remove();
+        overlayEl = null;
+        clearTimeout(timerMinimizar);
+      }
+    }
+  });
+
   // ── Setup automático do Anki (só roda até conseguir) ──
   chrome.storage.local.get("ankiSetupDone_v2", async ({ ankiSetupDone_v2 }) => {
     if (ankiSetupDone_v2) return;
@@ -32,6 +48,7 @@
   setTimeout(verificar, 2000);
 
   function verificar() {
+    if (!extensaoAtiva) return;
     // TEC: uma questão por vez na página
     if (adapter.nomePlataforma === "TEC Concursos") {
       if (!adapter.detectarErro() && !adapter.detectarAcerto()) return;

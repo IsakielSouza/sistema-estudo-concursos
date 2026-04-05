@@ -111,6 +111,46 @@
     color: #1e2d4d;
   }
   .footer a { color: #3b6ff5; text-decoration: none; }
+
+  /* ── Toggle switch ── */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #0f1729;
+    border: 1px solid #1e2d4d;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .toggle-label-text { font-size: 12px; }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #334155;
+    transition: .2s;
+    border-radius: 20px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 14px; width: 14px;
+    left: 3px; bottom: 3px;
+    background: white;
+    transition: .2s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background: #22c55e; }
+  input:checked + .slider:before { transform: translateX(16px); }
 </style>
 </head>
 <body>
@@ -120,6 +160,14 @@
       <h1>CaveiraCards</h1>
       <p>@isakielsouza</p>
     </div>
+  </div>
+
+  <div class="toggle-wrap">
+    <span id="toggle-label" class="toggle-label-text">Extensão ativa</span>
+    <label class="switch">
+      <input type="checkbox" id="toggle-enabled" checked>
+      <span class="slider"></span>
+    </label>
   </div>
 
   <p class="section-title">Plataformas</p>
@@ -150,83 +198,6 @@
     <a href="https://github.com/isakielsouza" target="_blank">GitHub</a>
   </div>
 
-  <script>
-    // ── Badges de plataforma ──
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      if (!tabs[0]) return;
-      const url = tabs[0].url || "";
-
-      function setBadge(id, ativo) {
-        const el = document.getElementById(id);
-        el.textContent = ativo ? "ATIVO" : "inativo";
-        el.className = "badge " + (ativo ? "ativo" : "inativo");
-      }
-
-      setBadge("badge-tec", url.includes("tecconcursos.com.br"));
-      setBadge("badge-gran", url.includes("grancursosonline.com.br"));
-    });
-
-    // ── Setup Anki ──
-    const statusEl = document.getElementById("setup-status");
-    const btnSetup = document.getElementById("btn-setup");
-
-    // Mostra status atual (se já foi configurado)
-    chrome.storage.local.get("ankiSetupDone", ({ ankiSetupDone }) => {
-      if (ankiSetupDone) {
-        statusEl.textContent = "OK";
-        statusEl.className = "setup-status ok";
-      }
-    });
-
-    // Botão: executa setup manualmente
-    btnSetup.addEventListener("click", async () => {
-      statusEl.textContent = "...";
-      statusEl.className = "setup-status carregando";
-
-      try {
-        const resp = await fetch("http://localhost:8765", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "modelNames", version: 6, params: {} }),
-        });
-        const data = await resp.json();
-        const modelos = data.result || [];
-
-        if (modelos.includes("CaveiraCards")) {
-          statusEl.textContent = "OK";
-          statusEl.className = "setup-status ok";
-          chrome.storage.local.set({ ankiSetupDone: true });
-          return;
-        }
-
-        // Cria o modelo
-        await fetch("http://localhost:8765", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "createModel", version: 6,
-            params: {
-              modelName: "CaveiraCards",
-              inOrderFields: ["Frente", "Verso", "Extra"],
-              css: ".card { font-family: 'Segoe UI', system-ui, sans-serif; background: white; }",
-              cardTemplates: [{
-                Name: "CaveiraCards",
-                Front: "{{Frente}}",
-                Back: "{{Verso}}",
-              }],
-            }
-          }),
-        });
-
-        statusEl.textContent = "OK";
-        statusEl.className = "setup-status ok";
-        chrome.storage.local.set({ ankiSetupDone: true });
-
-      } catch (e) {
-        statusEl.textContent = "Anki fechado";
-        statusEl.className = "setup-status erro";
-      }
-    });
-  </script>
+  <script src="popup.js"></script>
 </body>
 </html>
