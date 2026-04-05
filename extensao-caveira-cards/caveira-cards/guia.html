@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Guia de Instalação — CaveiraCards</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #080d1a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #0f1729 0%, #1a1a2e 100%);
+    border-bottom: 1px solid #1e2d4d;
+    padding: 32px 24px 28px;
+    text-align: center;
+  }
+  .header img {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 3px solid #3b6ff5;
+    box-shadow: 0 0 24px rgba(59,111,245,0.4);
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-size: 26px; font-weight: 800; color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .header .sub {
+    font-size: 13px; color: #3b6ff5;
+    font-weight: 600; margin-top: 4px;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .header .desc {
+    font-size: 14px; color: #64748b;
+    margin-top: 10px; max-width: 460px; margin-left: auto; margin-right: auto;
+    line-height: 1.6;
+  }
+
+  /* ── Content ── */
+  .content {
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 36px 24px 0;
+  }
+
+  /* ── Alerta ── */
+  .alerta {
+    background: #1a1205;
+    border: 1px solid #ca8a04;
+    border-left: 4px solid #ca8a04;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #fde68a;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  /* ── Steps ── */
+  .step {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #3b6ff5;
+    color: white;
+    font-size: 15px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+  }
+  .step-body {
+    flex: 1;
+    background: #0f1729;
+    border: 1px solid #1e2d4d;
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .step-body h2 {
+    font-size: 15px; font-weight: 700; color: #fff;
+    margin-bottom: 10px;
+  }
+  .step-body p {
+    font-size: 13px; color: #94a3b8;
+    line-height: 1.7; margin-bottom: 10px;
+  }
+  .step-body p:last-child { margin-bottom: 0; }
+  .step-body ol {
+    padding-left: 18px;
+    font-size: 13px; color: #94a3b8; line-height: 1.8;
+  }
+  .step-body ol li { margin-bottom: 4px; }
+  .step-body strong { color: #e2e8f0; }
+
+  .code {
+    background: #020815;
+    border: 1px solid #1e2d4d;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #7dd3fc;
+    margin: 10px 0;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+  }
+
+  .copy-wrap {
+    position: relative;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: #1e2d4d;
+    border: none;
+    border-radius: 6px;
+    color: #94a3b8;
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .copy-btn:hover { background: #3b6ff5; color: white; }
+  .copy-btn.copiado { background: #16a34a; color: white; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #3b6ff5;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px; font-weight: 700;
+    margin-top: 12px;
+    transition: background .2s;
+  }
+  .btn:hover { background: #2d5ce0; }
+  .btn.secondary {
+    background: #1e2d4d;
+    color: #94a3b8;
+    margin-left: 8px;
+  }
+  .btn.secondary:hover { background: #253450; color: #e2e8f0; }
+
+  /* ── Tags de plataforma ── */
+  .tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: .04em;
+    margin-right: 4px; margin-bottom: 4px;
+  }
+  .tag.tec { background: #1e3a5f; color: #60a5fa; }
+  .tag.gran { background: #1a2e1a; color: #4ade80; }
+
+  /* ── Pronto ── */
+  .pronto {
+    background: linear-gradient(135deg, #0f1e0f 0%, #0f1729 100%);
+    border: 1px solid #16a34a;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .pronto .icon { font-size: 36px; margin-bottom: 10px; }
+  .pronto h2 { font-size: 18px; font-weight: 800; color: #4ade80; margin-bottom: 8px; }
+  .pronto p { font-size: 13px; color: #86efac; line-height: 1.7; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 12px;
+    color: #334155;
+  }
+  .footer a { color: #3b6ff5; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="CaveiraCards.png" alt="CaveiraCards">
+  <h1>CaveiraCards</h1>
+  <div class="sub">Guia de instalação</div>
+  <div class="desc">Siga os passos abaixo para conectar a extensão ao seu Anki e começar a capturar questões automaticamente.</div>
+</div>
+
+<div class="content">
+
+  <!-- Download modelo CaveiraCards -->
+  <div style="background:#0d2b1a;border:1px solid #22c55e;border-radius:12px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#4ade80;margin-bottom:4px;">Modelo CaveiraCards — Padrão 💀</div>
+      <div style="font-size:12px;color:#86efac;line-height:1.5;">Importe antes de usar a extensão. Inclui logo, matéria, gabarito colorido e campo de comentários.</div>
+    </div>
+    <a href="CaveiraCards.apkg" download style="flex-shrink:0;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:#22c55e;color:#0d2b1a;border-radius:8px;text-decoration:none;font-size:13px;font-weight:800;white-space:nowrap;">
+      ↓ Baixar .apkg
+    </a>
+  </div>
+
+  <div class="alerta">
+    ⚠️ O CaveiraCards se comunica com o Anki via <strong>AnkiConnect</strong>. O Anki precisa estar aberto e com o plugin instalado para a extensão funcionar.
+  </div>
+
+  <!-- Passo 1 -->
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h2>Instale o Anki</h2>
+      <p>Baixe e instale o Anki gratuitamente. É o software onde seus cards de estudo ficam armazenados.</p>
+      <a class="btn" href="https://apps.ankiweb.net" target="_blank">↓ Baixar Anki</a>
+    </div>
+  </div>
+
+  <!-- Passo 2 -->
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h2>Instale o plugin AnkiConnect</h2>
+      <p>O AnkiConnect permite que a extensão se comunique com o Anki via API local.</p>
+      <ol>
+        <li>Abra o Anki</li>
+        <li>Vá em <strong>Ferramentas → Complementos → Baixar complementos</strong></li>
+        <li>Cole o código abaixo e clique em OK</li>
+        <li>Reinicie o Anki</li>
+      </ol>
+      <div class="copy-wrap">
+        <div class="code" id="code-plugin">2055492159</div>
+        <button class="copy-btn" data-target="code-plugin">Copiar</button>
+      </div>
+      <a class="btn secondary" href="https://ankiweb.net/shared/info/2055492159" target="_blank">Ver no AnkiWeb</a>
+    </div>
+  </div>
+
+  <!-- Passo 3 -->
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h2>Configure o AnkiConnect para todos os sites</h2>
+      <p>Por padrão, o AnkiConnect só aceita conexões do <span class="tag tec">TEC Concursos</span>. Para funcionar também com <span class="tag gran">Gran Questões</span> (e futuros sites), você precisa atualizar o arquivo de configuração.</p>
+      <ol>
+        <li>No Anki, vá em <strong>Ferramentas → Complementos</strong></li>
+        <li>Selecione <strong>AnkiConnect</strong> e clique em <strong>Config</strong></li>
+        <li>Substitua o conteúdo pelo JSON abaixo e clique em OK</li>
+        <li>Reinicie o Anki</li>
+      </ol>
+      <div class="copy-wrap">
+        <div class="code" id="code-config">{
+    "apiKey": null,
+    "apiLogPath": null,
+    "webBindAddress": "127.0.0.1",
+    "webBindPort": 8765,
+    "webCorsOriginList": [
+        "http://localhost",
+        "https://www.tecconcursos.com.br",
+        "https://www.grancursosonline.com.br"
+    ]
+}</div>
+        <button class="copy-btn" data-target="code-config">Copiar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Passo 4 -->
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h2>Crie o modelo de card "CaveiraCards"</h2>
+      <p>O CaveiraCards usa um modelo próprio no Anki com 3 campos: <strong>Frente</strong>, <strong>Verso</strong> e <strong>Extra</strong>.</p>
+      <ol>
+        <li>No Anki, vá em <strong>Ferramentas → Gerenciar tipos de notas</strong></li>
+        <li>Clique em <strong>Adicionar</strong> → selecione <strong>Básico</strong></li>
+        <li>Renomeie para <strong>CaveiraCards</strong></li>
+        <li>Vá em <strong>Campos</strong> e edite para ter exatamente: <strong>Frente</strong>, <strong>Verso</strong>, <strong>Extra</strong></li>
+        <li>Clique em <strong>Salvar</strong></li>
+      </ol>
+      <p style="margin-top:10px;">⚠️ Os nomes dos campos precisam ser exatamente esses — com letras maiúsculas.</p>
+    </div>
+  </div>
+
+  <!-- Pronto -->
+  <div class="pronto">
+    <div class="icon">💀</div>
+    <h2>Tudo pronto!</h2>
+    <p>Com o Anki aberto, acesse o <strong style="color:#fff;">TEC Concursos</strong> ou <strong style="color:#fff;">Gran Questões</strong>, responda uma questão e o botão do CaveiraCards aparecerá automaticamente na tela.</p>
+  </div>
+
+  <div class="footer">
+    CaveiraCards by <a href="https://github.com/isakielsouza" target="_blank">@isakielsouza</a>
+    &nbsp;·&nbsp; Projeto livre
+  </div>
+
+</div>
+
+<script src="guia.js"></script>
+
+</body>
+</html>
