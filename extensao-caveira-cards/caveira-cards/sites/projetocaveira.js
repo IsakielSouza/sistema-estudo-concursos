@@ -104,6 +104,10 @@
           }
         }
 
+        // ── Comentário do Professor ──
+        const teacherCommentEl = questaoEl.querySelector(".teacher-comment");
+        const explicacao = teacherCommentEl?.innerHTML?.trim() || "";
+
         return {
           enunciado,
           alternativas,
@@ -113,7 +117,7 @@
           materiaLimpa: disciplina.replace(/[:"]/g, "").trim(),
           assunto: materiaLimpa,
           banca,
-          explicacao: "",
+          explicacao,
           resultado,
           plataforma: this.nomePlataforma,
           url: window.location.href,
