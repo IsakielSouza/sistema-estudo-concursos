@@ -11,10 +11,24 @@
     if (!html) return "";
     // Remove tags de script e seus conteúdos
     let limpo = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-    // Remove atributos de evento (onmouseover, onclick, onerror, etc.)
+    // Remove atributos de evento
     limpo = limpo.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
     // Remove links javascript:
     limpo = limpo.replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)/gi, "");
+    // Remove atributos Vue scoped (data-v-*)
+    limpo = limpo.replace(/\s+data-v-[a-z0-9]+=""/gi, "");
+    // Limpa inline styles: remove background/background-color e cores claras (tema escuro)
+    limpo = limpo.replace(/style="([^"]*)"/gi, function(match, styles) {
+      let s = styles;
+      // Remove background e background-color
+      s = s.replace(/background(?:-color)?\s*:[^;]+;?\s*/gi, "");
+      // Remove color se for branco/claro (invisível no fundo branco do Anki)
+      s = s.replace(/\bcolor\s*:\s*(white|#fff(?:fff)?|#f[0-9a-fA-F]{5}|rgba?\(\s*2[0-9]{2}\s*,\s*2[0-9]{2}\s*,\s*2[0-9]{2}[^)]*\))\s*;?\s*/gi, "");
+      // Remove mso-* (Microsoft Office junk)
+      s = s.replace(/mso-[^:]+:[^;]+;?\s*/gi, "");
+      s = s.trim().replace(/;+$/, "");
+      return s ? `style="${s}"` : "";
+    });
     return limpo;
   }
 
