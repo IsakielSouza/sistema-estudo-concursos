@@ -15,6 +15,8 @@
     limpo = limpo.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
     // Remove links javascript:
     limpo = limpo.replace(/href\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*'|javascript:[^\s>]+)/gi, "");
+    // Remove estilos de cor inline que podem prejudicar a legibilidade (color, background-color, background)
+    limpo = limpo.replace(/style\s*=\s*["'][^"']*\b(color|background-color|background)\s*:[^"';]*;?[^"']*["']/gi, "");
     return limpo;
   }
 
