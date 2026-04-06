@@ -133,8 +133,35 @@
       }
     },
 
-    capturarComentarios() {
-      return null;
+    async capturarComentarios(questaoEl) {
+      // Encontra o card da questão atual se não foi passado
+      const card = questaoEl || (() => {
+        const cards = document.querySelectorAll(this.seletorQuestao);
+        for (const c of cards) {
+          if (c.querySelector(".subtitle-stats")) return c;
+        }
+        return null;
+      })();
+
+      if (!card) return null;
+
+      // Clica no botão da aba se .teacher-comment ainda não está no DOM
+      if (!card.querySelector(".teacher-comment")) {
+        const tabBtn =
+          card.querySelector('button[title="Comentário do professor"]') ||
+          Array.from(card.querySelectorAll("button")).find(b =>
+            b.innerText?.toLowerCase().includes("comentário do professor")
+          );
+        if (!tabBtn) return null;
+        tabBtn.click();
+        await new Promise(r => setTimeout(r, 1800));
+      }
+
+      const el = card.querySelector(".teacher-comment") || document.querySelector(".teacher-comment");
+      if (!el) return null;
+      const html = el.innerHTML.trim();
+      if (!html) return null;
+      return [{ score: "", html }];
     },
   };
 })();

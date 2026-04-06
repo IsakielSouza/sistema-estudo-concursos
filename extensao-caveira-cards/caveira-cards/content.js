@@ -15,6 +15,8 @@
   let overlayEl = null;
   let ultimaChaveTEC = null;
   let noteIdAtual = null; // Guarda o ID da nota da questão atual
+  let questaoElAtual = null; // Guarda o elemento DOM da questão atual (ProjetoCaveira)
+  let questaoAtual = null;  // Guarda o objeto questão atual
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
@@ -159,11 +161,24 @@
         if (!enuncEl) return;
         const chave = enuncEl.innerText.trim().substring(0, 80);
         if (!chave || processadas.has(chave)) return;
+        processadas.add(chave);
+
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
-        processadas.add(chave);
+        questaoElAtual = questaoEl;
+        questaoAtual = questao;
         mostrarOverlay(questao);
       });
+    }
+
+    // Botão 📎 de comentários para ProjetoCaveira (igual ao TEC)
+    if (adapter.nomePlataforma === "ProjetoCaveira") {
+      if (overlayEl && overlayEl.classList.contains("sucesso")) {
+        const btnExistente = overlayEl.querySelector(".cc-btn-comentarios");
+        if (!btnExistente && questaoElAtual) {
+          injetarBotaoComentarios(overlayEl, questaoAtual || {}, noteIdAtual, questaoElAtual);
+        }
+      }
     }
   }
 
@@ -203,7 +218,7 @@
     return `<hr style="border:1px solid #e5e7eb;margin:12px 0"><div class="cc-comentarios"><strong>💬 Top comentários</strong>${items}</div>`;
   }
 
-  function injetarBotaoComentarios(overlay, questao, noteIdPredefinido = null) {
+  function injetarBotaoComentarios(overlay, questao, noteIdPredefinido = null, questaoEl = null) {
     if (typeof adapter.capturarComentarios !== "function") return;
     if (overlay.querySelector(".cc-btn-comentarios")) return;
 
@@ -215,16 +230,17 @@
 
     btnComent.addEventListener("click", async e => {
       e.stopPropagation();
-      const comentarios = adapter.capturarComentarios();
-      
+      btnComent.disabled = true;
+      btnComent.textContent = "...";
+
+      const comentarios = await adapter.capturarComentarios(questaoEl);
+
       if (!comentarios) {
+        btnComent.disabled = false;
         btnComent.textContent = "⚠️";
         setTimeout(() => { if (btnComent.isConnected) btnComent.textContent = "📎"; }, 2000);
         return;
       }
-      
-      btnComent.disabled = true;
-      btnComent.textContent = "...";
 
       try {
         let noteId = noteIdPredefinido;
