@@ -16,6 +16,7 @@
     "https://app.qconcursos.com/*",
     "https://www.qconcursos.com/*",
     "https://www.deltinha.com.br/*",
+    "https://app.caveira.com/*",
     "http://localhost:8765/*"
   ],
   "content_scripts": [
@@ -65,6 +66,17 @@
       ],
       "css": ["shared/overlay.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://app.caveira.com/*"],
+      "js": [
+        "shared/anki.js",
+        "shared/card-builder.js",
+        "sites/projetocaveira.js",
+        "content.js"
+      ],
+      "css": ["shared/overlay.css"],
+      "run_at": "document_idle"
     }
   ],
   "background": {
@@ -91,7 +103,8 @@
         "https://*.grancursosonline.com.br/*",
         "https://app.qconcursos.com/*",
         "https://www.qconcursos.com/*",
-        "https://www.deltinha.com.br/*"
+        "https://www.deltinha.com.br/*",
+        "https://app.caveira.com/*"
       ]
     }
   ]
