@@ -105,7 +105,11 @@
         }
 
         // ── Comentário do Professor ──
-        const teacherCommentEl = questaoEl.querySelector(".teacher-comment");
+        // Busca primeiro dentro do card, depois no documento inteiro
+        // (o painel da aba pode estar renderizado fora do card no DOM)
+        const teacherCommentEl =
+          questaoEl.querySelector(".teacher-comment") ||
+          document.querySelector(".teacher-comment");
         const explicacao = teacherCommentEl?.innerHTML?.trim() || "";
 
         return {

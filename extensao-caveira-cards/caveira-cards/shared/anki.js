@@ -28,8 +28,11 @@
 .nightMode .cc-letra{background:#334155;color:#cbd5e1}
 .cc-alt.correta .cc-letra{background:#22c55e;color:white}
 .cc-gabarito-label{font-size:12px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.05em;margin-bottom:8px}
-.cc-explicacao{margin-top:16px;padding:16px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;font-size:14px;color:#92400e;line-height:1.6}
-.nightMode .cc-explicacao{background:#451a03;border-color:#92400e;color:#fed7aa}
+.cc-explicacao{margin-top:16px;padding:16px;border-radius:12px;background:#fffbeb!important;border:1px solid #fde68a;font-size:14px;color:#1a1a1a;line-height:1.6}
+.cc-explicacao *{color:#1a1a1a!important;background:transparent!important}
+.cc-explicacao p{margin:4px 0}
+.nightMode .cc-explicacao{background:#451a03!important;border-color:#92400e;color:#fed7aa}
+.nightMode .cc-explicacao *{color:#fed7aa!important;background:transparent!important}
 .cc-fonte{margin-top:12px;font-size:11px;color:#94a3b8}
 .cc-fonte a{color:#3b82f6;text-decoration:none}
 .cc-comentarios{margin-top:8px}
@@ -88,7 +91,7 @@
         fields: {
           Frente: frente,
           Verso: verso,
-          Extra: [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>"),
+          Extra: questao.banca || "",
         },
         tags,
         options: { allowDuplicate: false, duplicateScope: "deck" },
