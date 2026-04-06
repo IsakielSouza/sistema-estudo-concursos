@@ -149,6 +149,22 @@
         mostrarOverlay(questao);
       });
     }
+
+    // Projeto Caveira: múltiplas questões por página (Vue + Quasar)
+    if (adapter.nomePlataforma === "ProjetoCaveira") {
+      document.querySelectorAll(adapter.seletorQuestao).forEach(questaoEl => {
+        if (!adapter.questaoRespondida(questaoEl)) return;
+        const sections = questaoEl.querySelectorAll(".q-card__section");
+        const enuncEl = sections[1]?.querySelector(".content");
+        if (!enuncEl) return;
+        const chave = enuncEl.innerText.trim().substring(0, 80);
+        if (!chave || processadas.has(chave)) return;
+        const questao = adapter.capturarQuestao(questaoEl);
+        if (!questao) return;
+        processadas.add(chave);
+        mostrarOverlay(questao);
+      });
+    }
   }
 
   // ── Overlay ──
