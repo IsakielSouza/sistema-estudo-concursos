@@ -212,8 +212,109 @@
       };
     },
 
-    capturarComentarios() {
-      return null;
+    // ── Capturar comentários: professor (Gabarito Comentado) + aulas relevantes ──
+    async capturarComentarios(questaoEl) {
+      try {
+        const root = questaoEl || document;
+
+        // ── Helper: esperar elemento aparecer no container ──
+        function waitForEl(container, selector, timeout = 3000) {
+          return new Promise(resolve => {
+            const found = container.querySelector(selector);
+            if (found) { resolve(found); return; }
+            const timer = setTimeout(() => { obs.disconnect(); resolve(null); }, timeout);
+            const obs = new MutationObserver(() => {
+              const f = container.querySelector(selector);
+              if (f) { clearTimeout(timer); obs.disconnect(); resolve(f); }
+            });
+            obs.observe(container, { childList: true, subtree: true });
+          });
+        }
+
+        // ── Helper: sanitizar HTML removendo scripts e eventos inline ──
+        function sanitizarHtml(html) {
+          return html
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+            .replace(/\s+on\w+="[^"]*"/gi, "")
+            .replace(/\s+on\w+='[^']*'/gi, "")
+            .trim();
+        }
+
+        // ── Helper: ativar aba e retornar o painel de conteúdo ──
+        async function activateTab(tabLink) {
+          const href = tabLink.getAttribute("href") || "";
+          const paneId = href.replace("#", "");
+          if (!paneId) return null;
+          const pane = document.getElementById(paneId);
+          if (!pane) return null;
+          tabLink.click();
+          // Aguarda 1,8s para AJAX carregar o conteúdo
+          await new Promise(r => setTimeout(r, 1800));
+          return pane;
+        }
+
+        const comentarios = [];
+
+        // ── 1. Comentário do professor (Gabarito Comentado) ─────────────────
+        const teacherTabLink = root.querySelector("a[data-component-name=\"question_teacher\"]");
+        if (teacherTabLink) {
+          const pane = await activateTab(teacherTabLink);
+          if (pane) {
+            // Verifica estado vazio (nenhum professor comentou ainda)
+            const isEmpty = !!pane.querySelector(".q-empty-list-message");
+            if (!isEmpty) {
+              // Tenta encontrar o container do comentário do professor
+              const commentEl =
+                pane.querySelector(".q-comment-text") ||
+                pane.querySelector(".q-teacher-comment") ||
+                pane.querySelector(".q-answer") ||
+                pane.querySelector(".panel-body") ||
+                pane.querySelector("[class*='teacher']") ||
+                pane.querySelector("[class*='answer']");
+              const html = sanitizarHtml((commentEl || pane).innerHTML);
+              if (html && html.length > 30) {
+                comentarios.push({ score: 999, html });
+              }
+            }
+          }
+        }
+
+        // ── 2. Aulas / comentários por relevância (likes) ───────────────────
+        const lessonsTabLink = root.querySelector("a[data-component-name=\"question_lessons\"]");
+        if (lessonsTabLink) {
+          const pane = await activateTab(lessonsTabLink);
+          if (pane) {
+            const isEmpty = !!pane.querySelector(".q-empty-list-message");
+            if (!isEmpty) {
+              const likeEls = Array.from(pane.querySelectorAll(".js-likes.q-likes, b.js-likes"));
+              const items = likeEls.map(likeEl => {
+                const score = parseInt(likeEl.textContent.trim(), 10) || 0;
+                // Sobe na árvore para encontrar o container do item
+                const itemEl =
+                  likeEl.closest("li") ||
+                  likeEl.closest(".q-lesson-item") ||
+                  likeEl.closest(".q-comment") ||
+                  likeEl.closest("[class*='lesson']") ||
+                  likeEl.closest("[class*='comment']") ||
+                  likeEl.parentElement?.parentElement?.parentElement;
+                if (!itemEl) return null;
+                const html = sanitizarHtml(itemEl.innerHTML);
+                if (!html) return null;
+                return { score, html };
+              }).filter(Boolean);
+
+              // Ordena por mais curtidas e pega os 3 principais
+              items.sort((a, b) => b.score - a.score);
+              comentarios.push(...items.slice(0, 3));
+            }
+          }
+        }
+
+        return comentarios.length ? comentarios : null;
+      } catch (e) {
+        console.error("[CaveiraCards/QConcursos] capturarComentarios erro:", e);
+        return null;
+      }
     },
   };
 })();

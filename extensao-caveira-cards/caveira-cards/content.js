@@ -110,8 +110,18 @@
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
         processadas.add(chave);
+        questaoElAtual = questaoEl;
+        questaoAtual   = questao;
         mostrarOverlay(questao);
       });
+
+      // Botão 📎 de comentários para Gran Questões
+      if (overlayEl && overlayEl.classList.contains("sucesso")) {
+        const btnExistente = overlayEl.querySelector(".cc-btn-comentarios");
+        if (!btnExistente && questaoElAtual) {
+          injetarBotaoComentarios(overlayEl, questaoAtual || {}, noteIdAtual, questaoElAtual);
+        }
+      }
     }
 
     // QConcursos: múltiplas questões por página (suporta app. e www.)
@@ -133,8 +143,18 @@
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
         processadas.add(chave);
+        questaoElAtual = questaoEl;
+        questaoAtual   = questao;
         mostrarOverlay(questao);
       });
+
+      // Botão 📎 de comentários para QConcursos (professor + aulas)
+      if (overlayEl && overlayEl.classList.contains("sucesso")) {
+        const btnExistente = overlayEl.querySelector(".cc-btn-comentarios");
+        if (!btnExistente && questaoElAtual) {
+          injetarBotaoComentarios(overlayEl, questaoAtual || {}, noteIdAtual, questaoElAtual);
+        }
+      }
     }
 
     // Deltinha: múltiplas questões por página
