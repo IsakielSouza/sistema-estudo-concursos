@@ -1,13 +1,11 @@
 {
   "manifest_version": 3,
   "name": "CaveiraCards",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Integração com plataformas de questões e Anki — TEC Concursos, Gran Questões e mais.",
   "author": "@isakielsouza",
   "permissions": [
-    "activeTab",
     "storage",
-    "notifications",
     "tabs"
   ],
   "host_permissions": [

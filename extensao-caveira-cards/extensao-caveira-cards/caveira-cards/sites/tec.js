@@ -4,103 +4,180 @@
 (function () {
   "use strict";
 
+  /* ── helpers ── */
+  function primeiroCSSQuery(...seletores) {
+    for (const s of seletores) {
+      const el = document.querySelector(s);
+      if (el) return el;
+    }
+    return null;
+  }
+
+  function textoLimpo(el) {
+    if (!el) return "";
+    return el.innerText.replace(/\s+/g, " ").trim();
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     ADAPTER
+  ───────────────────────────────────────────────────────────── */
   window.CaveiraCardsAdapter = {
     nomePlataforma: "TEC Concursos",
-    deckBase: "CaveiraCards::TEC Concursos",
-    modelName: "CaveiraCards",
-    tags: ["tec-concursos", "caveira-cards"],
+    deckBase:       "CaveiraCards::TEC Concursos",
+    modelName:      "CaveiraCards",
+    tags:           ["tec-concursos", "caveira-cards"],
 
+    /* ── Detecta resultado ── */
     detectarErro() {
-      return !!document.querySelector("li.erro, .questao-enunciado-resolucao-errou");
+      return !!(
+        document.querySelector("li.erro") ||
+        document.querySelector(".questao-enunciado-resolucao-errou") ||
+        document.querySelector(".questao-resultado-errou")
+      );
     },
 
     detectarAcerto() {
-      return !!document.querySelector("li.acerto, .questao-enunciado-resolucao-acertou");
+      return !!(
+        document.querySelector("li.acerto") ||
+        document.querySelector(".questao-enunciado-resolucao-acertou") ||
+        document.querySelector(".questao-resultado-acertou")
+      );
     },
 
+    /* ── Captura questão ── */
     capturarQuestao() {
       try {
-        // ... (código anterior igual até a parte de alternativas)
-        const enunciadoEl = document.querySelector(
-          ".questao-enunciado-comando, [class*='questao-enunciado-comando'], .questao-enunciado"
+        /* 1. Enunciado ─────────────────────────────────────────── */
+        const enunciadoEl = primeiroCSSQuery(
+          ".questao-enunciado-comando",
+          "[class*='questao-enunciado-comando']",
+          ".questao-enunciado .comando",
+          ".questao-enunciado"
         );
         if (!enunciadoEl) return null;
 
-        const enunciadoClone = enunciadoEl.cloneNode(true);
-        enunciadoClone.querySelectorAll("ul, ol, li").forEach(el => el.remove());
-        let enunciado = enunciadoClone.innerHTML.trim();
+        const enuncClone = enunciadoEl.cloneNode(true);
+        // Remove listas de alternativas que podem estar dentro do enunciado
+        enuncClone.querySelectorAll("ul, ol, li").forEach(el => el.remove());
+        // Remove elementos de resolução embutidos
+        enuncClone.querySelectorAll(
+          ".questao-enunciado-resolucao, [class*='resolucao'], .questao-resultado"
+        ).forEach(el => el.remove());
 
-        const cortes = ["Você selecionou:", "Você errou!", "Gabarito:", "Ver resolução"];
+        let enunciado = enuncClone.innerHTML.trim();
+
+        // Corta tudo após marcadores de resolução (fallback textual)
+        const cortes = [
+          "Você selecionou:",
+          "Você errou!",
+          "Você acertou!",
+          "Gabarito:",
+          "Ver resolução",
+          "Resposta correta:",
+        ];
         for (const corte of cortes) {
           const idx = enunciado.indexOf(corte);
           if (idx !== -1) enunciado = enunciado.substring(0, idx).trim();
         }
-        if (!enunciado) return null;
 
-        const todosLis = Array.from(document.querySelectorAll("li[ng-repeat*='alternativa']"));
-        const textos = [];
-        const vistos = new Set();
+        if (!enunciado || enunciado.length < 10) return null;
+
+        /* 2. Alternativas ──────────────────────────────────────── */
+        // Coleta todos os <li> de alternativas, rastreando o índice
+        // DIRETAMENTE no array (sem comparação de texto posterior)
+        const todosLis = Array.from(
+          document.querySelectorAll("li[ng-repeat*='alternativa']")
+        );
+
+        const alternativas = [];
+        let idxCorreta = -1;
+        let idxErrada  = -1;
+        const vistos   = new Set();
+
         todosLis.forEach(el => {
-          const divTexto = el.querySelector(".questao-enunciado-alternativa-texto");
+          const divTexto = el.querySelector(
+            ".questao-enunciado-alternativa-texto, .alternativa-texto"
+          );
           if (!divTexto) return;
+
           const clone = divTexto.cloneNode(true);
           clone.querySelectorAll("p.elemento-vazio, p[size]").forEach(p => p.remove());
-          const texto = clone.innerText.trim();
-          if (texto && !vistos.has(texto)) {
-            vistos.add(texto);
-            textos.push(texto);
-          }
+          const texto = clone.innerText.replace(/\s+/g, " ").trim();
+          if (!texto || vistos.has(texto)) return;
+
+          const arrIdx = alternativas.length;
+          vistos.add(texto);
+          alternativas.push(texto);
+
+          // Identifica correta e errada pelo índice de array
+          const isCorreta =
+            el.classList.contains("correcao") ||
+            el.classList.contains("acerto")   ||
+            el.classList.contains("correta");
+          const isErrada =
+            el.classList.contains("erro") ||
+            el.classList.contains("errada");
+
+          if (isCorreta && idxCorreta === -1) idxCorreta = arrIdx;
+          if (isErrada  && idxErrada  === -1) idxErrada  = arrIdx;
         });
 
-        // Índice correta/errada — ATUALIZADO para aceitar .acerto e .correcao
-        let idxCorreta = -1;
-        let idxErrada = -1;
-        todosLis.filter(el =>
-          el.classList.contains("correcao") || el.classList.contains("acerto") || el.classList.contains("erro")
-        ).forEach(el => {
-          const divTexto = el.querySelector(".questao-enunciado-alternativa-texto");
-          if (!divTexto) return;
-          const texto = divTexto.innerText.trim();
-          const idx = textos.indexOf(texto);
-          if (idx === -1) return;
-          if (el.classList.contains("correcao") || el.classList.contains("acerto")) idxCorreta = idx;
-          if (el.classList.contains("erro")) idxErrada = idx;
-        });
+        if (alternativas.length === 0) return null;
 
-        // Matéria
+        /* 3. Matéria e assunto ──────────────────────────────────── */
         let materia = "Geral";
-        const materiaContainer = document.querySelector(".questao-cabecalho-informacoes-materia");
-        if (materiaContainer) {
-          const materiaLink = materiaContainer.querySelector("a");
-          if (materiaLink) materia = materiaLink.innerText.trim();
+        const materiaEl = primeiroCSSQuery(
+          ".questao-cabecalho-informacoes-materia a",
+          ".questao-cabecalho-informacoes-materia",
+          "[class*='materia'] a",
+          "[class*='materia']"
+        );
+        if (materiaEl) materia = textoLimpo(materiaEl);
+
+        let assunto = "";
+        const assuntoEl = primeiroCSSQuery(
+          ".questao-cabecalho-informacoes-assunto a",
+          ".questao-cabecalho-informacoes-assunto",
+          "[class*='assunto'] a"
+        );
+        if (assuntoEl) assunto = textoLimpo(assuntoEl);
+
+        /* 4. Banca ─────────────────────────────────────────────── */
+        let banca = "";
+        const bancaEl = primeiroCSSQuery(
+          ".questao-titulo",
+          "[class*='questao-titulo']",
+          ".questao-cabecalho-titulo"
+        );
+        if (bancaEl) banca = textoLimpo(bancaEl);
+
+        /* 5. ID da questão ─────────────────────────────────────── */
+        let idQuestao = "";
+        const idEl = primeiroCSSQuery(".id-questao", "[class*='id-questao']");
+        if (idEl) idQuestao = textoLimpo(idEl).replace(/^#/, "");
+
+        /* 6. Resolução / explicação ────────────────────────────── */
+        let explicacao = "";
+        const resEl = primeiroCSSQuery(
+          ".questao-enunciado-resolucao-texto",
+          ".questao-enunciado-resolucao .texto",
+          ".questao-enunciado-resolucao",
+          "[class*='resolucao-texto']",
+          "[class*='resolucao']"
+        );
+        if (resEl) {
+          // Limpa o clone: remove cabeçalhos como "Resolução:" que são visuais
+          const resClone = resEl.cloneNode(true);
+          resClone.querySelectorAll(".resolucao-cabecalho, h4, h5").forEach(h => h.remove());
+          explicacao = resClone.innerHTML.trim();
         }
 
-        // Assunto
-        let assunto = "";
-        const assuntoEl = document.querySelector(".questao-cabecalho-informacoes-assunto a");
-        if (assuntoEl) assunto = assuntoEl.innerText.trim();
-
-        // Banca
-        let banca = "";
-        const bancaEl = document.querySelector(".questao-titulo, [class*='questao-titulo']");
-        if (bancaEl) banca = bancaEl.innerText.trim();
-
-        // ID da Questão (NOVO)
-        let idQuestao = "";
-        const idEl = document.querySelector(".id-questao");
-        if (idEl) idQuestao = idEl.innerText.replace("#", "").trim();
-
-        // Resolução
-        let explicacao = "";
-        const explicacaoEl = document.querySelector(".questao-enunciado-resolucao, [class*='resolucao']");
-        if (explicacaoEl) explicacao = explicacaoEl.innerText.trim();
-
-        const materiaLimpa = materia.replace(/[:"]/g, "").trim();
+        const materiaLimpa = materia.replace(/[:"\/\\]/g, "").trim() || "Geral";
         const resultado = this.detectarErro() ? "Erros" : "Revisão";
 
         return {
           enunciado,
-          alternativas: textos,
+          alternativas,
           idxCorreta,
           idxErrada,
           materia,
@@ -111,8 +188,8 @@
           resultado,
           idQuestao,
           plataforma: this.nomePlataforma,
-          url: window.location.href,
-          timestamp: new Date().toLocaleDateString("pt-BR"),
+          url:        window.location.href,
+          timestamp:  new Date().toLocaleDateString("pt-BR"),
         };
       } catch (e) {
         console.error("[CaveiraCards/TEC] Erro ao capturar questão:", e);
@@ -120,30 +197,61 @@
       }
     },
 
+    /* ── Captura comentários (painel de discussão) ── */
     capturarComentarios() {
-      const ul = document.querySelector("ul.discussao-comentarios");
-      if (!ul || ul.offsetParent === null) return null;
+      try {
+        // TEC Concursos pode ter o painel de discussão em vários lugares
+        const ul = primeiroCSSQuery(
+          "ul.discussao-comentarios",
+          ".discussao ul",
+          "[class*='discussao'] ul"
+        );
 
-      const items = Array.from(ul.querySelectorAll("li"));
-      if (!items.length) return null;
+        // Se não encontrou ou está oculto (offsetParent === null)
+        if (!ul || ul.offsetParent === null) return null;
 
-      const comentarios = items.map(li => {
-        const scoreEl = li.querySelector(".discussao-comentario-nota-numero .ng-binding");
-        const textoEl = li.querySelector(".discussao-comentario-post-texto");
-        if (!scoreEl || !textoEl) return null;
-        const score = parseInt(scoreEl.textContent.trim(), 10) || 0;
-        const html = textoEl.innerHTML.trim()
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-          .replace(/\s+on\w+="[^"]*"/gi, "")
-          .replace(/\s+on\w+='[^']*'/gi, "");
-        if (!html) return null;
-        return { score, html };
-      }).filter(Boolean);
+        const items = Array.from(ul.querySelectorAll("li"));
+        if (!items.length) return null;
 
-      if (!comentarios.length) return null;
+        const comentarios = items.map(li => {
+          // Score (votos)
+          const scoreEl = li.querySelector(
+            ".discussao-comentario-nota-numero .ng-binding, " +
+            ".nota-numero, " +
+            "[class*='nota-numero']"
+          );
+          // Texto do comentário
+          const textoEl = li.querySelector(
+            ".discussao-comentario-post-texto, " +
+            ".comentario-texto, " +
+            "[class*='post-texto'], " +
+            "[class*='comentario-texto']"
+          );
 
-      comentarios.sort((a, b) => b.score - a.score);
-      return comentarios.slice(0, 3);
+          if (!textoEl) return null;
+
+          const score = scoreEl
+            ? (parseInt(scoreEl.textContent.trim(), 10) || 0)
+            : 0;
+
+          const html = textoEl.innerHTML.trim()
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+            .replace(/\s+on\w+="[^"]*"/gi, "")
+            .replace(/\s+on\w+='[^']*'/gi, "");
+
+          if (!html) return null;
+          return { score, html };
+        }).filter(Boolean);
+
+        if (!comentarios.length) return null;
+
+        // Retorna os 3 comentários com maior score
+        comentarios.sort((a, b) => b.score - a.score);
+        return comentarios.slice(0, 3);
+      } catch (e) {
+        console.error("[CaveiraCards/TEC] Erro ao capturar comentários:", e);
+        return null;
+      }
     },
   };
 })();

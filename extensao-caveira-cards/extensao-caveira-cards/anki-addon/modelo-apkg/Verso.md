@@ -1,47 +1,55 @@
-{{FrontSide}}
+{{Verso}}
 
-<div class="resposta">{{Certo - Errado}}</div>
 <script>
-  var fields = document.querySelectorAll(".resposta");
-  for (var i = 0; i < fields.length; i++) {
-    fields[i].innerHTML = fields[i].innerHTML
-      .replace('Certo', '<span style="color: #4eaed9">CERTO</span>')
-      .replace('certo', '<span style="color: #4eaed9">CERTO</span>')
-      .replace('Errado', '<span style="color: #ff7345">ERRADO</span>')
-      .replace('errado', '<span style="color: #ff7345">ERRADO</span>');
-  }
+
+(function () {
+
+  /* ── Corrige inline colors no verso também ── */
+
+  var fixar = ['.cc-enunciado', '.cc-explicacao-corpo', '.cc-comentario'];
+
+  fixar.forEach(function(sel) {
+
+    document.querySelectorAll(sel + ', ' + sel + ' *').forEach(function(el) {
+
+      if (![el.style](http://el.style)) return;
+
+      [el.style](http://el.style).removeProperty('color');
+
+      [el.style](http://el.style).removeProperty('background');
+
+      [el.style](http://el.style).removeProperty('background-color');
+
+      [el.style](http://el.style).removeProperty('font-family');
+
+    });
+
+  });
+
+})();
+
 </script>
 
+{{#Extra}}
 
-{{#Embasamento}}<div class=justificativa>{{edit:Embasamento}}</div>{{/Embasamento}}
+<div class="cc-wrap" style="padding-top:0">
 
+  <div class="extra-box">
 
-{{#✚ Saiba mais}}<div class="esquema">{{hint:✚ Saiba mais}}</div>{{/✚ Saiba mais}}</div>
+    <div class="extra-label">💬 Comentários</div>
 
+    {{Extra}}
 
-<!--<div class=tags>
+  </div>
 
-TAGS: {{Tags}}
-
-</div>-->
-
-
-<div class=erro>
-		
- 		<p>Encontrou algum erro? <a href="https://www.instagram.com/isakielsouza/"/>Clique aqui para reportar</a>
-
-
-	
-</div><br>
-<div class=direito>
-		
- 		<p>Criado por: <a href="https://www.instagram.com/isakielsouza/"/>@isakielsouza</a> <br> <a href="https://www.isakielsouza.com"/>www.isakielsouza.com</a>
-
-<p><a href="https://www.copyrightservice.net/pt/copyright_notice" title="Avisos de direitos autorais">Avisos de direitos autorais</a> </p>
-
-	
 </div>
 
+{{/Extra}}  
 
 
+```
+		<p>Criado por: <a href="https://www.instagram.com/isakielsouza/"/>@isakielsouza</a> <br> <a href="https://www.isakielsouza.com"/>www.isakielsouza.com</a>
+```
+
+[Avisos de direitos autorais](https://www.copyrightservice.net/pt/copyright_notice)
 
