@@ -1,0 +1,3 @@
+# Não incluir no zip de submissão para Chrome Web Store
+gerar-apkg.py
+*.apkg
