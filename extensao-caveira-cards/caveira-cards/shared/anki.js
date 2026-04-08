@@ -5,40 +5,305 @@
 (function () {
   "use strict";
 
+  /* ══════════════════════════════════════════════════════════════
+     CSS DO MODELO — sincronizado com o popup da extensão
+  ══════════════════════════════════════════════════════════════ */
   const MODEL_CSS = `
-.card{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;margin:0;padding:8px;color:#f1f5f9;text-align:left}
-.nightMode.card{background:#0f172a;color:#f1f5f9}
-.cc-header{display:flex;align-items:center;gap:12px;background:#1e293b;border-radius:12px;padding:10px 16px;margin:0 auto 12px;max-width:640px;box-sizing:border-box}
-.cc-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #3b82f6;flex-shrink:0}
-.cc-materia-texto{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#f1f5f9}
-.cc-wrap{max-width:640px;margin:0 auto;padding:4px}
-.cc-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.cc-tag-plataforma{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#334155;color:#f1f5f9}
-.cc-tag-assunto{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:#334155;color:#f1f5f9}
-.cc-banca{font-size:12px;color:#94a3b8;margin-bottom:10px;font-style:italic}
-.cc-enunciado{font-size:16px;line-height:1.6;margin-bottom:16px;color:#f1f5f9}
-.cc-enunciado, .cc-enunciado *{color:#f1f5f9 !important;background:transparent !important}
-.cc-alts{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
-.cc-alt{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1.5px solid #334155;background:#1e293b;font-size:14px;color:#f1f5f9}
-.cc-alt.correta{background:#064e3b;border-color:#059669;color:#ecfdf5}
-.cc-letra{min-width:28px;height:28px;border-radius:50%;background:#334155;color:#cbd5e1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
-.cc-alt.correta .cc-letra{background:#22c55e;color:white}
-.cc-gabarito-label{font-size:12px;font-weight:700;text-transform:uppercase;color:#94a3b8;letter-spacing:.05em;margin-bottom:8px}
-.cc-explicacao{margin-top:16px;padding:16px;border-radius:12px;background:#1e293b!important;border:1px solid #334155;font-size:14px;color:#f1f5f9;line-height:1.6}
-.cc-explicacao *{color:#f1f5f9!important;background:transparent!important}
-.cc-explicacao p{margin:4px 0}
-.cc-fonte{margin-top:12px;font-size:11px;color:#64748b}
-.cc-fonte a{color:#3b82f6;text-decoration:none}
-.cc-comentarios{margin-top:8px}
-.cc-comentarios strong{font-size:12px;text-transform:uppercase;color:#94a3b8;letter-spacing:.05em}
-.cc-comentario{margin-top:10px;padding:10px 12px;border-radius:8px;background:#0c4a6e;border:1px solid #0284c7;font-size:13px;line-height:1.6;color:#e0f2fe}
-.cc-comentario *{color:#e0f2fe!important;background:transparent!important}
-.cc-score{display:inline-block;font-size:11px;font-weight:700;color:#38bdf8;margin-bottom:4px}
+/* ── Reset ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base ── */
+.card {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0f1729;
+  color: #e2e8f0;
+  text-align: left;
+  line-height: 1.5;
+}
+.nightMode.card { background: #0f1729; color: #e2e8f0; }
+
+/* ── Header: logo + matéria (igual ao popup) ── */
+.cc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1a2540;
+  border-bottom: 2px solid #3b6ff5;
+  padding: 12px 20px;
+}
+.cc-logo {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #3b6ff5;
+  flex-shrink: 0;
+}
+.cc-header-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cc-materia-texto {
+  font-size: 15px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: #e2e8f0 !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cc-banca-header {
+  font-size: 11px; color: #64748b; font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Wrapper ── */
+.cc-wrap {
+  max-width: 680px; margin: 0 auto;
+  padding: 16px 20px 20px;
+}
+
+/* ── Tags ── */
+.cc-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.cc-tag {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.cc-tag-plataforma { background: #1e2d4d; color: #93c5fd; border: 1px solid #2d4070; }
+.cc-tag-assunto    { background: #2d1a4d; color: #c4b5fd; border: 1px solid #4a2d8a; }
+
+/* ── Enunciado — força legibilidade no tema escuro ── */
+.cc-enunciado {
+  font-size: 15px; line-height: 1.8;
+  color: #e2e8f0 !important;
+  margin-bottom: 18px; word-break: break-word;
+}
+/* Reseta qualquer cor inline que venha do conteúdo da plataforma */
+.cc-enunciado p,
+.cc-enunciado span,
+.cc-enunciado div,
+.cc-enunciado strong,
+.cc-enunciado b,
+.cc-enunciado em,
+.cc-enunciado i,
+.cc-enunciado a,
+.cc-enunciado li,
+.cc-enunciado td,
+.cc-enunciado th,
+.cc-enunciado label { color: #e2e8f0 !important; background: transparent !important; }
+.cc-enunciado p  { margin: 6px 0; }
+.cc-enunciado img { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
+.cc-enunciado table {
+  width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 14px;
+}
+.cc-enunciado th,
+.cc-enunciado td { border: 1px solid #1e2d4d; padding: 6px 10px; }
+.cc-enunciado th  { background: #1a2540 !important; }
+
+/* ── Alternativas (container) ── */
+.cc-alts {
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;
+}
+
+/* ── Alternativa base ── */
+.cc-alt {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 11px 14px; border-radius: 10px;
+  border: 1.5px solid #1e2d4d;
+  background: #1a2540;
+  font-size: 14px; color: #cbd5e1;
+  line-height: 1.5; transition: background .15s, border-color .15s;
+}
+
+/* ── Alternativa clicável (só na frente) ── */
+.cc-clicavel { cursor: pointer; }
+.cc-clicavel:hover {
+  background: #1e2f55 !important;
+  border-color: #3b6ff5 !important;
+}
+.cc-clicavel:hover .cc-letra {
+  background: #3b6ff5 !important;
+  color: #fff !important;
+}
+
+/* ── Alternativa correta ── */
+.cc-alt.correta {
+  background: #0a2918 !important;
+  border-color: #22c55e !important;
+  color: #86efac !important;
+}
+.cc-alt.correta .cc-letra    { background: #22c55e !important; color: #fff !important; }
+.cc-alt.correta .cc-alt-texto { color: #86efac !important; }
+
+/* ── Alternativa errada (a que o usuário escolheu) ── */
+.cc-alt.errada {
+  background: #290a0a !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+.cc-alt.errada .cc-letra    { background: #ef4444 !important; color: #fff !important; }
+.cc-alt.errada .cc-alt-texto { color: #fca5a5 !important; }
+
+/* ── Círculo letra ── */
+.cc-letra {
+  min-width: 28px; height: 28px; border-radius: 50%;
+  background: #1e2d4d; color: #94a3b8;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; flex-shrink: 0; margin-top: 1px;
+  transition: background .15s, color .15s;
+}
+.cc-alt-texto { flex: 1; word-break: break-word; }
+
+/* ── Feedback / dica ── */
+.cc-dica {
+  font-size: 13px; color: #475569;
+  text-align: center; margin-top: 6px;
+  padding: 6px; border-radius: 8px;
+  transition: color .2s;
+}
+.cc-dica.acertou { color: #4ade80 !important; font-weight: 700; }
+.cc-dica.errou   { color: #f87171 !important; font-weight: 700; }
+
+/* ── Label Gabarito ── */
+.cc-gabarito-label {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; color: #64748b;
+  letter-spacing: .06em; margin-bottom: 10px;
+}
+
+/* ── Explicação / Resolução ── */
+.cc-explicacao {
+  margin-top: 16px; border-radius: 12px;
+  background: #0d1626; border: 1px solid #1e2d4d;
+  border-left: 3px solid #3b6ff5; overflow: hidden;
+}
+.cc-explicacao-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: #3b6ff5; padding: 10px 16px 6px;
+  background: #0f1729;
+}
+.cc-explicacao-corpo {
+  padding: 10px 16px 14px;
+  font-size: 14px; line-height: 1.75;
+}
+.cc-explicacao-corpo,
+.cc-explicacao-corpo p,
+.cc-explicacao-corpo span,
+.cc-explicacao-corpo div,
+.cc-explicacao-corpo strong,
+.cc-explicacao-corpo b,
+.cc-explicacao-corpo em,
+.cc-explicacao-corpo li { color: #cbd5e1 !important; background: transparent !important; }
+.cc-explicacao-corpo p   { margin: 5px 0; }
+.cc-explicacao-corpo img { max-width: 100%; border-radius: 6px; }
+
+/* ── Comentários da comunidade ── */
+.cc-comentario {
+  margin-top: 8px; padding: 10px 14px;
+  border-radius: 8px; background: #0d1e38;
+  border: 1px solid #1e3a5f;
+  font-size: 13px; line-height: 1.6;
+}
+.cc-comentario,
+.cc-comentario p,
+.cc-comentario span,
+.cc-comentario div { color: #bfdbfe !important; background: transparent !important; }
+.cc-score { display: inline-block; font-size: 11px; font-weight: 700; color: #38bdf8; margin-bottom: 5px; }
+
+/* ── Extra (comentários capturados depois) ── */
+.extra-box {
+  margin-top: 14px; padding: 12px 16px; border-radius: 10px;
+  background: #0d1626; border: 1px solid #1e2d4d;
+  font-size: 13px; color: #94a3b8; line-height: 1.6;
+}
+.extra-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: #475569; margin-bottom: 6px;
+}
+
+/* ── Rodapé ── */
+.cc-fonte {
+  margin-top: 16px; padding-top: 10px;
+  border-top: 1px solid #1e2d4d;
+  font-size: 11px; color: #475569;
+}
+.cc-fonte a { color: #3b6ff5; text-decoration: none; }
 `.trim();
 
-  const FRONT_TEMPLATE = "{{Frente}}";
-  const BACK_TEMPLATE = "{{FrontSide}}<hr style='border:1px solid #e5e7eb;margin:16px 0'>{{Verso}}{{#Extra}}<hr style='border:1px solid #e5e7eb;margin:12px 0'>{{Extra}}{{/Extra}}";
+  /* ══════════════════════════════════════════════════════════════
+     TEMPLATE DA FRENTE — com interatividade: clique na alternativa
 
+     Lógica:
+     1. Lê data-correta do container .cc-alts-frente
+     2. Adiciona hover e cursor pointer
+     3. No clique: destaca correta (verde) e errada (vermelho)
+     4. Atualiza o texto de dica com feedback visual
+     5. Chama pycmd('ans') para flipar para o verso (mostra botões de dificuldade)
+
+     Nota: se .cc-alts-verso já estiver no DOM significa que estamos no verso
+     ({{FrontSide}} renderizou o front novamente) — nesse caso não adiciona handlers.
+  ══════════════════════════════════════════════════════════════ */
+  const FRONT_TEMPLATE = `{{Frente}}
+<script>
+(function () {
+  // Detecta se estamos no verso (front foi re-renderizado via {{FrontSide}})
+  if (document.querySelector('.cc-alts-verso')) return;
+
+  var container = document.querySelector('.cc-alts-frente');
+  if (!container) return;
+
+  var corretaIdx = parseInt(container.getAttribute('data-correta') || '-1', 10);
+  var alts       = Array.from(container.querySelectorAll('.cc-alt'));
+  var respondido = false;
+
+  alts.forEach(function (alt, i) {
+    alt.addEventListener('click', function () {
+      if (respondido) return;
+      respondido = true;
+
+      var acertou = (i === corretaIdx);
+
+      // Aplica as classes visuais
+      alts.forEach(function (a, j) {
+        a.classList.remove('cc-clicavel');
+        if (j === corretaIdx) {
+          a.classList.add('correta');
+          a.querySelector('.cc-letra').textContent = '\\u2713'; // ✓
+        } else if (j === i && !acertou) {
+          a.classList.add('errada');
+          a.querySelector('.cc-letra').textContent = '\\u2717'; // ✗
+        }
+      });
+
+      // Atualiza dica com feedback
+      var dica = document.getElementById('cc-dica-feedback');
+      if (dica) {
+        dica.textContent = acertou
+          ? '\\u2705 Você acertou! Boa!'
+          : '\\u274C Você errou — veja o gabarito no verso';
+        dica.className   = 'cc-dica ' + (acertou ? 'acertou' : 'errou');
+      }
+
+      // Flip para o verso após 900 ms para o usuário ver o feedback
+      setTimeout(function () {
+        try { pycmd('ans'); } catch (e) { /* AnkiWeb / fallback */ }
+      }, 900);
+    });
+  });
+})();
+<\/script>`;
+
+  /* ══════════════════════════════════════════════════════════════
+     TEMPLATE DO VERSO
+  ══════════════════════════════════════════════════════════════ */
+  const BACK_TEMPLATE = `{{Verso}}
+{{#Extra}}
+<div class="cc-wrap" style="padding-top:0">
+  <div class="extra-box">
+    <div class="extra-label">\\u{1F4AC} Comentários</div>
+    {{Extra}}
+  </div>
+</div>
+{{/Extra}}`;
+
+  /* ══════════════════════════════════════════════════════════════
+     AnkiConnect helpers
+  ══════════════════════════════════════════════════════════════ */
   async function ankiRequest(action, params) {
     const response = await fetch("http://localhost:8765", {
       method: "POST",
@@ -57,26 +322,20 @@
       `CaveiraCards::${plataforma}::${resultado}`,
       `CaveiraCards::${plataforma}::${resultado}::${materiaLimpa}`,
     ];
-    for (const deck of niveis) {
-      await ankiRequest("createDeck", { deck });
-    }
+    for (const deck of niveis) await ankiRequest("createDeck", { deck });
     return niveis[niveis.length - 1];
   }
 
   async function enviarQuestao(questao, frente, verso) {
     const resultado = questao.resultado;
-    const deckName = await criarDecks(
-      questao.plataforma,
-      resultado,
-      questao.materiaLimpa
-    );
+    const deckName  = await criarDecks(questao.plataforma, resultado, questao.materiaLimpa);
 
     const tags = [
       "caveira-cards",
       resultado === "Erros" ? "caderno-de-erros" : "revisao",
       questao.plataforma.toLowerCase().replace(/\s+/g, "-"),
-      questao.materiaLimpa.toLowerCase().replace(/\s+/g, "-"),
-    ];
+      questao.materiaLimpa.toLowerCase().replace(/[\s:/]/g, "-"),
+    ].filter(Boolean);
 
     const noteId = await ankiRequest("addNote", {
       note: {
@@ -84,23 +343,19 @@
         modelName: "CaveiraCards",
         fields: {
           Frente: frente,
-          Verso: verso,
-          Extra: questao.banca || "",
+          Verso:  verso,
+          Extra:  questao.banca ? `<em style="">${questao.banca}</em>` : "",
         },
         tags,
         options: { allowDuplicate: false, duplicateScope: "deck" },
       },
     });
-
     return noteId;
   }
 
   async function atualizarExtra(noteId, extraHtml) {
     await ankiRequest("updateNoteFields", {
-      note: {
-        id: noteId,
-        fields: { Extra: extraHtml },
-      },
+      note: { id: noteId, fields: { Extra: extraHtml } },
     });
   }
 
@@ -108,18 +363,19 @@
     return await ankiRequest("findNotes", { query });
   }
 
+  /* ── Configura (ou atualiza) o modelo CaveiraCards no Anki ── */
   async function configurarAnki() {
     const modelos = await ankiRequest("modelNames", {});
 
     if (!modelos.includes("CaveiraCards")) {
       await ankiRequest("createModel", {
-        modelName: "CaveiraCards",
+        modelName:     "CaveiraCards",
         inOrderFields: ["Frente", "Verso", "Extra"],
-        css: MODEL_CSS,
+        css:           MODEL_CSS,
         cardTemplates: [{
-          Name: "CaveiraCards",
+          Name:  "CaveiraCards",
           Front: FRONT_TEMPLATE,
-          Back: BACK_TEMPLATE,
+          Back:  BACK_TEMPLATE,
         }],
       });
     } else {
@@ -130,10 +386,7 @@
         model: {
           name: "CaveiraCards",
           templates: {
-            "CaveiraCards": {
-              Front: FRONT_TEMPLATE,
-              Back: BACK_TEMPLATE,
-            },
+            "CaveiraCards": { Front: FRONT_TEMPLATE, Back: BACK_TEMPLATE },
           },
         },
       });

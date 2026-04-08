@@ -1,30 +1,32 @@
-/* shared/overlay.css — CaveiraCards overlay */
+/* shared/overlay.css — CaveiraCards overlay
+   Cores: #0f1729 bg | #1a2540 card | #1e2d4d border | #3b6ff5 blue
+          #22c55e green | #ef4444 red | #e2e8f0 text | #64748b muted */
 
-/* Container principal — posição fixa no canto inferior direito */
+/* ── Container principal ── */
 #cc-overlay {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 2147483647;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  transition: all 0.3s ease;
 }
 
-/* Estado expandido */
+/* ── Card ── */
 #cc-overlay .cc-card {
   display: flex;
   align-items: center;
   gap: 12px;
   background: #0f1729;
-  border: 1px solid #1e2d4d;
-  border-radius: 16px;
-  padding: 14px 16px;
-  min-width: 240px;
-  max-width: 300px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  border: 1.5px solid #1e2d4d;
+  border-radius: 14px;
+  padding: 13px 42px 13px 14px;
+  min-width: 250px;
+  max-width: 310px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(59,111,245,0.08);
   cursor: pointer;
   position: relative;
-  transition: opacity 0.3s, transform 0.3s;
+  transition: border-color 0.2s, transform 0.2s;
 }
 
 #cc-overlay .cc-card:hover {
@@ -32,84 +34,102 @@
   transform: translateY(-2px);
 }
 
-/* Resultado: borda colorida */
-#cc-overlay.errou .cc-card { border-left: 3px solid #ef4444; }
+/* ── Resultado: borda colorida esquerda ── */
+#cc-overlay.errou  .cc-card { border-left: 3px solid #ef4444; }
 #cc-overlay.acertou .cc-card { border-left: 3px solid #22c55e; }
 
-/* Ícone/logo */
+/* ── Ícone / logo ── */
 #cc-overlay .cc-icon {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  border: 2px solid #1e2d4d;
 }
 
-/* Textos */
+/* ── Textos ── */
+#cc-overlay .cc-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
 #cc-overlay .cc-title {
   font-size: 13px;
   font-weight: 700;
   color: #e2e8f0;
   display: block;
+  white-space: nowrap;
 }
+
 #cc-overlay .cc-sub {
   font-size: 11px;
   color: #64748b;
   display: block;
-  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 185px;
 }
 
-/* Botão fechar */
+/* ── Botão fechar ── */
 #cc-overlay .cc-close {
   position: absolute;
-  top: 6px;
-  right: 8px;
+  top: 7px;
+  right: 10px;
   background: none;
   border: none;
-  color: #334155;
-  font-size: 14px;
+  color: #475569;
+  font-size: 13px;
   cursor: pointer;
   line-height: 1;
-  padding: 2px 4px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
 }
-#cc-overlay .cc-close:hover { color: #e2e8f0; }
+#cc-overlay .cc-close:hover {
+  color: #e2e8f0;
+  background: #1e2d4d;
+}
 
-/* Estado de sucesso */
-#cc-overlay.sucesso .cc-card { border-left: 3px solid #22c55e; }
-#cc-overlay.sucesso .cc-title { color: #4ade80; }
+/* ── Estados especiais ── */
+#cc-overlay.sucesso  .cc-card { border-left: 3px solid #22c55e; }
+#cc-overlay.sucesso  .cc-title { color: #4ade80; }
 
-/* Estado de erro */
-#cc-overlay.falha .cc-card { border-left: 3px solid #ef4444; }
-#cc-overlay.falha .cc-title { color: #f87171; }
+#cc-overlay.falha    .cc-card { border-left: 3px solid #ef4444; }
+#cc-overlay.falha    .cc-title { color: #f87171; }
 
-/* Estado carregando */
-#cc-overlay.loading .cc-title { color: #93c5fd; }
+#cc-overlay.loading  .cc-title { color: #93c5fd; }
 
-/* Botão de comentários */
+/* ── Botão de comentários (📎) ── */
 #cc-overlay .cc-btn-comentarios {
   position: absolute;
-  bottom: 6px;
-  right: 8px;
+  bottom: 8px;
+  right: 10px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  color: #6b7280;
-  font-size: 13px;
+  border: 1.5px solid #1e2d4d;
+  background: #1a2540;
+  color: #64748b;
+  font-size: 12px;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
   z-index: 2;
 }
 #cc-overlay .cc-btn-comentarios:hover {
-  background: #e5e7eb;
+  background: #1e2d4d;
+  border-color: #3b6ff5;
+  color: #93c5fd;
+}
+#cc-overlay .cc-btn-comentarios:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

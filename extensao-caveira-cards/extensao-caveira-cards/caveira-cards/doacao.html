@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Apoiar o CaveiraCards</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .container { max-width: 360px; width: 100%; text-align: center; }
+
+  /* Tela inicial */
+  #tela-inicial .avatar {
+    width: 90px; height: 90px; border-radius: 50%;
+    object-fit: cover; margin: 0 auto 16px;
+    border: 3px solid #1a1a2e;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  #tela-inicial h1 { font-size: 20px; font-weight: 800; color: #1a1a2e; }
+  #tela-inicial .handle { font-size: 13px; color: #6366f1; margin-top: 4px; }
+  .apoio-box {
+    background: white; border-radius: 16px;
+    padding: 24px; margin-top: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    text-align: left;
+  }
+  .apoio-box h2 { font-size: 16px; color: #1a1a2e; margin-bottom: 8px; }
+  .apoio-box p { font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
+  .pix-btn {
+    display: block; width: 100%; padding: 14px;
+    background: #f5a623; border: none; border-radius: 10px;
+    color: #1a1a2e; font-size: 14px; font-weight: 800;
+    cursor: pointer; margin-bottom: 10px;
+    transition: background .2s, transform .1s;
+  }
+  .pix-btn:hover { background: #e09510; transform: translateY(-1px); }
+  .pix-btn:active { transform: translateY(0); }
+
+  /* Tela QR Code */
+  #tela-qr { display: none; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: #6366f1;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    margin-bottom: 20px;
+  }
+  .back-btn:hover { color: #4f46e5; }
+  .qr-box {
+    background: white; border-radius: 16px; padding: 28px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .qr-valor { font-size: 28px; font-weight: 800; color: #1a1a2e; margin-bottom: 20px; }
+  #qrcode { display: flex; justify-content: center; margin-bottom: 20px; }
+  #qrcode canvas, #qrcode img { border-radius: 8px; }
+  .chave-box {
+    background: #f1f5f9; border-radius: 10px; padding: 12px 16px;
+    margin-bottom: 14px; text-align: left;
+  }
+  .chave-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+  .chave-valor { font-size: 13px; color: #1a1a2e; font-weight: 600; margin-top: 4px; word-break: break-all; }
+  .copiar-btn {
+    display: block; width: 100%; padding: 12px;
+    background: #1a1a2e; border: none; border-radius: 10px;
+    color: white; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: background .2s;
+  }
+  .copiar-btn:hover { background: #2d3748; }
+  .copiar-btn.copiado { background: #16a34a; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Tela inicial -->
+  <div id="tela-inicial">
+    <img class="avatar" src="CaveiraCards.png" alt="CaveiraCards">
+    <h1>CaveiraCards</h1>
+    <p class="handle">@isakielsouza</p>
+
+    <div class="apoio-box">
+      <h2>Apoie o projeto</h2>
+      <p>Se a extensão te ajudou nos estudos, considere uma contribuição para manter o projeto ativo.</p>
+      <button class="pix-btn" data-valor="2.00" data-label="R$ 2,00">Fazer um PIX (R$ 2,00)</button>
+      <button class="pix-btn" data-valor="3.00" data-label="R$ 3,00">Fazer um PIX (R$ 3,00)</button>
+      <button class="pix-btn" data-valor="5.00" data-label="R$ 5,00">Fazer um PIX (R$ 5,00)</button>
+    </div>
+  </div>
+
+  <!-- Tela QR Code -->
+  <div id="tela-qr">
+    <button class="back-btn" id="btn-voltar">← Voltar</button>
+    <div class="qr-box">
+      <div class="qr-valor" id="qr-valor-texto"></div>
+      <div id="qrcode"></div>
+      <div class="chave-box">
+        <div class="chave-label">Chave PIX</div>
+        <div class="chave-valor">isakielsouza@outlook.com.br</div>
+      </div>
+      <button class="copiar-btn" id="btn-copiar">📋 Copiar chave PIX</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="libs/qrcode.min.js"></script>
+<script>
+  // ── Geração do payload PIX EMV (BR Code) ──
+  function tlv(id, value) {
+    return id + String(value.length).padStart(2, "0") + value;
+  }
+
+  function crc16(str) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < str.length; i++) {
+      crc ^= str.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+      }
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
+  }
+
+  function buildPixPayload(chave, valor, nome, cidade) {
+    const gui      = tlv("00", "BR.GOV.BCB.PIX");
+    const key      = tlv("01", chave);
+    const merchant = tlv("26", gui + key);
+    const nomeTrunc = nome.substring(0, 25);
+    const cidadeTrunc = cidade.substring(0, 15);
+
+    let payload =
+      tlv("00", "01") +
+      merchant +
+      tlv("52", "0000") +
+      tlv("53", "986") +
+      tlv("54", valor) +
+      tlv("58", "BR") +
+      tlv("59", nomeTrunc) +
+      tlv("60", cidadeTrunc) +
+      tlv("62", tlv("05", "***")) +
+      "6304";
+
+    return payload + crc16(payload);
+  }
+
+  // ── Navegação entre telas ──
+  const CHAVE_PIX  = "isakielsouza@outlook.com.br";
+  const NOME_PIX   = "isakielsouza";
+  const CIDADE_PIX = "BRASIL";
+
+  document.querySelectorAll(".pix-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const valor = btn.dataset.valor;
+      const label = btn.dataset.label;
+
+      document.getElementById("tela-inicial").style.display = "none";
+      document.getElementById("tela-qr").style.display = "block";
+      document.getElementById("qr-valor-texto").textContent = label;
+
+      const qrEl = document.getElementById("qrcode");
+      qrEl.innerHTML = "";
+
+      const payload = buildPixPayload(CHAVE_PIX, valor, NOME_PIX, CIDADE_PIX);
+
+      new QRCode(qrEl, {
+        text: payload,
+        width: 200,
+        height: 200,
+        colorDark: "#1a1a2e",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    });
+  });
+
+  document.getElementById("btn-voltar").addEventListener("click", () => {
+    document.getElementById("tela-qr").style.display = "none";
+    document.getElementById("tela-inicial").style.display = "block";
+  });
+
+  document.getElementById("btn-copiar").addEventListener("click", function () {
+    navigator.clipboard.writeText(CHAVE_PIX).then(() => {
+      this.textContent = "✓ Copiado!";
+      this.classList.add("copiado");
+      setTimeout(() => {
+        this.textContent = "📋 Copiar chave PIX";
+        this.classList.remove("copiado");
+      }, 2000);
+    });
+  });
+</script>
+</body>
+</html>
