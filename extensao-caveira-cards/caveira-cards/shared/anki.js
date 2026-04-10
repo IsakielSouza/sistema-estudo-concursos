@@ -252,22 +252,12 @@
 `.trim();
 
   /* ══════════════════════════════════════════════════════════════
-     TEMPLATE DA FRENTE — com interatividade: clique na alternativa
-
-     Lógica:
-     1. Lê data-correta do container .cc-alts-frente
-     2. Adiciona hover e cursor pointer
-     3. No clique: destaca correta (verde) e errada (vermelho)
-     4. Atualiza o texto de dica com feedback visual
-     5. Chama pycmd('ans') para flipar para o verso (mostra botões de dificuldade)
-
-     Nota: se .cc-alts-verso já estiver no DOM significa que estamos no verso
-     ({{FrontSide}} renderizou o front novamente) — nesse caso não adiciona handlers.
+     TEMPLATE DA FRENTE
   ══════════════════════════════════════════════════════════════ */
   const FRONT_TEMPLATE = `{{Frente}}
 <script>
 (function () {
-  // Limpeza agressiva de cores (importante para TEC Concursos)
+  // 1. Limpeza agressiva de cores (TEC Concursos)
   var containers = document.querySelectorAll('.card, .cc-enunciado, .cc-alt-texto, .comando');
   containers.forEach(function(c) {
     c.querySelectorAll('*').forEach(function(el) {
@@ -282,7 +272,7 @@
   });
   document.body.style.color = '#e2e8f0';
 
-  /* ── Interatividade: Texto Associado colapsável ── */
+  // 2. Interatividade: Texto Associado colapsável
   document.querySelectorAll('.cc-texto-associado-toggle').forEach(function(toggle) {
     toggle.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -293,24 +283,53 @@
     });
   });
 
-  // Detecta se estamos no verso (front foi re-renderizado via {{FrontSide}})
+  // 3. Interatividade: Clique na Alternativa
   if (document.querySelector('.cc-alts-verso')) return;
 
   var container = document.querySelector('.cc-alts-frente');
   if (!container) return;
-...
+
+  var corretaIdx = parseInt(container.getAttribute('data-correta') || '-1', 10);
+  var alts       = Array.from(container.querySelectorAll('.cc-alt'));
+  var respondido = false;
+
+  alts.forEach(function (alt, i) {
+    alt.addEventListener('click', function () {
+      if (respondido) return;
+      respondido = true;
+      var acertou = (i === corretaIdx);
+      alts.forEach(function (a, j) {
+        a.classList.remove('cc-clicavel');
+        if (j === corretaIdx) {
+          a.classList.add('correta');
+          var l = a.querySelector('.cc-letra');
+          if (l) l.textContent = '\\u2713';
+        } else if (j === i && !acertou) {
+          a.classList.add('errada');
+          var l = a.querySelector('.cc-letra');
+          if (l) l.textContent = '\\u2717';
+        }
+      });
+      var dica = document.getElementById('cc-dica-feedback');
+      if (dica) {
+        dica.textContent = acertou ? '\\u2705 Você acertou! Boa!' : '\\u274C Você errou — veja o gabarito no verso';
+        dica.className   = 'cc-dica ' + (acertou ? 'acertou' : 'errou');
+      }
+      setTimeout(function () {
+        try { pycmd('ans'); } catch (e) { }
+      }, 900);
+    });
+  });
 })();
 <\/script>`;
 
   /* ══════════════════════════════════════════════════════════════
      TEMPLATE DO VERSO
   ══════════════════════════════════════════════════════════════ */
-  const BACK_TEMPLATE = `{{FrontSide}}
-<hr id="answer">
-{{Verso}}
+  const BACK_TEMPLATE = `{{Verso}}
 <script>
 (function () {
-  /* ── Destaca a resposta correta automaticamente no Verso ── */
+  /* ── 1. Destaca a resposta correta automaticamente no Verso ── */
   var container = document.querySelector('.cc-alts-frente');
   if (container) {
     var corretaIdx = parseInt(container.getAttribute('data-correta') || '-1', 10);
@@ -323,7 +342,7 @@
     }
   }
 
-  // Limpeza de cores no verso também
+  // 2. Limpeza de cores no verso também
   var containers = document.querySelectorAll('.card, .cc-enunciado, .cc-alt-texto, .comando');
   containers.forEach(function(c) {
     c.querySelectorAll('*').forEach(function(el) {
@@ -340,10 +359,12 @@
 <\/script>
 {{#Extra}}
 <div class="cc-wrap" style="padding-top:0">
-...
+  <div class="extra-box">
+    <div class="extra-label">💬 Comentários</div>
+    {{Extra}}
+  </div>
 </div>
 {{/Extra}}`;
-
 
   /* ══════════════════════════════════════════════════════════════
      AnkiConnect helpers
