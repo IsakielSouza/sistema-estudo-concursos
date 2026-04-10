@@ -129,9 +129,37 @@
 
     // ── Interface www.qconcursos.com ─────────────────────────────────────────
     _capturarWww(questaoEl) {
+      /* 1. Texto Associado (se houver) ────────────────────────── */
+      let textoAssociado = "";
+      const textoAssocEl = questaoEl.querySelector(".q-question-text");
+      if (textoAssocEl) {
+        const cloneAssoc = textoAssocEl.cloneNode(true);
+        // Remove os links de "Texto associado" que são botões de abrir/fechar
+        cloneAssoc.querySelectorAll("a.q-link").forEach(a => a.remove());
+        // Remove ícones
+        cloneAssoc.querySelectorAll("i.q-icon").forEach(i => i.remove());
+        
+        const conteudoAssoc = cloneAssoc.innerHTML.trim();
+        if (conteudoAssoc) {
+          textoAssociado = `
+            <div class="cc-texto-associado-wrap">
+              <div class="cc-texto-associado-toggle">
+                <span>Texto associado</span>
+                <span class="cc-texto-associado-icon">+</span>
+              </div>
+              <div class="cc-texto-associado-content" style="display: none;">
+                ${conteudoAssoc}
+              </div>
+            </div>`;
+        }
+      }
+
+      /* 2. Enunciado Principal ────────────────────────────────── */
       const enunciadoEl = questaoEl.querySelector(".q-question-enunciation");
-      if (!enunciadoEl) return null;
-      const enunciado = enunciadoEl.innerHTML.trim();
+      if (!enunciadoEl && !textoAssociado) return null;
+      
+      const enunciadoPrincipal = enunciadoEl ? enunciadoEl.innerHTML.trim() : "";
+      const enunciado = (textoAssociado + enunciadoPrincipal).trim();
       if (!enunciado) return null;
 
       // Alternativas: letra (value do input) + texto (span .js-alternative-content)

@@ -21,8 +21,16 @@
   // Reset adicional para o corpo do card
   document.body.style.color = '#e2e8f0';
 
-
-
+  /* ── Interatividade: Texto Associado colapsável ── */
+  document.querySelectorAll('.cc-texto-associado-toggle').forEach(function(toggle) {
+    toggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var wrap = this.parentElement;
+      var content = wrap.querySelector('.cc-texto-associado-content');
+      var isExpandido = wrap.classList.toggle('expandido');
+      content.style.display = isExpandido ? 'block' : 'none';
+    });
+  });
 
   /* ── Interatividade: clique na alternativa ── */
 
