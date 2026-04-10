@@ -1,34 +1,44 @@
+{{Frente}}
+
+<hr id="answer">
+
 {{Verso}}
 
 <script>
-
 (function () {
+  /* ── Destaca a resposta correta automaticamente no Verso ── */
+  var container = document.querySelector('.cc-alts-frente');
+  if (container) {
+    var corretaIdx = parseInt(container.getAttribute('data-correta') || '-1', 10);
+    var alts = container.querySelectorAll('.cc-alt');
+    if (alts[corretaIdx]) {
+      alts[corretaIdx].classList.add('correta');
+      var letra = alts[corretaIdx].querySelector('.cc-letra');
+      if (letra) letra.textContent = '\u2713';
+      alts.forEach(function(a) { a.classList.remove('cc-clicavel'); });
+    }
+  }
 
   /* ── Corrige inline colors no verso também ── */
-
-  var fixar = ['.cc-enunciado', '.cc-explicacao-corpo', '.cc-comentario'];
-
+  var fixar = ['.cc-enunciado', '.cc-explicacao-corpo', '.cc-comentario', '.cc-alt-texto', '.comando'];
   fixar.forEach(function(sel) {
-
     document.querySelectorAll(sel + ', ' + sel + ' *').forEach(function(el) {
-
-      if (![el.style](http://el.style)) return;
-
-      [el.style](http://el.style).removeProperty('color');
-
-      [el.style](http://el.style).removeProperty('background');
-
-      [el.style](http://el.style).removeProperty('background-color');
-
-      [el.style](http://el.style).removeProperty('font-family');
-
+      if (!el.style) return;
+      el.style.setProperty('color', '#e2e8f0', 'important');
+      el.style.setProperty('background', 'transparent', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.removeProperty('font-family');
     });
-
+  });
+  // Limpa também cores obsoletas de tags <font color="black">
+  document.querySelectorAll('font').forEach(function(el) {
+    el.removeAttribute('color');
+    el.style.color = '#e2e8f0';
   });
 
 })();
-
 </script>
+
 
 {{#Extra}}
 

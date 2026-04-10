@@ -67,66 +67,40 @@
 .cc-tag-assunto    { background: #2d1a4d; color: #c4b5fd; border: 1px solid #4a2d8a; }
 
 /* ══ ENUNCIADO — força texto claro em tudo ══ */
-
-.cc-enunciado {
-
-  font-size: 15px; line-height: 1.8;
-
+.cc-enunciado, 
+.cc-enunciado *,
+.cc-enunciado p,
+.cc-enunciado span,
+.cc-enunciado div,
+.cc-enunciado font,
+.comando,
+.comando * {
   color: #e2e8f0 !important;
-
+  background-color: transparent !important;
+  text-shadow: none !important;
+}
+.cc-enunciado {
+  font-size: 15px; line-height: 1.8;
   margin-bottom: 18px; word-break: break-word;
-
 }
 
-.cc-enunciado *        { color: #e2e8f0 !important; background: transparent !important; }
-
-.cc-enunciado p        { margin: 6px 0; color: #e2e8f0 !important; }
-
-.cc-enunciado span     { color: #e2e8f0 !important; }
-
-.cc-enunciado div      { color: #e2e8f0 !important; background: transparent !important; }
-
-.cc-enunciado strong,
-
-.cc-enunciado b        { color: #e2e8f0 !important; }
-
-.cc-enunciado em,
-
-.cc-enunciado i        { color: #e2e8f0 !important; }
-
-.cc-enunciado li,
-
-.cc-enunciado td,
-
-.cc-enunciado th       { color: #e2e8f0 !important; background: transparent !important; }
-
 .cc-enunciado img      { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
-
-.cc-enunciado table    { width: 100%; border-collapse: collapse; font-size: 14px; }
-
+.cc-enunciado table    { width: 100%; border-collapse: collapse; font-size: 14px; color: #e2e8f0 !important; }
 .cc-enunciado th,
-
-.cc-enunciado td       { border: 1px solid #1e2d4d; padding: 6px 10px; }
-
+.cc-enunciado td       { border: 1px solid #1e2d4d; padding: 6px 10px; color: #e2e8f0 !important; }
 .cc-enunciado th       { background: #1a2540 !important; }
 
 /* Alternativas */
-
 .cc-alts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-
 .cc-alt {
-
   display: flex; align-items: flex-start; gap: 12px;
-
   padding: 11px 14px; border-radius: 10px;
-
   border: 1.5px solid #1e2d4d; background: #1a2540;
-
-  font-size: 14px; color: #cbd5e1; line-height: 1.5;
-
+  font-size: 14px; color: #cbd5e1 !important; line-height: 1.5;
   transition: background .15s, border-color .15s;
-
 }
+.cc-alt * { color: inherit !important; background-color: transparent !important; }
+
 
 /* Clicável */
 

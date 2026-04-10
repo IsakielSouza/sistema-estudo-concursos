@@ -5,26 +5,24 @@
 (function () {
 
   /* ── Corrige inline colors do conteúdo da plataforma ── */
-
-  var fixar = ['.cc-enunciado', '.cc-explicacao-corpo', '.cc-comentario'];
-
-  fixar.forEach(function(sel) {
-
-    document.querySelectorAll(sel + ', ' + sel + ' *').forEach(function(el) {
-
-      if (![el.style](http://el.style)) return;
-
-      [el.style](http://el.style).removeProperty('color');
-
-      [el.style](http://el.style).removeProperty('background');
-
-      [el.style](http://el.style).removeProperty('background-color');
-
-      [el.style](http://el.style).removeProperty('font-family');
-
+  var containers = document.querySelectorAll('.card, .cc-enunciado, .cc-alt-texto, .comando');
+  containers.forEach(function(c) {
+    c.querySelectorAll('*').forEach(function(el) {
+      if (!el.style) return;
+      // Força texto claro em tudo se houver estilo de cor inline
+      if (el.style.color || el.getAttribute('color')) {
+        el.style.setProperty('color', '#e2e8f0', 'important');
+      }
+      el.style.setProperty('background', 'transparent', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.removeProperty('font-family');
     });
-
   });
+  // Reset adicional para o corpo do card
+  document.body.style.color = '#e2e8f0';
+
+
+
 
   /* ── Interatividade: clique na alternativa ── */
 

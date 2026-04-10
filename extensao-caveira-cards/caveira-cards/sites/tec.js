@@ -57,27 +57,44 @@
         if (!enunciadoEl) return null;
 
         const enuncClone = enunciadoEl.cloneNode(true);
+        // Remove estilos inline que causam texto preto no Anki
+        enuncClone.querySelectorAll("*").forEach(el => {
+          el.removeAttribute("style");
+          el.removeAttribute("color");
+          el.removeAttribute("face");
+          el.removeAttribute("size");
+        });
         // Remove listas de alternativas que podem estar dentro do enunciado
         enuncClone.querySelectorAll("ul, ol, li").forEach(el => el.remove());
-        // Remove elementos de resolução embutidos
+        // Remove elementos de resolução e feedback embutidos que poluem o enunciado
         enuncClone.querySelectorAll(
-          ".questao-enunciado-resolucao, [class*='resolucao'], .questao-resultado"
+          ".questao-enunciado-resolucao, " +
+          "[class*='resolucao'], " +
+          ".questao-resultado, " +
+          "[class*='resultado'], " +
+          ".questao-enunciado-comando-resolucao, " +
+          ".questao-enunciado-alternativa-correta-marcada"
         ).forEach(el => el.remove());
 
         let enunciado = enuncClone.innerHTML.trim();
 
-        // Corta tudo após marcadores de resolução (fallback textual)
+        // Lista exaustiva de marcadores de feedback que devem ser cortados
         const cortes = [
           "Você selecionou:",
           "Você errou!",
           "Você acertou!",
           "Gabarito:",
-          "Ver resolução",
+          "Gabarito :",
           "Resposta correta:",
+          "Ver resolução",
+          "Sua resposta:",
+          "Resultado:",
         ];
+        
+        // Remove qualquer texto de feedback que tenha sobrado como texto puro
         for (const corte of cortes) {
-          const idx = enunciado.indexOf(corte);
-          if (idx !== -1) enunciado = enunciado.substring(0, idx).trim();
+          const regex = new RegExp(corte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ".*", "gi");
+          enunciado = enunciado.replace(regex, "").trim();
         }
 
         if (!enunciado || enunciado.length < 10) return null;

@@ -66,24 +66,22 @@
 .cc-tag-assunto    { background: #2d1a4d; color: #c4b5fd; border: 1px solid #4a2d8a; }
 
 /* ── Enunciado — força legibilidade no tema escuro ── */
-.cc-enunciado {
-  font-size: 15px; line-height: 1.8;
-  color: #e2e8f0 !important;
-  margin-bottom: 18px; word-break: break-word;
-}
-/* Reseta qualquer cor inline que venha do conteúdo da plataforma */
+.cc-enunciado, 
+.cc-enunciado *,
 .cc-enunciado p,
 .cc-enunciado span,
 .cc-enunciado div,
-.cc-enunciado strong,
-.cc-enunciado b,
-.cc-enunciado em,
-.cc-enunciado i,
-.cc-enunciado a,
-.cc-enunciado li,
-.cc-enunciado td,
-.cc-enunciado th,
-.cc-enunciado label { color: #e2e8f0 !important; background: transparent !important; }
+.cc-enunciado font,
+.comando,
+.comando * {
+  color: #e2e8f0 !important;
+  background-color: transparent !important;
+  text-shadow: none !important;
+}
+.cc-enunciado {
+  font-size: 15px; line-height: 1.8;
+  margin-bottom: 18px; word-break: break-word;
+}
 .cc-enunciado p  { margin: 6px 0; }
 .cc-enunciado img { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
 .cc-enunciado table {
@@ -241,65 +239,72 @@
   const FRONT_TEMPLATE = `{{Frente}}
 <script>
 (function () {
+  // Limpeza agressiva de cores (importante para TEC Concursos)
+  var containers = document.querySelectorAll('.card, .cc-enunciado, .cc-alt-texto, .comando');
+  containers.forEach(function(c) {
+    c.querySelectorAll('*').forEach(function(el) {
+      if (!el.style) return;
+      if (el.style.color || el.getAttribute('color')) {
+        el.style.setProperty('color', '#e2e8f0', 'important');
+      }
+      el.style.setProperty('background', 'transparent', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.removeProperty('font-family');
+    });
+  });
+  document.body.style.color = '#e2e8f0';
+
   // Detecta se estamos no verso (front foi re-renderizado via {{FrontSide}})
   if (document.querySelector('.cc-alts-verso')) return;
 
   var container = document.querySelector('.cc-alts-frente');
   if (!container) return;
-
-  var corretaIdx = parseInt(container.getAttribute('data-correta') || '-1', 10);
-  var alts       = Array.from(container.querySelectorAll('.cc-alt'));
-  var respondido = false;
-
-  alts.forEach(function (alt, i) {
-    alt.addEventListener('click', function () {
-      if (respondido) return;
-      respondido = true;
-
-      var acertou = (i === corretaIdx);
-
-      // Aplica as classes visuais
-      alts.forEach(function (a, j) {
-        a.classList.remove('cc-clicavel');
-        if (j === corretaIdx) {
-          a.classList.add('correta');
-          a.querySelector('.cc-letra').textContent = '\\u2713'; // ✓
-        } else if (j === i && !acertou) {
-          a.classList.add('errada');
-          a.querySelector('.cc-letra').textContent = '\\u2717'; // ✗
-        }
-      });
-
-      // Atualiza dica com feedback
-      var dica = document.getElementById('cc-dica-feedback');
-      if (dica) {
-        dica.textContent = acertou
-          ? '\\u2705 Você acertou! Boa!'
-          : '\\u274C Você errou — veja o gabarito no verso';
-        dica.className   = 'cc-dica ' + (acertou ? 'acertou' : 'errou');
-      }
-
-      // Flip para o verso após 900 ms para o usuário ver o feedback
-      setTimeout(function () {
-        try { pycmd('ans'); } catch (e) { /* AnkiWeb / fallback */ }
-      }, 900);
-    });
-  });
+...
 })();
 <\/script>`;
 
   /* ══════════════════════════════════════════════════════════════
      TEMPLATE DO VERSO
   ══════════════════════════════════════════════════════════════ */
-  const BACK_TEMPLATE = `{{Verso}}
+  const BACK_TEMPLATE = `{{FrontSide}}
+<hr id="answer">
+{{Verso}}
+<script>
+(function () {
+  /* ── Destaca a resposta correta automaticamente no Verso ── */
+  var container = document.querySelector('.cc-alts-frente');
+  if (container) {
+    var corretaIdx = parseInt(container.getAttribute('data-correta') || '-1', 10);
+    var alts       = container.querySelectorAll('.cc-alt');
+    if (alts[corretaIdx]) {
+      alts[corretaIdx].classList.add('correta');
+      var letra = alts[corretaIdx].querySelector('.cc-letra');
+      if (letra) letra.textContent = '\\u2713';
+      alts.forEach(function(a) { a.classList.remove('cc-clicavel'); });
+    }
+  }
+
+  // Limpeza de cores no verso também
+  var containers = document.querySelectorAll('.card, .cc-enunciado, .cc-alt-texto, .comando');
+  containers.forEach(function(c) {
+    c.querySelectorAll('*').forEach(function(el) {
+      if (!el.style) return;
+      if (el.style.color || el.getAttribute('color')) {
+        el.style.setProperty('color', '#e2e8f0', 'important');
+      }
+      el.style.setProperty('background', 'transparent', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.removeProperty('font-family');
+    });
+  });
+})();
+<\/script>
 {{#Extra}}
 <div class="cc-wrap" style="padding-top:0">
-  <div class="extra-box">
-    <div class="extra-label">\\u{1F4AC} Comentários</div>
-    {{Extra}}
-  </div>
+...
 </div>
 {{/Extra}}`;
+
 
   /* ══════════════════════════════════════════════════════════════
      AnkiConnect helpers
