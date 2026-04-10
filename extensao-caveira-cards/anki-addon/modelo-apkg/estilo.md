@@ -86,10 +86,17 @@
 
 /* ══ TEXTO ASSOCIADO (Expand/Collapse) ══ */
 .cc-texto-associado-wrap {
-  margin-bottom: 15px; border-radius: 8px;
-  background: #1a2540; border: 1.5px solid #1e2d4d;
+  display: block;
+  clear: both;
+  position: relative;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background: #1a2540;
+  border: 1.5px solid #1e2d4d;
   overflow: hidden;
+  width: 100%;
 }
+
 .cc-texto-associado-toggle {
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 14px; background: #223055; cursor: pointer;
