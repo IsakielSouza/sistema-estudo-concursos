@@ -78,7 +78,11 @@
         const contentEl = sec1.querySelector(".content");
         if (!contentEl && !textoAssociado) return null;
 
-        const enunciadoPrincipal = contentEl ? contentEl.innerHTML.trim() : "";
+        const enuncClone = contentEl ? contentEl.cloneNode(true) : document.createElement("div");
+        // Remove o conteúdo de apoio de dentro do enunciado se ele estiver lá duplicado
+        enuncClone.querySelectorAll(".question-supporting-content").forEach(el => el.remove());
+
+        const enunciadoPrincipal = enuncClone.innerHTML.trim();
         const enunciado = (textoAssociado + enunciadoPrincipal).trim();
         if (!enunciado) return null;
 

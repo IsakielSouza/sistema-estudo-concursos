@@ -95,6 +95,13 @@
           el.removeAttribute("face");
           el.removeAttribute("size");
         });
+        // IMPORTANTE: Remove o bloco de texto associado se ele estiver dentro do clone do enunciado,
+        // para evitar que apareça 2x (uma vez no toggle e outra aberta).
+        enuncClone.querySelectorAll(
+          ".questao-enunciado-texto, " +
+          "[class*='enunciado-texto']"
+        ).forEach(el => el.remove());
+
         // Remove listas de alternativas que podem estar dentro do enunciado
         enuncClone.querySelectorAll("ul, ol, li").forEach(el => el.remove());
         // Remove elementos de resolução e feedback embutidos que poluem o enunciado
@@ -104,7 +111,9 @@
           ".questao-resultado, " +
           "[class*='resultado'], " +
           ".questao-enunciado-comando-resolucao, " +
-          ".questao-enunciado-alternativa-correta-marcada"
+          ".questao-enunciado-alternativa-correta-marcada, " +
+          ".questao-enunciado-resolucao-errou, " +
+          ".questao-enunciado-resolucao-acertou"
         ).forEach(el => el.remove());
 
         let enunciadoPrincipal = enuncClone.innerHTML.trim();
@@ -217,7 +226,11 @@
         if (resEl) {
           // Limpa o clone: remove cabeçalhos como "Resolução:" que são visuais
           const resClone = resEl.cloneNode(true);
-          resClone.querySelectorAll(".resolucao-cabecalho, h4, h5").forEach(h => h.remove());
+          resClone.querySelectorAll(
+            ".resolucao-cabecalho, h4, h5, " +
+            ".questao-enunciado-resolucao-errou, " +
+            ".questao-enunciado-resolucao-acertou"
+          ).forEach(h => h.remove());
           explicacao = resClone.innerHTML.trim();
         }
 
