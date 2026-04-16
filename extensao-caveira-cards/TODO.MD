@@ -35,5 +35,5 @@ add detalhes a pagina como minha rede social, direitos footer padrão e header c
 no popup principal remover butão onde mostra Configurar Anki, trocar por um toogle igual butão de liga/desliga mostrando se Anki esta ligado ou desligado (ativo), apenas nome: Anki e lado toogle mostrando se esta ligado ou desligado
 [x] Salvar git commit 
 
-[ ] Task: no toast onde mostra para add questão ao anki, lado direto mostrar ícone de cafe e ao passar mouse em cima mostrar: Apoie o projeto (ícone coração)!, e ao clicar fazer igual outro atalho no popup principal, navegar usuário para tela de doação
-[ ] Salvar git commit 
+[x] Task: no toast onde mostra para add questão ao anki, lado direto mostrar ícone de cafe e ao passar mouse em cima mostrar: Apoie o projeto (ícone coração)!, e ao clicar fazer igual outro atalho no popup principal, navegar usuário para tela de doação
+[x] Salvar git commit 

@@ -129,6 +129,56 @@
   border-color: #3b6ff5;
   color: #93c5fd;
 }
+
+/* ── Botão de Apoio (☕) ── */
+#cc-overlay .cc-btn-apoio {
+  position: absolute;
+  top: 7px;
+  right: 32px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid #1e2d4d;
+  background: #1a2540;
+  color: #fbbf24;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s;
+  z-index: 2;
+  text-decoration: none;
+}
+#cc-overlay .cc-btn-apoio:hover {
+  background: #1e2d4d;
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: scale(1.1);
+}
+#cc-overlay .cc-btn-apoio::after {
+  content: "Apoie o projeto ❤️";
+  position: absolute;
+  bottom: 120%;
+  right: 0;
+  background: #0f1729;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s;
+  border: 1px solid #1e2d4d;
+  pointer-events: none;
+}
+#cc-overlay .cc-btn-apoio:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
 #cc-overlay .cc-btn-comentarios:disabled {
   opacity: 0.5;
   cursor: default;

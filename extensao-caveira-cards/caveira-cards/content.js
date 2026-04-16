@@ -416,7 +416,19 @@
     overlay.id = "cc-overlay";
     overlay.classList.add(questao.resultado === "Erros" ? "errou" : "acertou");
 
-    overlay.innerHTML = `<div class="cc-card"><img class="cc-icon" src="${LOGO_URL}" alt="CaveiraCards"><div class="cc-text"><span class="cc-title">Adicionar ao Anki</span><span class="cc-sub">${questao.resultado} · ${questao.materia}</span></div><button class="cc-close" title="Fechar">✕</button></div>`;
+    const doacaoUrl = chrome.runtime.getURL("doacao.html");
+
+    overlay.innerHTML = `
+      <div class="cc-card">
+        <img class="cc-icon" src="${LOGO_URL}" alt="CaveiraCards">
+        <div class="cc-text">
+          <span class="cc-title">Adicionar ao Anki</span>
+          <span class="cc-sub">${questao.resultado} · ${questao.materia}</span>
+        </div>
+        <a href="${doacaoUrl}" target="_blank" class="cc-btn-apoio" title="Apoie o projeto ❤️">☕</a>
+        <button class="cc-close" title="Fechar">✕</button>
+      </div>
+    `;
 
     document.body.appendChild(overlay);
     overlayEl = overlay;
