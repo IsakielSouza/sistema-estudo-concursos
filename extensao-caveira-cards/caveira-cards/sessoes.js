@@ -81,7 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
     lista.innerHTML = historico.map(sessao => {
       const aproveitamento = parseInt(sessao.aproveitamento);
       const classeCor = aproveitamento < 60 ? 'baixo' : '';
+      const mediaStr = sessao.mediaTempoStr || (sessao.mediaTempoMs ? formatarTimer(sessao.mediaTempoMs) : "-");
       
+      // Truncar matérias para não quebrar layout
+      const materiasResumo = sessao.materias 
+        ? (sessao.materias.length > 50 ? sessao.materias.substring(0, 50) + "..." : sessao.materias)
+        : "-";
+
       return `
         <tr>
           <td class="row-data">${sessao.data}</td>
@@ -89,6 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${sessao.questoes}</td>
           <td>${sessao.acertos}</td>
           <td class="row-aproveitamento ${classeCor}">${sessao.aproveitamento}</td>
+          <td>${mediaStr}</td>
+          <td title="${sessao.materias || ''}" style="font-size: 11px; color: #64748b;">${materiasResumo}</td>
           <td class="actions">
             <button class="btn-icon btn-excluir" data-id="${sessao.id}" title="Excluir">🗑️</button>
           </td>
@@ -138,14 +146,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const [y, m, d] = dataVal.split("-");
     const dataBr = `${d}/${m}/${y}`;
 
+    const durMs = durMin * 60000;
+    const mediaMs = q > 0 ? Math.round(durMs / q) : 0;
+
     const novaSessao = {
       id: Date.now(),
       data: dataBr,
-      duracaoMs: durMin * 60000,
+      duracaoMs: durMs,
       duracaoStr: durMin >= 60 ? `${Math.floor(durMin/60)}h${String(durMin%60).padStart(2,"0")}m` : `${durMin}min`,
       questoes: q,
       acertos: a,
-      aproveitamento: q > 0 ? Math.round((a / q) * 100) + "%" : "0%"
+      aproveitamento: q > 0 ? Math.round((a / q) * 100) + "%" : "0%",
+      mediaTempoMs: mediaMs,
+      mediaTempoStr: mediaMs > 0 ? formatarTimer(mediaMs) : "-",
+      materias: "Adição manual"
     };
 
     chrome.storage.local.get("historicoSessoes", ({ historicoSessoes = [] }) => {

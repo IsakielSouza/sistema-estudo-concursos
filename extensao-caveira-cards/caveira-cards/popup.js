@@ -83,6 +83,15 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
     const acertos  = sessaoAtiva?.acertos  || 0;
     const resumo = formatarResumo(duracaoMs, questoes, acertos);
     
+    // Processar detalhes
+    const detalhes = sessaoAtiva.detalhes || [];
+    const materiasSet = new Set(detalhes.map(d => d.materia));
+    const listaMaterias = Array.from(materiasSet).join(", ");
+    
+    // Calcular média de tempo por questão
+    const tempoTotalMs = detalhes.reduce((acc, d) => acc + d.tempoGastoMs, 0);
+    const mediaTempoMs = questoes > 0 ? Math.round(tempoTotalMs / questoes) : 0;
+    
     // Nova entrada para o histórico
     const novaSessao = {
       id: Date.now(),
@@ -93,7 +102,11 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
       duracaoStr: formatarTimer(duracaoMs),
       questoes,
       acertos,
-      aproveitamento: questoes > 0 ? Math.round((acertos / questoes) * 100) + "%" : "0%"
+      aproveitamento: questoes > 0 ? Math.round((acertos / questoes) * 100) + "%" : "0%",
+      mediaTempoMs,
+      mediaTempoStr: mediaTempoMs > 0 ? formatarTimer(mediaTempoMs) : "-",
+      materias: listaMaterias,
+      detalhesPorMateria: agruparPorMateria(detalhes)
     };
 
     const novoHistorico = [novaSessao, ...historicoSessoes];
@@ -216,3 +229,15 @@ ankiToggle.addEventListener("change", async () => {
     atualizarAnkiStatus(false);
   }
 });
+
+function agruparPorMateria(detalhes) {
+  const grupos = {};
+  detalhes.forEach(d => {
+    if (!grupos[d.materia]) {
+      grupos[d.materia] = { questoes: 0, acertos: 0 };
+    }
+    grupos[d.materia].questoes++;
+    if (d.resultado !== "Erros") grupos[d.materia].acertos++;
+  });
+  return grupos;
+}

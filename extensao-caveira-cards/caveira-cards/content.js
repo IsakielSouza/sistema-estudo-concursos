@@ -641,11 +641,26 @@
         try {
           chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
             if (sessaoAtiva && sessaoAtiva.ativa) {
+              const agora = Date.now();
+              const ultimaAtividade = sessaoAtiva.ultimaAtividade || sessaoAtiva.inicio;
+              
+              // Dados da questão atual
+              const detalheQuestao = {
+                materia: questao.materia,
+                resultado: questao.resultado,
+                tempoGastoMs: agora - ultimaAtividade,
+                timestamp: agora
+              };
+
               sessaoAtiva.questoes = (sessaoAtiva.questoes || 0) + 1;
               if (questao.resultado !== "Erros") {
                 sessaoAtiva.acertos = (sessaoAtiva.acertos || 0) + 1;
               }
-              sessaoAtiva.ultimaAtividade = Date.now();
+              
+              if (!sessaoAtiva.detalhes) sessaoAtiva.detalhes = [];
+              sessaoAtiva.detalhes.push(detalheQuestao);
+              
+              sessaoAtiva.ultimaAtividade = agora;
               chrome.storage.local.set({ sessaoAtiva });
             }
           });
