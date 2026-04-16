@@ -115,25 +115,6 @@ chrome.storage.onChanged.addListener((changes) => {
   }
 });
 
-// ── Badges de plataforma ──
-chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-  if (!tabs[0]) return;
-  const url = tabs[0].url || "";
-
-  function setBadge(id, ativo) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = ativo ? "ATIVO" : "INATIVO";
-    el.className = "badge " + (ativo ? "ativo" : "inativo");
-  }
-
-  setBadge("badge-tec",       url.includes("tecconcursos.com.br"));
-  setBadge("badge-gran",      url.includes("grancursosonline.com.br"));
-  setBadge("badge-qconcurso", url.includes("qconcursos.com"));
-  setBadge("badge-deltinha",       url.includes("deltinha.com.br"));
-  setBadge("badge-projetocaveira", url.includes("app.caveira.com"));
-});
-
 // ── Toggle liga/desliga ──
 const toggle = document.getElementById("toggle-enabled");
 const toggleLabel = document.getElementById("toggle-label");
@@ -168,20 +149,11 @@ toggleManual.addEventListener("change", () => {
   atualizarToggleManual(ativo);
 });
 
-// ── Setup Anki ──
-const statusEl = document.getElementById("setup-status");
-const btnSetup = document.getElementById("btn-setup");
+// ── Toggle Anki ──
+const ankiToggle = document.getElementById("anki-toggle");
+const ankiLabel  = document.getElementById("anki-toggle-label");
 
-chrome.storage.local.get("ankiSetupDone_v6", ({ ankiSetupDone_v6 }) => {
-  if (ankiSetupDone_v6) {
-    statusEl.textContent = "OK";
-    statusEl.className = "setup-status ok";
-  }
-});
-
-btnSetup.addEventListener("click", async () => {
-  statusEl.textContent = "...";
-  statusEl.className = "setup-status carregando";
+async function verificarAnki() {
   try {
     const resp = await fetch("http://localhost:8765", {
       method: "POST",
@@ -189,13 +161,39 @@ btnSetup.addEventListener("click", async () => {
       body: JSON.stringify({ action: "modelNames", version: 6, params: {} }),
     });
     const data = await resp.json();
-    if (data.result) {
-      statusEl.textContent = "OK";
-      statusEl.className = "setup-status ok";
-      chrome.storage.local.set({ ankiSetupDone_v6: true });
-    }
+    return !!data.result;
   } catch (e) {
-    statusEl.textContent = "Anki fechado";
-    statusEl.className = "setup-status erro";
+    return false;
+  }
+}
+
+function atualizarAnkiStatus(ativo) {
+  ankiToggle.checked = ativo;
+  ankiLabel.style.color = ativo ? "#4ade80" : "#f87171";
+  ankiLabel.textContent = ativo ? "Anki: Ativo" : "Anki: Desconectado";
+}
+
+chrome.storage.local.get("ankiSetupDone_v6", async ({ ankiSetupDone_v6 }) => {
+  const isOnline = await verificarAnki();
+  atualizarAnkiStatus(isOnline);
+  if (isOnline && !ankiSetupDone_v6) {
+    chrome.storage.local.set({ ankiSetupDone_v6: true });
+  }
+});
+
+ankiToggle.addEventListener("change", async () => {
+  if (ankiToggle.checked) {
+    ankiLabel.textContent = "Conectando...";
+    const isOnline = await verificarAnki();
+    if (isOnline) {
+      atualizarAnkiStatus(true);
+      chrome.storage.local.set({ ankiSetupDone_v6: true });
+    } else {
+      setTimeout(() => {
+        atualizarAnkiStatus(false);
+      }, 500);
+    }
+  } else {
+    atualizarAnkiStatus(false);
   }
 });
