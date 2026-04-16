@@ -76,14 +76,33 @@ document.getElementById("btn-iniciar").addEventListener("click", () => {
 // Encerrar sessão
 document.getElementById("btn-encerrar").addEventListener("click", () => {
   if (timerInterval) clearInterval(timerInterval);
-  chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
-    const duracao = Date.now() - (sessaoAtiva?.inicio || Date.now());
+  chrome.storage.local.get(["sessaoAtiva", "historicoSessoes"], ({ sessaoAtiva, historicoSessoes = [] }) => {
+    const agora = Date.now();
+    const duracaoMs = agora - (sessaoAtiva?.inicio || agora);
     const questoes = sessaoAtiva?.questoes || 0;
     const acertos  = sessaoAtiva?.acertos  || 0;
-    const resumo = formatarResumo(duracao, questoes, acertos);
+    const resumo = formatarResumo(duracaoMs, questoes, acertos);
+    
+    // Nova entrada para o histórico
+    const novaSessao = {
+      id: Date.now(),
+      data: new Date().toLocaleDateString("pt-BR"),
+      inicio: sessaoAtiva.inicio,
+      fim: agora,
+      duracaoMs,
+      duracaoStr: formatarTimer(duracaoMs),
+      questoes,
+      acertos,
+      aproveitamento: questoes > 0 ? Math.round((acertos / questoes) * 100) + "%" : "0%"
+    };
+
+    const novoHistorico = [novaSessao, ...historicoSessoes];
+    
     chrome.storage.local.set({
-      sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: Date.now(), questoes, acertos }
+      sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos },
+      historicoSessoes: novoHistorico
     });
+
     summaryValEl.textContent = resumo;
     mostrarEstado("summary");
   });

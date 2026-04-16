@@ -307,9 +307,14 @@
   <div class="session-box" id="session-box">
 
     <!-- Estado: idle -->
-    <div class="session-idle" id="session-idle">
-      <span class="session-idle-label">📚 Nenhuma sessão ativa</span>
-      <button class="btn-iniciar" id="btn-iniciar">Iniciar</button>
+    <div class="session-idle" id="session-idle" style="flex-direction: column; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+        <span class="session-idle-label">📚 Nenhuma sessão ativa</span>
+        <button class="btn-iniciar" id="btn-iniciar">Iniciar</button>
+      </div>
+      <a href="sessoes.html" target="_blank" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 0; justify-content: center; background: #0b1222; width: 100%;">
+        📊 Ver Histórico
+      </a>
     </div>
 
     <!-- Estado: ativa -->
@@ -336,6 +341,9 @@
       <div class="summary-label">Resumo da sessão</div>
       <div class="summary-val" id="summary-val">—</div>
       <button class="btn-copiar" id="btn-copiar">📋 Copiar resumo</button>
+      <a href="sessoes.html" target="_blank" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 6px; justify-content: center;">
+        📊 Ver Histórico Completo
+      </a>
       <button class="btn-nova-sessao" id="btn-nova-sessao">+ Nova sessão</button>
     </div>
 
