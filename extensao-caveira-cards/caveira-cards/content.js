@@ -22,9 +22,13 @@
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
-  chrome.storage.local.get("caveiraCardsEnabled", ({ caveiraCardsEnabled }) => {
+  let manualCommentCaptureEnabled = false;
+
+  chrome.storage.local.get(["caveiraCardsEnabled", "manualCommentCaptureEnabled"], ({ caveiraCardsEnabled, manualCommentCaptureEnabled: manualEnabled }) => {
     extensaoAtiva = caveiraCardsEnabled !== false;
+    manualCommentCaptureEnabled = manualEnabled === true;
   });
+
   chrome.storage.onChanged.addListener((changes) => {
     if ("caveiraCardsEnabled" in changes) {
       extensaoAtiva = changes.caveiraCardsEnabled.newValue !== false;
@@ -34,6 +38,77 @@
       } else if (extensaoAtiva) {
         verificar();
       }
+    }
+    if ("manualCommentCaptureEnabled" in changes) {
+      manualCommentCaptureEnabled = changes.manualCommentCaptureEnabled.newValue === true;
+    }
+  });
+
+  // ── Monitorar cliques para Captura Manual (Like) ──
+  document.addEventListener("click", async (e) => {
+    if (!extensaoAtiva || !manualCommentCaptureEnabled) return;
+    if (typeof adapter.capturarUnicoComentario !== "function") return;
+
+    // Identificar se o alvo é um botão de "Gostei" / "Like"
+    let btnLike = null;
+    
+    if (adapter.nomePlataforma === "TEC Concursos") {
+      btnLike = e.target.closest("button.discussao-comentario-nota-seta.nota-positiva");
+    } else if (adapter.nomePlataforma === "QConcursos") {
+      btnLike = e.target.closest(".js-question-comment-like, .js-like-comment, .q-icon.material-icons:contains('thumb_up')");
+      // QConcursos usa muitos elementos diferentes, busca simplificada:
+      if (!btnLike && (e.target.innerText === "thumb_up" || e.target.classList.contains("q-icon"))) {
+         btnLike = e.target.closest("button, a");
+      }
+    } else if (adapter.nomePlataforma === "ProjetoCaveira") {
+      btnLike = e.target.closest("button[title*='Gostei'], .q-btn");
+      // Verifica se o botão clicado parece ser um like (ícone thumb_up)
+      if (btnLike && !btnLike.querySelector(".i-thumb-up, .thumb_up, [class*='thumb']")) {
+        // Se não tem ícone de like, talvez não seja o botão certo
+        if (!e.target.innerHTML.includes("thumb_up")) btnLike = null;
+      }
+    }
+
+    if (!btnLike) return;
+
+    // Captura o comentário
+    const comentario = adapter.capturarUnicoComentario(btnLike);
+    if (!comentario) return;
+
+    console.log("[CaveiraCards] Captura manual detectada:", comentario);
+
+    // Feedback visual temporário no botão
+    const originalText = btnLike.innerText;
+    
+    try {
+      // Tenta encontrar a nota do Anki para a questão atual
+      let noteId = noteIdAtual;
+      if (!noteId && questaoAtual) {
+        const query = `deck:"CaveiraCards" "Frente:${questaoAtual.enunciado.substring(0, 30)}*"`;
+        const notes = await window.CaveiraAnki.buscarNotas(query);
+        if (notes && notes.length > 0) noteId = notes[0];
+      }
+
+      if (!noteId) {
+        console.warn("[CaveiraCards] Nota não encontrada para captura manual.");
+        return;
+      }
+
+      const html = formatarComentarios([comentario]);
+      // Remove o <hr> inicial se for apenas um comentário manual sendo adicionado sozinho
+      const cleanHtml = html.replace(/^<hr[^>]*>/, "");
+      
+      await window.CaveiraAnki.atualizarExtra(noteId, cleanHtml);
+      
+      // Feedback de sucesso
+      const badge = document.createElement("span");
+      badge.innerText = "✓ Anki";
+      badge.style = "position:absolute; background:#22c55e; color:white; font-size:10px; padding:2px 4px; border-radius:4px; z-index:9999;";
+      btnLike.appendChild(badge);
+      setTimeout(() => badge.remove(), 2000);
+
+    } catch (err) {
+      console.error("[CaveiraCards] Erro na captura manual:", err);
     }
   });
 

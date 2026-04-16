@@ -361,5 +361,15 @@
         return null;
       }
     },
+
+    // ── Helper para captura manual via clique no Like ──
+    capturarUnicoComentario(btnLike) {
+      const container = btnLike.closest(".js-question-comment, .q-comment, .q-lesson-item");
+      if (!container) return null;
+      const textEl = container.querySelector(".js-question-comment-text, .q-comment-text, .q-lesson-text");
+      if (!textEl) return null;
+      const html = textEl.innerHTML.trim();
+      return html ? { score: "Manual", html } : null;
+    }
   };
 })();

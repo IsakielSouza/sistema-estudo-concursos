@@ -169,6 +169,7 @@
 
       if (!card) return null;
 
+      // ── 1. Comentário do professor ──
       // Clica no botão da aba se .teacher-comment ainda não está no DOM
       if (!card.querySelector(".teacher-comment")) {
         const tabBtn =
@@ -176,16 +177,72 @@
           Array.from(card.querySelectorAll("button")).find(b =>
             b.innerText?.toLowerCase().includes("comentário do professor")
           );
-        if (!tabBtn) return null;
-        tabBtn.click();
-        await new Promise(r => setTimeout(r, 1800));
+        if (tabBtn) {
+          tabBtn.click();
+          await new Promise(r => setTimeout(r, 1000));
+        }
       }
 
-      const el = card.querySelector(".teacher-comment") || document.querySelector(".teacher-comment");
-      if (!el) return null;
-      const html = el.innerHTML.trim();
-      if (!html) return null;
-      return [{ score: "", html }];
+      const comentarios = [];
+      const teacherEl = card.querySelector(".teacher-comment") || document.querySelector(".teacher-comment");
+      if (teacherEl && teacherEl.innerHTML.trim()) {
+        comentarios.push({ score: 9999, html: teacherEl.innerHTML.trim() });
+      }
+
+      // ── 2. Comentários dos alunos ──
+      // Clica na aba de comentários se disponível
+      const studentTabBtn =
+        card.querySelector('button[title="Comentários dos alunos"]') ||
+        Array.from(card.querySelectorAll("button")).find(b =>
+          b.innerText?.toLowerCase().includes("comentários")
+        );
+      if (studentTabBtn) {
+        studentTabBtn.click();
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      // No Projeto Caveira (Quasar), comentários costumam estar em .q-list ou .comment-item
+      const commentItems = Array.from(card.querySelectorAll(".q-item.items-start, .comment-item"));
+      commentItems.forEach(item => {
+        const textEl = item.querySelector(".q-item__label--caption, .comment-text, .text-body2");
+        if (!textEl) return;
+        
+        // Busca likes (ex: um span com número perto de um ícone de thumb_up)
+        const likesEl = item.querySelector(".q-btn .q-badge, .likes-count");
+        const score = likesEl ? (parseInt(likesEl.innerText, 10) || 0) : 0;
+        
+        const html = textEl.innerHTML.trim();
+        if (html && html.length > 5) {
+          comentarios.push({ score, html });
+        }
+      });
+
+      if (!comentarios.length) return null;
+
+      // Ordena por score e remove duplicados
+      comentarios.sort((a, b) => b.score - a.score);
+      const vistos = new Set();
+      const final = comentarios.filter(c => {
+        const mini = c.html.substring(0, 100);
+        if (vistos.has(mini)) return false;
+        vistos.add(mini);
+        return true;
+      });
+
+      return final.slice(0, 5);
     },
+
+    // ── Helper para captura manual via clique no Like ──
+    capturarUnicoComentario(btnLike) {
+      // Sobe até o container do comentário
+      const container = btnLike.closest(".q-item, .comment-item, li");
+      if (!container) return null;
+
+      const textEl = container.querySelector(".q-item__label--caption, .comment-text, .text-body2, .discussao-comentario-post-texto");
+      if (!textEl) return null;
+
+      const html = textEl.innerHTML.trim();
+      return html ? { score: "Manual", html } : null;
+    }
   };
 })();

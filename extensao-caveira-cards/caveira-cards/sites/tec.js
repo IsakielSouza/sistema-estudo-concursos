@@ -307,13 +307,23 @@
 
         if (!comentarios.length) return null;
 
-        // Retorna os 3 comentários com maior score
+        // Retorna os 5 comentários com maior score
         comentarios.sort((a, b) => b.score - a.score);
-        return comentarios.slice(0, 3);
+        return comentarios.slice(0, 5);
       } catch (e) {
         console.error("[CaveiraCards/TEC] Erro ao capturar comentários:", e);
         return null;
       }
     },
+
+    // ── Helper para captura manual via clique no Like ──
+    capturarUnicoComentario(btnLike) {
+      const li = btnLike.closest("li");
+      if (!li) return null;
+      const textoEl = li.querySelector(".discussao-comentario-post-texto, .comentario-texto, [class*='post-texto']");
+      if (!textoEl) return null;
+      const html = textoEl.innerHTML.trim();
+      return html ? { score: "Manual", html } : null;
+    }
   };
 })();

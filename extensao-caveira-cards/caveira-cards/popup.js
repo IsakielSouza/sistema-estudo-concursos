@@ -137,6 +137,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 // ── Toggle liga/desliga ──
 const toggle = document.getElementById("toggle-enabled");
 const toggleLabel = document.getElementById("toggle-label");
+const toggleManual = document.getElementById("toggle-manual");
+const toggleManualLabel = document.getElementById("toggle-manual-label");
 
 function atualizarToggle(ativo) {
   toggle.checked = ativo;
@@ -144,14 +146,26 @@ function atualizarToggle(ativo) {
   toggleLabel.style.color = ativo ? "#4ade80" : "#f87171";
 }
 
-chrome.storage.local.get("caveiraCardsEnabled", ({ caveiraCardsEnabled }) => {
+function atualizarToggleManual(ativo) {
+  toggleManual.checked = ativo;
+  toggleManualLabel.style.color = ativo ? "#93c5fd" : "#64748b";
+}
+
+chrome.storage.local.get(["caveiraCardsEnabled", "manualCommentCaptureEnabled"], ({ caveiraCardsEnabled, manualCommentCaptureEnabled }) => {
   atualizarToggle(caveiraCardsEnabled !== false); // default: ativo
+  atualizarToggleManual(manualCommentCaptureEnabled === true); // default: inativo
 });
 
 toggle.addEventListener("change", () => {
   const ativo = toggle.checked;
   chrome.storage.local.set({ caveiraCardsEnabled: ativo });
   atualizarToggle(ativo);
+});
+
+toggleManual.addEventListener("change", () => {
+  const ativo = toggleManual.checked;
+  chrome.storage.local.set({ manualCommentCaptureEnabled: ativo });
+  atualizarToggleManual(ativo);
 });
 
 // ── Setup Anki ──

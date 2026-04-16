@@ -158,9 +158,9 @@
           return { score, html };
         }).filter(Boolean);
 
-        // Top 3 por relevância (curtidas)
+        // Top 5 por relevância (curtidas)
         items.sort((a, b) => b.score - a.score);
-        comentarios.push(...items.slice(0, 3));
+        comentarios.push(...items.slice(0, 5));
 
         return comentarios.length ? comentarios : null;
       } catch (e) {
