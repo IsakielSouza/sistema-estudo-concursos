@@ -17,6 +17,8 @@
   let noteIdAtual = null; // Guarda o ID da nota da questão atual
   let questaoElAtual = null; // Guarda o elemento DOM da questão atual (ProjetoCaveira)
   let questaoAtual = null;  // Guarda o objeto questão atual
+  let mostrandoOverlay = false; // Evita overlay simultâneo durante await do dialog
+  let comentariosAutoCapturados = false; // Evita botão manual após auto-captura TEC
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
@@ -47,10 +49,27 @@
   });
 
 
+  // ── Guarda de contexto: para tudo se a extensão for recarregada ──
+  function contextoValido() {
+    try { return !!chrome.runtime?.id; } catch { return false; }
+  }
+
+  function pararExtensao() {
+    observer.disconnect();
+    clearInterval(intervalId);
+    if (overlayEl) { overlayEl.remove(); overlayEl = null; }
+  }
+
   // ── Observador de mudanças no DOM ──
-  const observer = new MutationObserver(() => verificar());
+  const observer = new MutationObserver(() => {
+    if (!contextoValido()) { pararExtensao(); return; }
+    verificar();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
-  setInterval(verificar, 1000); 
+  const intervalId = setInterval(() => {
+    if (!contextoValido()) { pararExtensao(); return; }
+    verificar();
+  }, 1000);
 
   function verificar() {
     if (!extensaoAtiva) return;
@@ -66,6 +85,7 @@
         }
         ultimaChaveTEC = idAtual;
         noteIdAtual = null; // Reset do ID da nota ao mudar de questão
+        comentariosAutoCapturados = false; // Reset ao mudar de questão
       }
 
       if (!idAtual) return;
@@ -82,12 +102,13 @@
       }
       
       const questao = adapter.capturarQuestao();
-      if (!overlayEl && questao) {
+      if (!overlayEl && !mostrandoOverlay && questao) {
         mostrarOverlay(questao);
       }
 
       // ── Lógica Dinâmica do Botão de Comentários (TEC) ──
-      if (overlayEl && overlayEl.classList.contains("sucesso")) {
+      // O botão manual só aparece se a auto-captura não capturou (fallback)
+      if (overlayEl && overlayEl.classList.contains("sucesso") && !comentariosAutoCapturados) {
         const painelAberto = !!document.querySelector(".questao-complementos-cabecalho");
         const btnExistente = overlayEl.querySelector(".cc-btn-comentarios");
 
@@ -107,6 +128,7 @@
         if (!enuncEl) return;
         const chave = enuncEl.innerText.trim().substring(0, 80);
         if (!chave || processadas.has(chave)) return;
+        if (mostrandoOverlay) return; // aguarda dialog de sessão fechar (retenta no próximo ciclo)
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
         processadas.add(chave);
@@ -140,6 +162,7 @@
         if (!enuncEl) return;
         const chave = enuncEl.innerText.trim().substring(0, 80);
         if (!chave || processadas.has(chave)) return;
+        if (mostrandoOverlay) return; // aguarda dialog de sessão fechar
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
         processadas.add(chave);
@@ -165,6 +188,7 @@
         if (!enuncEl) return;
         const chave = enuncEl.innerText.trim().substring(0, 80);
         if (!chave || processadas.has(chave)) return;
+        if (mostrandoOverlay) return; // aguarda dialog de sessão fechar
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
         processadas.add(chave);
@@ -181,10 +205,11 @@
         if (!enuncEl) return;
         const chave = enuncEl.innerText.trim().substring(0, 80);
         if (!chave || processadas.has(chave)) return;
-        processadas.add(chave);
+        if (mostrandoOverlay) return; // aguarda dialog de sessão fechar
 
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
+        processadas.add(chave);
         questaoElAtual = questaoEl;
         questaoAtual = questao;
         mostrarOverlay(questao);
@@ -213,6 +238,7 @@
         );
         const chave = radioInput ? radioInput.name : null;
         if (!chave || processadas.has(chave)) return;
+        if (mostrandoOverlay) return; // aguarda dialog de sessão fechar
 
         const questao = adapter.capturarQuestao(questaoEl);
         if (!questao) return;
@@ -223,9 +249,91 @@
     }
   }
 
+  // ── Sessão: verificação de inatividade (> 1h sem responder questão) ──
+
+  function mostrarDialogSessaoInativa(sessao) {
+    return new Promise((resolve) => {
+      const antigo = document.getElementById("cc-sessao-dialog");
+      if (antigo) antigo.remove();
+
+      const duracao = Date.now() - sessao.inicio;
+      const totalMin = Math.floor(duracao / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      const duracaoStr = h > 0
+        ? `${h}h${String(m).padStart(2, "0")}min`
+        : `${m}min`;
+      const q = sessao.questoes || 0;
+      const a = sessao.acertos  || 0;
+      const plural = q !== 1 ? "questões" : "questão";
+
+      const dialog = document.createElement("div");
+      dialog.id = "cc-sessao-dialog";
+      dialog.innerHTML = `
+        <div class="cc-sessao-card">
+          <div class="cc-sessao-header">
+            <img class="cc-sessao-icon" src="${LOGO_URL}" alt="CaveiraCards">
+            <div class="cc-sessao-info">
+              <span class="cc-sessao-title">⏸ Sessão pausada</span>
+              <span class="cc-sessao-sub">${q} ${plural} · ✅ ${a} acertos · ${duracaoStr}</span>
+            </div>
+          </div>
+          <div class="cc-sessao-pergunta">Você ficou mais de 1h sem atividade. O que fazer?</div>
+          <div class="cc-sessao-acoes">
+            <button class="cc-sessao-btn cc-sessao-nova" id="cc-btn-sessao-nova">🆕 Nova sessão</button>
+            <button class="cc-sessao-btn cc-sessao-continuar" id="cc-btn-sessao-continuar">▶ Continuar</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(dialog);
+
+      document.getElementById("cc-btn-sessao-nova").addEventListener("click", () => {
+        dialog.remove();
+        resolve("nova");
+      });
+      document.getElementById("cc-btn-sessao-continuar").addEventListener("click", () => {
+        dialog.remove();
+        resolve("continuar");
+      });
+    });
+  }
+
+  async function verificarInatividade() {
+    if (!contextoValido()) return;
+    return new Promise((resolve) => {
+      try { chrome.storage.local.get("sessaoAtiva", async ({ sessaoAtiva }) => {
+        if (!sessaoAtiva || !sessaoAtiva.ativa) { resolve(); return; }
+
+        const ultima = sessaoAtiva.ultimaAtividade || sessaoAtiva.inicio;
+        const inativo = Date.now() - ultima;
+
+        if (inativo < 3_600_000) { resolve(); return; } // menos de 1h → ok
+
+        // Mais de 1h inativo — perguntar ao usuário
+        const escolha = await mostrarDialogSessaoInativa(sessaoAtiva);
+
+        if (escolha === "nova") {
+          const nova = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, ultimaAtividade: Date.now() };
+          chrome.storage.local.set({ sessaoAtiva: nova }, resolve);
+        } else {
+          // Continuar: só atualiza o timestamp de atividade
+          sessaoAtiva.ultimaAtividade = Date.now();
+          chrome.storage.local.set({ sessaoAtiva }, resolve);
+        }
+      }); } catch { resolve(); }
+    });
+  }
+
   // ── Overlay ──
 
-  function mostrarOverlay(questao) {
+  async function mostrarOverlay(questao) {
+    if (mostrandoOverlay) return;
+    mostrandoOverlay = true;
+
+    // Verifica inatividade antes de mostrar — exibe dialog se > 1h parado
+    await verificarInatividade();
+
     const antigo = document.getElementById("cc-overlay");
     if (antigo) antigo.remove();
 
@@ -237,6 +345,19 @@
 
     document.body.appendChild(overlay);
     overlayEl = overlay;
+    mostrandoOverlay = false; // overlay criado — libera para próxima questão
+
+    // Registra que houve atividade agora
+    if (contextoValido()) {
+      try {
+        chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
+          if (sessaoAtiva && sessaoAtiva.ativa) {
+            sessaoAtiva.ultimaAtividade = Date.now();
+            chrome.storage.local.set({ sessaoAtiva });
+          }
+        });
+      } catch { /* contexto inválido — ignora */ }
+    }
 
     overlay.querySelector(".cc-card").addEventListener("click", e => {
       if (e.target.classList.contains("cc-close") || e.target.classList.contains("cc-btn-comentarios")) return;
@@ -308,6 +429,113 @@
     });
   }
 
+  // ── Auto-abertura do painel de comentários (TEC) ──
+  // Clica programaticamente na aba/botão de discussão e aguarda o painel aparecer.
+  async function abrirPainelComentariosTEC() {
+    // Painel já aberto? Nada a fazer.
+    if (document.querySelector(".questao-complementos-cabecalho")) return true;
+
+    // 1) Tenta seletores específicos do TEC (Angular ng-click / classes)
+    const seletores = [
+      ".questao-complementos-aba-discussao",
+      ".questao-complementos-tab-discussao",
+      "[class*='questao-complementos'][class*='discussao']",
+      "[class*='questao-complementos'][class*='comentario']",
+      "[ng-click*='discussao']",
+      "[ng-click*='Discussao']",
+      "[ng-click*='comentario']",
+      "[ng-click*='Comentario']",
+      "[class*='aba'][class*='discussao']",
+      "[class*='tab'][class*='discussao']",
+      "li[class*='discussao']",
+    ];
+
+    let botao = null;
+    for (const s of seletores) {
+      const el = document.querySelector(s);
+      if (el) { botao = el; break; }
+    }
+
+    // 2) Fallback: busca por texto visível ("Discussão", "Comentários")
+    if (!botao) {
+      const candidatos = document.querySelectorAll(
+        "button, a, li, span, [ng-click], [class*='aba'], [class*='tab'], [class*='complemento']"
+      );
+      for (const el of candidatos) {
+        const txt = (el.innerText || el.textContent || "").trim().toLowerCase();
+        if (txt === "discussão" || txt === "comentários" ||
+            txt === "discussao"  || txt === "comentarios") {
+          botao = el;
+          break;
+        }
+      }
+    }
+
+    if (!botao) return false;
+
+    botao.click();
+
+    // Aguarda até 5s para o painel ou a lista de comentários aparecer
+    for (let i = 0; i < 50; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if (document.querySelector(".questao-complementos-cabecalho")) return true;
+      const ul = document.querySelector(
+        "ul.discussao-comentarios, .discussao ul, [class*='discussao'] ul"
+      );
+      if (ul && ul.offsetParent !== null) return true;
+    }
+
+    return false;
+  }
+
+  // ── Auto-captura de comentários após envio ao Anki (TEC) ──
+  async function autoCapturarComentariosTEC(questao, noteId) {
+    if (typeof adapter.capturarComentarios !== "function") return;
+    const overlay = overlayEl;
+    if (!overlay) return;
+
+    const subEl   = overlay.querySelector(".cc-sub");
+    const titleEl = overlay.querySelector(".cc-title");
+
+    try {
+      subEl.textContent = "Abrindo comentários...";
+      const painelAberto = await abrirPainelComentariosTEC();
+
+      if (!painelAberto) {
+        // Painel não abriu — restaura texto e deixa botão manual como fallback
+        subEl.textContent = `${questao.resultado} · ${questao.materia}`;
+        return;
+      }
+
+      subEl.textContent = "Capturando comentários...";
+
+      // Aguarda os comentários renderizarem
+      await new Promise(r => setTimeout(r, 600));
+
+      const comentarios = await adapter.capturarComentarios();
+
+      if (!comentarios || !comentarios.length) {
+        subEl.textContent = `${questao.resultado} · ${questao.materia}`;
+        return;
+      }
+
+      const extraOriginal = [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>");
+      const comentariosHtml = formatarComentarios(comentarios);
+      const extraFinal = extraOriginal
+        ? extraOriginal + comentariosHtml
+        : comentariosHtml.replace(/^<hr[^>]*>/, "");
+
+      await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
+
+      comentariosAutoCapturados = true;
+      titleEl.textContent = "Adicionado! ✓";
+      subEl.textContent = "💬 Com comentários";
+    } catch (err) {
+      console.warn("[CaveiraCards] Auto-comentários falhou:", err);
+      subEl.textContent = `${questao.resultado} · ${questao.materia}`;
+    }
+  }
+
   async function enviarParaAnki(questao) {
     const overlay = overlayEl;
     if (!overlay) return;
@@ -325,6 +553,28 @@
       overlay.classList.remove("loading", "errou", "acertou");
       overlay.classList.add("sucesso");
       titleEl.textContent = "Adicionado! ✓";
+
+      // ── Auto-captura de comentários (TEC) ──
+      // Roda em segundo plano: abre o painel e captura os top comentários automaticamente.
+      if (adapter.nomePlataforma === "TEC Concursos") {
+        autoCapturarComentariosTEC(questao, noteId);
+      }
+
+      // ── Incrementar contadores da sessão ativa ──
+      if (contextoValido()) {
+        try {
+          chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
+            if (sessaoAtiva && sessaoAtiva.ativa) {
+              sessaoAtiva.questoes = (sessaoAtiva.questoes || 0) + 1;
+              if (questao.resultado !== "Erros") {
+                sessaoAtiva.acertos = (sessaoAtiva.acertos || 0) + 1;
+              }
+              sessaoAtiva.ultimaAtividade = Date.now();
+              chrome.storage.local.set({ sessaoAtiva });
+            }
+          });
+        } catch { /* contexto inválido — ignora */ }
+      }
 
     } catch (err) {
       overlay.classList.remove("loading");
