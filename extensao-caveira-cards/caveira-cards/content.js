@@ -200,6 +200,27 @@
         }
       }
     }
+
+    // Focus Concursos: múltiplas questões por página (Vue SPA / Vuetify)
+    // Suporta Certo/Errado e Múltipla Escolha; texto associado incluído no enunciado.
+    if (adapter.nomePlataforma === "Focus Concursos") {
+      document.querySelectorAll(adapter.seletorQuestao).forEach(questaoEl => {
+        if (!adapter.questaoRespondida(questaoEl)) return;
+
+        // Chave de deduplicação: name do radiogroup (ex: "v-radio-472")
+        const radioInput = questaoEl.querySelector(
+          ".v-input--radio-group__input input[type='radio']"
+        );
+        const chave = radioInput ? radioInput.name : null;
+        if (!chave || processadas.has(chave)) return;
+
+        const questao = adapter.capturarQuestao(questaoEl);
+        if (!questao) return;
+
+        processadas.add(chave);
+        mostrarOverlay(questao);
+      });
+    }
   }
 
   // ── Overlay ──
