@@ -429,53 +429,33 @@
     });
   }
 
+  // ── Simulação de tecla (TEC usa atalhos de teclado) ──
+  function simularTecla(key, keyCode) {
+    ["keydown", "keypress", "keyup"].forEach(tipo => {
+      document.dispatchEvent(new KeyboardEvent(tipo, {
+        key, keyCode, which: keyCode, bubbles: true, cancelable: true
+      }));
+    });
+  }
+
   // ── Auto-abertura do painel de comentários (TEC) ──
-  // Clica programaticamente na aba/botão de discussão e aguarda o painel aparecer.
+  // Usa o seletor exato do botão de Fórum de discussão do TEC.
   async function abrirPainelComentariosTEC() {
     // Painel já aberto? Nada a fazer.
     if (document.querySelector(".questao-complementos-cabecalho")) return true;
 
-    // 1) Tenta seletores específicos do TEC (Angular ng-click / classes)
-    const seletores = [
-      ".questao-complementos-aba-discussao",
-      ".questao-complementos-tab-discussao",
-      "[class*='questao-complementos'][class*='discussao']",
-      "[class*='questao-complementos'][class*='comentario']",
-      "[ng-click*='discussao']",
-      "[ng-click*='Discussao']",
-      "[ng-click*='comentario']",
-      "[ng-click*='Comentario']",
-      "[class*='aba'][class*='discussao']",
-      "[class*='tab'][class*='discussao']",
-      "li[class*='discussao']",
-    ];
+    // Seletor exato do botão de discussão (ng-click="vm.abrirComplemento('discussao')")
+    // Atalho nativo do TEC: tecla F (keyCode 70)
+    const botao = document.querySelector("button[ng-click=\"vm.abrirComplemento('discussao')\"]");
 
-    let botao = null;
-    for (const s of seletores) {
-      const el = document.querySelector(s);
-      if (el) { botao = el; break; }
+    if (botao) {
+      botao.click();
+    } else {
+      // Fallback: simula a tecla F (atalho nativo do TEC para abrir fórum)
+      simularTecla("f", 70);
     }
 
-    // 2) Fallback: busca por texto visível ("Discussão", "Comentários")
-    if (!botao) {
-      const candidatos = document.querySelectorAll(
-        "button, a, li, span, [ng-click], [class*='aba'], [class*='tab'], [class*='complemento']"
-      );
-      for (const el of candidatos) {
-        const txt = (el.innerText || el.textContent || "").trim().toLowerCase();
-        if (txt === "discussão" || txt === "comentários" ||
-            txt === "discussao"  || txt === "comentarios") {
-          botao = el;
-          break;
-        }
-      }
-    }
-
-    if (!botao) return false;
-
-    botao.click();
-
-    // Aguarda até 5s para o painel ou a lista de comentários aparecer
+    // Aguarda até 5s para o painel ou lista de comentários aparecer
     for (let i = 0; i < 50; i++) {
       await new Promise(r => setTimeout(r, 100));
       if (document.querySelector(".questao-complementos-cabecalho")) return true;
@@ -529,7 +509,16 @@
 
       comentariosAutoCapturados = true;
       titleEl.textContent = "Adicionado! ✓";
-      subEl.textContent = "💬 Com comentários";
+      subEl.textContent = "💬 Próxima questão...";
+
+      // Aguarda um instante para o usuário ver o feedback e avança com N
+      await new Promise(r => setTimeout(r, 900));
+      if (overlay.isConnected) {
+        overlay.remove();
+        overlayEl = null;
+      }
+      simularTecla("n", 78); // Tecla N = próxima questão no TEC
+
     } catch (err) {
       console.warn("[CaveiraCards] Auto-comentários falhou:", err);
       subEl.textContent = `${questao.resultado} · ${questao.materia}`;
