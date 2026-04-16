@@ -54,12 +54,32 @@
           }
         }
 
-        // ── Enunciado ──
-        // sec1.children[0] = "Conteúdo de apoio" (expansion item, skip)
-        // sec1.children[1] = .content = enunciado
+        // ── Enunciado e Conteúdo de Apoio ──
+        let textoAssociado = "";
+        const supportingContentEl = sec1.querySelector(".question-supporting-content");
+        if (supportingContentEl) {
+          const conteudoAssoc = supportingContentEl.innerHTML.trim();
+          if (conteudoAssoc) {
+            textoAssociado = `
+              <div class="cc-texto-associado-wrap">
+                <div class="cc-texto-associado-toggle">
+                  <span>Conteúdo de apoio</span>
+                  <span class="cc-texto-associado-icon">+</span>
+                </div>
+                <div class="cc-texto-associado-content" style="display: none;">
+                  ${conteudoAssoc}
+                </div>
+              </div>`;
+          }
+        }
+
+        // sec1.children[0] pode ser o "Conteúdo de apoio" (expansion item)
+        // sec1.querySelector(".content") é o enunciado principal
         const contentEl = sec1.querySelector(".content");
-        if (!contentEl) return null;
-        const enunciado = contentEl.innerHTML.trim();
+        if (!contentEl && !textoAssociado) return null;
+
+        const enunciadoPrincipal = contentEl ? contentEl.innerHTML.trim() : "";
+        const enunciado = (textoAssociado + enunciadoPrincipal).trim();
         if (!enunciado) return null;
 
         // ── Alternativas ──

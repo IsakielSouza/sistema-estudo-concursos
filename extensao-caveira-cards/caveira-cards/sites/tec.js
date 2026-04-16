@@ -47,16 +47,47 @@
     /* ── Captura questão ── */
     capturarQuestao() {
       try {
-        /* 1. Enunciado ─────────────────────────────────────────── */
+        /* 1. Texto Associado (se houver) ────────────────────────── */
+        let textoAssociado = "";
+        const textoAssocEl = primeiroCSSQuery(
+          ".questao-enunciado-texto",
+          "[class*='enunciado-texto']",
+          ".questao-enunciado .texto"
+        );
+        if (textoAssocEl) {
+          const cloneAssoc = textoAssocEl.cloneNode(true);
+          // Limpeza de estilos que poluem o Anki
+          cloneAssoc.querySelectorAll("*").forEach(el => {
+            el.removeAttribute("style");
+            el.removeAttribute("color");
+            el.removeAttribute("face");
+            el.removeAttribute("size");
+          });
+          const conteudoAssoc = cloneAssoc.innerHTML.trim();
+          if (conteudoAssoc) {
+            textoAssociado = `
+              <div class="cc-texto-associado-wrap">
+                <div class="cc-texto-associado-toggle">
+                  <span>Texto associado</span>
+                  <span class="cc-texto-associado-icon">+</span>
+                </div>
+                <div class="cc-texto-associado-content" style="display: none;">
+                  ${conteudoAssoc}
+                </div>
+              </div>`;
+          }
+        }
+
+        /* 2. Enunciado (Comando) ────────────────────────────────── */
         const enunciadoEl = primeiroCSSQuery(
           ".questao-enunciado-comando",
           "[class*='questao-enunciado-comando']",
           ".questao-enunciado .comando",
           ".questao-enunciado"
         );
-        if (!enunciadoEl) return null;
+        if (!enunciadoEl && !textoAssociado) return null;
 
-        const enuncClone = enunciadoEl.cloneNode(true);
+        const enuncClone = enunciadoEl ? enunciadoEl.cloneNode(true) : document.createElement("div");
         // Remove estilos inline que causam texto preto no Anki
         enuncClone.querySelectorAll("*").forEach(el => {
           el.removeAttribute("style");
@@ -76,7 +107,7 @@
           ".questao-enunciado-alternativa-correta-marcada"
         ).forEach(el => el.remove());
 
-        let enunciado = enuncClone.innerHTML.trim();
+        let enunciadoPrincipal = enuncClone.innerHTML.trim();
 
         // Lista exaustiva de marcadores de feedback que devem ser cortados
         const cortes = [
@@ -94,12 +125,13 @@
         // Remove qualquer texto de feedback que tenha sobrado como texto puro
         for (const corte of cortes) {
           const regex = new RegExp(corte.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ".*", "gi");
-          enunciado = enunciado.replace(regex, "").trim();
+          enunciadoPrincipal = enunciadoPrincipal.replace(regex, "").trim();
         }
 
-        if (!enunciado || enunciado.length < 10) return null;
+        const enunciado = (textoAssociado + enunciadoPrincipal).trim();
+        if (!enunciado || enunciado.length < 5) return null;
 
-        /* 2. Alternativas ──────────────────────────────────────── */
+        /* 3. Alternativas ──────────────────────────────────────── */
         // Coleta todos os <li> de alternativas, rastreando o índice
         // DIRETAMENTE no array (sem comparação de texto posterior)
         const todosLis = Array.from(
