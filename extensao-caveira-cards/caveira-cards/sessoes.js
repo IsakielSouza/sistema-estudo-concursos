@@ -4,8 +4,68 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("manual-form");
   const lista = document.getElementById("historico-lista");
   const btnLimpar = document.getElementById("btn-limpar-tudo");
+  const btnExportar = document.getElementById("btn-exportar");
 
-  // Carregar e renderizar histórico
+  // Exportar para JSON
+  function exportarHistorico(historico) {
+    if (!historico || historico.length === 0) {
+      alert("Não há dados para exportar.");
+      return;
+    }
+    const data = JSON.stringify(historico, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `caveira-cards-historico-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  btnExportar.addEventListener("click", () => {
+    chrome.storage.local.get("historicoSessoes", ({ historicoSessoes = [] }) => {
+      exportarHistorico(historicoSessoes);
+    });
+  });
+
+  // Limpar Tudo
+  btnLimpar.addEventListener("click", () => {
+    chrome.storage.local.get("historicoSessoes", ({ historicoSessoes = [] }) => {
+      if (historicoSessoes.length === 0) {
+        alert("O histórico já está vazio.");
+        return;
+      }
+
+      const confirmacao = confirm(
+        "⚠️ ATENÇÃO: Você está prestes a apagar TODO o seu histórico de estudos. Esta ação é definitiva e os dados não poderão ser recuperados.\n\n" +
+        "Deseja exportar uma cópia de segurança em .JSON antes de limpar?"
+      );
+
+      if (confirmacao) {
+        // Oferece exportar antes
+        exportarHistorico(historicoSessoes);
+        
+        // Pergunta final após exportar (ou se o usuário cancelar o download)
+        setTimeout(() => {
+          if (confirm("Agora que você exportou (ou cancelou), deseja realmente APAGAR TUDO do navegador?")) {
+            executarLimpeza();
+          }
+        }, 1000);
+      } else {
+        // Se o usuário clicar em Cancelar no primeiro confirm, perguntamos se ele quer limpar SEM exportar
+        if (confirm("Deseja prosseguir com a limpeza SEM exportar os dados? (Ação irreversível)")) {
+          executarLimpeza();
+        }
+      }
+    });
+  });
+
+  function executarLimpeza() {
+    chrome.storage.local.set({ historicoSessoes: [] }, () => {
+      renderizar([]);
+      alert("Histórico limpo com sucesso.");
+    });
+  }
   function carregarHistorico() {
     chrome.storage.local.get("historicoSessoes", ({ historicoSessoes = [] }) => {
       renderizar(historicoSessoes);
@@ -95,15 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
         form.reset();
         alert("Sessão adicionada com sucesso!");
       });
-    });
-  });
-
-  // Limpar Tudo
-  btnLimpar.addEventListener("click", () => {
-    if (!confirm("⚠️ ATENÇÃO: Deseja apagar TODO o histórico de sessões? Esta ação não pode ser desfeita.")) return;
-    
-    chrome.storage.local.set({ historicoSessoes: [] }, () => {
-      renderizar([]);
     });
   });
 
