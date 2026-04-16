@@ -98,14 +98,15 @@
       // Remove o <hr> inicial se for apenas um comentário manual sendo adicionado sozinho
       const cleanHtml = html.replace(/^<hr[^>]*>/, "");
       
-      await window.CaveiraAnki.atualizarExtra(noteId, cleanHtml);
+      const status = await window.CaveiraAnki.atualizarExtra(noteId, cleanHtml);
       
-      // Feedback de sucesso
+      // Feedback de sucesso ou duplicidade
       const badge = document.createElement("span");
-      badge.innerText = "✓ Anki";
-      badge.style = "position:absolute; background:#22c55e; color:white; font-size:10px; padding:2px 4px; border-radius:4px; z-index:9999;";
+      badge.innerText = status === "exists" ? "Já enviado" : "✓ Anki";
+      badge.style = `position:absolute; background:${status === "exists" ? "#1e2d4d" : "#22c55e"}; color:white; font-size:10px; padding:2px 4px; border-radius:4px; z-index:9999; pointer-events:none;`;
+      btnLike.style.position = "relative";
       btnLike.appendChild(badge);
-      setTimeout(() => badge.remove(), 2000);
+      setTimeout(() => badge.remove(), 2500);
 
     } catch (err) {
       console.error("[CaveiraCards] Erro na captura manual:", err);
@@ -501,12 +502,16 @@
 
         if (!noteId) throw new Error("Nota não encontrada");
 
-        const extraOriginal = [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>");
-        const comentariosHtml = formatarComentarios(comentarios);
-        const extraFinal = extraOriginal ? extraOriginal + comentariosHtml : comentariosHtml.replace(/^<hr[^>]*>/, "");
+        const comentariosHtml = formatarComentarios(comentarios).replace(/^<hr[^>]*>/, "");
         
-        await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
-        btnComent.textContent = "✓";
+        const status = await window.CaveiraAnki.atualizarExtra(noteId, comentariosHtml);
+        
+        if (status === "exists") {
+          btnComent.textContent = "✓"; // Já estava lá
+        } else {
+          btnComent.textContent = "✓";
+        }
+        
         setTimeout(() => { if (btnComent.isConnected) btnComent.remove(); }, 1500);
       } catch (err) {
         btnComent.disabled = false;
@@ -586,13 +591,8 @@
         return;
       }
 
-      const extraOriginal = [questao.banca, questao.explicacao].filter(Boolean).join("<br><br>");
-      const comentariosHtml = formatarComentarios(comentarios);
-      const extraFinal = extraOriginal
-        ? extraOriginal + comentariosHtml
-        : comentariosHtml.replace(/^<hr[^>]*>/, "");
-
-      await window.CaveiraAnki.atualizarExtra(noteId, extraFinal);
+      const comentariosHtml = formatarComentarios(comentarios).replace(/^<hr[^>]*>/, "");
+      await window.CaveiraAnki.atualizarExtra(noteId, comentariosHtml);
 
       comentariosAutoCapturados = true;
       titleEl.textContent = "Adicionado! ✓";

@@ -419,9 +419,28 @@
   }
 
   async function atualizarExtra(noteId, extraHtml) {
+    // 1. Busca os campos atuais da nota para não apagar o que já existe
+    const notesInfo = await ankiRequest("notesInfo", { notes: [noteId] });
+    if (!notesInfo || notesInfo.length === 0) return;
+    
+    const currentExtra = notesInfo[0].fields.Extra.value || "";
+    
+    // 2. Verifica se o comentário já está lá (evita duplicação exata de conteúdo)
+    // Sanitiza levemente o HTML para comparação ignorando espaços extras
+    const normalizedNew = extraHtml.trim();
+    if (currentExtra.includes(normalizedNew)) {
+      console.log("[CaveiraCards] Comentário já existe na nota.");
+      return "exists";
+    }
+
+    // 3. Anexa o novo comentário abaixo do existente
+    const separator = currentExtra.trim() ? "<br><hr style='border:1px dashed #1e2d4d; margin: 10px 0;'><br>" : "";
+    const finalExtra = currentExtra + separator + normalizedNew;
+
     await ankiRequest("updateNoteFields", {
-      note: { id: noteId, fields: { Extra: extraHtml } },
+      note: { id: noteId, fields: { Extra: finalExtra } },
     });
+    return "updated";
   }
 
   async function buscarNotas(query) {
