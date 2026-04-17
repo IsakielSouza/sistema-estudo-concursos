@@ -259,57 +259,59 @@
       }
     },
 
-    /* ── Captura comentários (painel de discussão) ── */
-    capturarComentarios() {
+    /* ── Captura comentários (professor + fórum) ── */
+    async capturarComentarios() {
       try {
-        // TEC Concursos pode ter o painel de discussão em vários lugares
+        const comentarios = [];
+
+        // 1. Comentário do Professor (seção específica)
+        const professorEl = document.querySelector(".questao-complementos-comentario-conteudo-texto");
+        if (professorEl) {
+          const html = professorEl.innerHTML.trim()
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+            .replace(/\s+on\w+="[^"]*"/gi, "")
+            .replace(/\s+on\w+='[^']*'/gi, "");
+          if (html) {
+            comentarios.push({ score: 9999, html, type: "professor" });
+          }
+        }
+
+        // 2. Fórum de discussão (Alunos)
         const ul = primeiroCSSQuery(
           "ul.discussao-comentarios",
           ".discussao ul",
           "[class*='discussao'] ul"
         );
 
-        // Se não encontrou ou está oculto (offsetParent === null)
-        if (!ul || ul.offsetParent === null) return null;
+        if (ul && ul.offsetParent !== null) {
+          const items = Array.from(ul.querySelectorAll("li"));
+          const itemsAlunos = items.map(li => {
+            const scoreEl = li.querySelector(".discussao-comentario-nota-numero .ng-binding, .nota-numero, [class*='nota-numero']");
+            const textoEl = li.querySelector(".discussao-comentario-post-texto, .comentario-texto, [class*='post-texto'], [class*='comentario-texto']");
+            if (!textoEl) return null;
 
-        const items = Array.from(ul.querySelectorAll("li"));
-        if (!items.length) return null;
+            const score = scoreEl ? (parseInt(scoreEl.textContent.trim(), 10) || 0) : 0;
+            const html = textoEl.innerHTML.trim()
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+              .replace(/\s+on\w+="[^"]*"/gi, "")
+              .replace(/\s+on\w+='[^']*'/gi, "");
 
-        const comentarios = items.map(li => {
-          // Score (votos)
-          const scoreEl = li.querySelector(
-            ".discussao-comentario-nota-numero .ng-binding, " +
-            ".nota-numero, " +
-            "[class*='nota-numero']"
-          );
-          // Texto do comentário
-          const textoEl = li.querySelector(
-            ".discussao-comentario-post-texto, " +
-            ".comentario-texto, " +
-            "[class*='post-texto'], " +
-            "[class*='comentario-texto']"
-          );
+            return html ? { score, html, type: "aluno" } : null;
+          }).filter(Boolean);
 
-          if (!textoEl) return null;
-
-          const score = scoreEl
-            ? (parseInt(scoreEl.textContent.trim(), 10) || 0)
-            : 0;
-
-          const html = textoEl.innerHTML.trim()
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-            .replace(/\s+on\w+="[^"]*"/gi, "")
-            .replace(/\s+on\w+='[^']*'/gi, "");
-
-          if (!html) return null;
-          return { score, html };
-        }).filter(Boolean);
+          comentarios.push(...itemsAlunos);
+        }
 
         if (!comentarios.length) return null;
 
-        // Retorna os 5 comentários com maior score
-        comentarios.sort((a, b) => b.score - a.score);
-        return comentarios.slice(0, 5);
+        // Ordena por tipo (professor primeiro) e depois por score
+        comentarios.sort((a, b) => {
+          if (a.type === "professor" && b.type !== "professor") return -1;
+          if (a.type !== "professor" && b.type === "professor") return 1;
+          return b.score - a.score;
+        });
+
+        return comentarios.slice(0, 6); // Professor + top 5 alunos
       } catch (e) {
         console.error("[CaveiraCards/TEC] Erro ao capturar comentários:", e);
         return null;

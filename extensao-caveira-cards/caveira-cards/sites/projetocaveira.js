@@ -186,7 +186,7 @@
       const comentarios = [];
       const teacherEl = card.querySelector(".teacher-comment") || document.querySelector(".teacher-comment");
       if (teacherEl && teacherEl.innerHTML.trim()) {
-        comentarios.push({ score: 9999, html: teacherEl.innerHTML.trim() });
+        comentarios.push({ score: 9999, html: teacherEl.innerHTML.trim(), type: "professor" });
       }
 
       // ── 2. Comentários dos alunos ──

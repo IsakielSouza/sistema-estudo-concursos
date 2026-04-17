@@ -297,7 +297,7 @@
                 pane.querySelector(".panel-body");
               const html = sanitizarHtml((commentEl || pane).innerHTML);
               if (html && html.length > 30) {
-                comentarios.push({ score: 9999, html });
+                comentarios.push({ score: 9999, html, type: "professor" });
               }
             }
           }

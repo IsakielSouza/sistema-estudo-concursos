@@ -462,10 +462,32 @@
   }
 
   function formatarComentarios(comentarios) {
-    const items = comentarios.map(c =>
+    if (!comentarios || !comentarios.length) return "";
+
+    const professor = comentarios.filter(c => c.type === "professor");
+    const alunos = comentarios.filter(c => c.type !== "professor");
+
+    const htmlProf = professor.map(c => 
+      `<div class="cc-comentario-prof"><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
+    ).join("");
+
+    const htmlAlunos = alunos.map(c =>
       `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}</span><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
     ).join("");
-    return `<hr style="border:1px solid #e5e7eb;margin:12px 0"><div class="cc-comentarios"><strong>💬 Top comentários</strong>${items}</div>`;
+
+    const hasProf = !!htmlProf;
+    const hasAlunos = !!htmlAlunos;
+
+    return `
+      <div class="cc-tabs">
+        <div class="cc-tabs-header">
+          ${hasProf ? `<button class="cc-tab-btn active" onclick="ccOpenTab(event, 'tab-prof')">Professor</button>` : ""}
+          ${hasAlunos ? `<button class="cc-tab-btn ${!hasProf ? "active" : ""}" onclick="ccOpenTab(event, 'tab-alunos')">Alunos</button>` : ""}
+        </div>
+        ${hasProf ? `<div id="tab-prof" class="cc-tab-content active">${htmlProf}</div>` : ""}
+        ${hasAlunos ? `<div id="tab-alunos" class="cc-tab-content ${!hasProf ? "active" : ""}">${htmlAlunos}</div>` : ""}
+      </div>
+    `.trim();
   }
 
   function injetarBotaoComentarios(overlay, questao, noteIdPredefinido = null, questaoEl = null) {
@@ -531,32 +553,33 @@
   }
 
   // ── Auto-abertura do painel de comentários (TEC) ──
-  // Usa o seletor exato do botão de Fórum de discussão do TEC.
-  async function abrirPainelComentariosTEC() {
-    // Painel já aberto? Nada a fazer.
-    if (document.querySelector(".questao-complementos-cabecalho")) return true;
+  async function abrirPainelComentariosTEC(tipo = "discussao") {
+    // Verifica se o painel solicitado já está aberto
+    const painelAberto = document.querySelector(`.questao-complementos-${tipo}`);
+    if (painelAberto) return true;
 
-    // Seletor exato do botão de discussão (ng-click="vm.abrirComplemento('discussao')")
-    // Atalho nativo do TEC: tecla F (keyCode 70)
-    const botao = document.querySelector("button[ng-click=\"vm.abrirComplemento('discussao')\"]");
+    // Seletor do botão: comentario ou discussao
+    const selector = `button[ng-click="vm.abrirComplemento('${tipo}')"]`;
+    const botao = document.querySelector(selector);
 
     if (botao) {
       botao.click();
     } else {
-      // Fallback: simula a tecla F (atalho nativo do TEC para abrir fórum)
-      simularTecla("f", 70);
+      // Atalhos nativos: O para comentário, F para discussão
+      const char = tipo === "comentario" ? "o" : "f";
+      const code = tipo === "comentario" ? 79 : 70;
+      simularTecla(char, code);
     }
 
-    // Aguarda até 5s para o painel ou lista de comentários aparecer
-    for (let i = 0; i < 50; i++) {
+    // Aguarda até 3s para o painel aparecer
+    for (let i = 0; i < 30; i++) {
       await new Promise(r => setTimeout(r, 100));
-      if (document.querySelector(".questao-complementos-cabecalho")) return true;
-      const ul = document.querySelector(
-        "ul.discussao-comentarios, .discussao ul, [class*='discussao'] ul"
-      );
-      if (ul && ul.offsetParent !== null) return true;
+      if (document.querySelector(`.questao-complementos-${tipo}`)) return true;
+      if (tipo === "discussao") {
+        const ul = document.querySelector("ul.discussao-comentarios, .discussao ul");
+        if (ul && ul.offsetParent !== null) return true;
+      }
     }
-
     return false;
   }
 
@@ -571,18 +594,16 @@
 
     try {
       subEl.textContent = "Abrindo comentários...";
-      const painelAberto = await abrirPainelComentariosTEC();
+      
+      // 1. Tenta abrir e capturar comentário do Professor
+      await abrirPainelComentariosTEC("comentario");
+      await new Promise(r => setTimeout(r, 800)); // Espera render
 
-      if (!painelAberto) {
-        // Painel não abriu — restaura texto e deixa botão manual como fallback
-        subEl.textContent = `${questao.resultado} · ${questao.materia}`;
-        return;
-      }
+      // 2. Tenta abrir e capturar Fórum (Alunos)
+      await abrirPainelComentariosTEC("discussao");
+      await new Promise(r => setTimeout(r, 800));
 
       subEl.textContent = "Capturando comentários...";
-
-      // Aguarda os comentários renderizarem
-      await new Promise(r => setTimeout(r, 600));
 
       const comentarios = await adapter.capturarComentarios();
 

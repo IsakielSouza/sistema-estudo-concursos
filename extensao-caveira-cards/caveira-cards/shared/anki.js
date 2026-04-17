@@ -232,16 +232,29 @@
 
 /* ── Extra (comentários capturados depois) ── */
 .extra-box {
-  margin-top: 14px; padding: 12px 16px; border-radius: 10px;
+  margin-top: 14px; padding: 0; border-radius: 10px;
   background: #0d1626; border: 1px solid #1e2d4d;
   font-size: 13px; color: #94a3b8; line-height: 1.6;
-}
-.extra-label {
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .06em;
-  color: #475569; margin-bottom: 6px;
+  overflow: hidden;
 }
 
+/* ── Sistema de Abas no Extra ── */
+.cc-tabs { display: flex; flex-direction: column; }
+.cc-tabs-header {
+  display: flex; background: #1a2540; border-bottom: 1px solid #1e2d4d;
+}
+.cc-tab-btn {
+  flex: 1; padding: 10px; border: none; background: none;
+  color: #64748b; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.cc-tab-btn.active {
+  color: #3b6ff5; border-bottom: 2px solid #3b6ff5; background: #1e2d4d;
+}
+.cc-tab-content { padding: 12px 16px; display: none; }
+.cc-tab-content.active { display: block; }
+`.trim(),old_string:
 /* ── Rodapé ── */
 .cc-fonte {
   margin-top: 16px; padding-top: 10px;
@@ -355,12 +368,22 @@
       el.style.removeProperty('font-family');
     });
   });
+
+  // 3. Lógica de Abas
+  window.ccOpenTab = function(evt, tabId) {
+    var i, content, btns;
+    content = document.getElementsByClassName("cc-tab-content");
+    for (i = 0; i < content.length; i++) { content[i].classList.remove("active"); }
+    btns = document.getElementsByClassName("cc-tab-btn");
+    for (i = 0; i < btns.length; i++) { btns[i].classList.remove("active"); }
+    document.getElementById(tabId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+  }
 })();
 <\/script>
 {{#Extra}}
 <div class="cc-wrap" style="padding-top:0">
   <div class="extra-box">
-    <div class="extra-label">💬 Comentários</div>
     {{Extra}}
   </div>
 </div>
@@ -418,27 +441,78 @@
     return noteId;
   }
 
-  async function atualizarExtra(noteId, extraHtml) {
-    // 1. Busca os campos atuais da nota para não apagar o que já existe
+  async function atualizarExtra(noteId, newExtraHtml) {
     const notesInfo = await ankiRequest("notesInfo", { notes: [noteId] });
     if (!notesInfo || notesInfo.length === 0) return;
     
-    const currentExtra = notesInfo[0].fields.Extra.value || "";
-    
-    // 2. Verifica se o comentário já está lá (evita duplicação exata de conteúdo)
-    // Sanitiza levemente o HTML para comparação ignorando espaços extras
-    const normalizedNew = extraHtml.trim();
-    if (currentExtra.includes(normalizedNew)) {
-      console.log("[CaveiraCards] Comentário já existe na nota.");
-      return "exists";
+    let currentExtra = notesInfo[0].fields.Extra.value || "";
+    const normalizedNew = newExtraHtml.trim();
+
+    // Se o conteúdo exato já existe, ignora
+    if (currentExtra.includes(normalizedNew)) return "exists";
+
+    // Lógica de mesclagem para Abas (Professor/Alunos)
+    if (normalizedNew.includes("cc-tabs")) {
+      const parser = new DOMParser();
+      const docNew = parser.parseFromString(normalizedNew, "text/html");
+      const docCurrent = parser.parseFromString(currentExtra || "<div></div>", "text/html");
+
+      const newProf = docNew.getElementById("tab-prof");
+      const newAlunos = docNew.getElementById("tab-alunos");
+
+      let currentTabs = docCurrent.querySelector(".cc-tabs");
+      
+      // Se não tem abas ainda, preserva o conteúdo antigo (ex: banca) acima das abas
+      if (!currentTabs) {
+        const preContent = currentExtra.trim() ? `<div style="padding:10px 16px; border-bottom:1px solid #1e2d4d; font-size:11px; opacity:0.7;">${currentExtra}</div>` : "";
+        currentExtra = preContent + normalizedNew;
+      } else {
+        // Mescla Professor
+        if (newProf) {
+          let tabProf = docCurrent.getElementById("tab-prof");
+          if (!tabProf) {
+            // Cria aba professor se não existia
+            const header = docCurrent.querySelector(".cc-tabs-header");
+            header.insertAdjacentHTML("afterbegin", '<button class="cc-tab-btn active" onclick="ccOpenTab(event, \'tab-prof\')">Professor</button>');
+            const tabs = docCurrent.querySelector(".cc-tabs");
+            tabs.insertAdjacentHTML("beforeend", `<div id="tab-prof" class="cc-tab-content active">${newProf.innerHTML}</div>`);
+            // Desativa outras abas
+            docCurrent.querySelectorAll(".cc-tab-btn, .cc-tab-content").forEach(el => {
+              if (el.id !== "tab-prof" && !el.getAttribute("onclick")?.includes("tab-prof")) {
+                el.classList.remove("active");
+              }
+            });
+          } else {
+            // Anexa se for novo conteúdo
+            if (!tabProf.innerHTML.includes(newProf.innerHTML.trim())) {
+              tabProf.innerHTML += newProf.innerHTML;
+            }
+          }
+        }
+
+        // Mescla Alunos
+        if (newAlunos) {
+          let tabAlunos = docCurrent.getElementById("tab-alunos");
+          if (!tabAlunos) {
+            const header = docCurrent.querySelector(".cc-tabs-header");
+            header.insertAdjacentHTML("beforeend", '<button class="cc-tab-btn" onclick="ccOpenTab(event, \'tab-alunos\')">Alunos</button>');
+            currentTabs.insertAdjacentHTML("beforeend", `<div id="tab-alunos" class="cc-tab-content">${newAlunos.innerHTML}</div>`);
+          } else {
+            if (!tabAlunos.innerHTML.includes(newAlunos.innerHTML.trim())) {
+              tabAlunos.innerHTML += newAlunos.innerHTML;
+            }
+          }
+        }
+        currentExtra = docCurrent.body.innerHTML;
+      }
+    } else {
+      // Anexo simples para conteúdos não estruturados
+      const separator = currentExtra.trim() ? "<br><hr style='border:1px dashed #1e2d4d; margin: 10px 0;'><br>" : "";
+      currentExtra = currentExtra + separator + normalizedNew;
     }
 
-    // 3. Anexa o novo comentário abaixo do existente
-    const separator = currentExtra.trim() ? "<br><hr style='border:1px dashed #1e2d4d; margin: 10px 0;'><br>" : "";
-    const finalExtra = currentExtra + separator + normalizedNew;
-
     await ankiRequest("updateNoteFields", {
-      note: { id: noteId, fields: { Extra: finalExtra } },
+      note: { id: noteId, fields: { Extra: currentExtra } },
     });
     return "updated";
   }

@@ -1,4 +1,6 @@
-- [x] Por padrão para todos sites deve salvar comentario do professor!
+- [x] Por padrão para todos sites deve salvar comentario do professor! (TEC, QConcurso, ProjetoCaveira)
+- [x] Separar Professor e Alunos em abas no Anki.
+- [x] Evitar duplicidade e permitir múltiplos comentários na mesma questão via anexo inteligente.
 
 Feature nova:
 [x] salvar comentários dos alunos de forma manual
@@ -11,18 +13,6 @@ Checklist sites:
 [x] - Tec
 [x] - QConcurso
 [x] - Projeto Caveira
-
-Site TEC:
-Butão com like:
-<button class="discussao-comentario-nota-seta nota-positiva ativo" ng-class="{ ativo: comentario.voto == 'UP' }" ng-click="vm.votarComentarioAprovar(comentario)" aria-label="Gostei do comentário" aria-pressed="true">
-									<span id="" class="glyphicon glyphicon-chevron-up " title=""></span></button>
-
-
-Butão sem like:
-
-<button class="discussao-comentario-nota-seta nota-positiva" ng-class="{ ativo: comentario.voto == 'UP' }" ng-click="vm.votarComentarioAprovar(comentario)" aria-label="Gostei do comentário" aria-pressed="false">
-									<span id="" class="glyphicon glyphicon-chevron-up " title=""></span></button>
-
 
 [x] Task: criar tela de Plataformas Homologadas, com card list, mostrando imagem 250 por 320 px mais ou menos, e colocar imagem abaixo nome
 em cada item da lista colocar link para navegar para respectivas plataformas, uma forma de atalho para entrar nos site oficiais.
@@ -37,3 +27,6 @@ no popup principal remover butão onde mostra Configurar Anki, trocar por um too
 
 [x] Task: no toast onde mostra para add questão ao anki, lado direto mostrar ícone de cafe e ao passar mouse em cima mostrar: Apoie o projeto (ícone coração)!, e ao clicar fazer igual outro atalho no popup principal, navegar usuário para tela de doação
 [x] Salvar git commit 
+
+[x] Task: Histórico rico de sessões (Tempo por questão, média, matérias agrupadas).
+[x] Task: Exportação JSON e Limpeza segura de histórico.
