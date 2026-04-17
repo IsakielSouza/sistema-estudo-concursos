@@ -30,3 +30,9 @@ no popup principal remover butão onde mostra Configurar Anki, trocar por um too
 
 [x] Task: Histórico rico de sessões (Tempo por questão, média, matérias agrupadas).
 [x] Task: Exportação JSON e Limpeza segura de histórico.
+
+
+
+TODO:
+Criar Decks manuais na extensão de questões para desafios: (1k, 200 fds)
+iniciar uma sessão de estudos associando Deck

@@ -619,15 +619,7 @@
 
       comentariosAutoCapturados = true;
       titleEl.textContent = "Adicionado! ✓";
-      subEl.textContent = "💬 Próxima questão...";
-
-      // Aguarda um instante para o usuário ver o feedback e avança com N
-      await new Promise(r => setTimeout(r, 900));
-      if (overlay.isConnected) {
-        overlay.remove();
-        overlayEl = null;
-      }
-      simularTecla("n", 78); // Tecla N = próxima questão no TEC
+      subEl.textContent = "💬 Comentários capturados";
 
     } catch (err) {
       console.warn("[CaveiraCards] Auto-comentários falhou:", err);

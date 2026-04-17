@@ -50,7 +50,7 @@ CaveiraCards transforma o seu estudo para concursos em um ciclo contínuo de rev
   2. Ative "Modo do desenvolvedor" (canto superior direito) 
   3. Clique em "Carregar sem compactação"                                                         
   4. Selecione a pasta:                                                                           
-  /home/isakiel/projects/sistema-estudo-concursos/extensao-caveira-cards/caveira-cards            
+  ./sistema-estudo-concursos/extensao-caveira-cards/caveira-cards            
                                                                                                   
   2. Configurar o Anki                                                                            
                                                             

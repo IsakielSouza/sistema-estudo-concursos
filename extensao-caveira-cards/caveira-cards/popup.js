@@ -106,7 +106,8 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
       mediaTempoMs,
       mediaTempoStr: mediaTempoMs > 0 ? formatarTimer(mediaTempoMs) : "-",
       materias: listaMaterias,
-      detalhesPorMateria: agruparPorMateria(detalhes)
+      detalhesPorMateria: agruparPorMateria(detalhes),
+      detalhes: detalhes
     };
 
     const novoHistorico = [novaSessao, ...historicoSessoes];
@@ -240,6 +241,9 @@ document.getElementById("btn-plataformas").addEventListener("click", () => abrir
 
 const btnHistIdle = document.getElementById("btn-historico-idle");
 if (btnHistIdle) btnHistIdle.addEventListener("click", () => abrirPagina("sessoes.html"));
+
+const btnHistActive = document.getElementById("btn-historico-active");
+if (btnHistActive) btnHistActive.addEventListener("click", () => abrirPagina("sessoes.html"));
 
 const btnHistSummary = document.getElementById("btn-historico-summary");
 if (btnHistSummary) btnHistSummary.addEventListener("click", () => abrirPagina("sessoes.html"));
