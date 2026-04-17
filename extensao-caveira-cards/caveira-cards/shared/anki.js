@@ -404,11 +404,14 @@
   }
 
   async function criarDecks(plataforma, resultado, materiaLimpa) {
+    // Normaliza "Revisão" para "Revisao" para evitar problemas de encoding em deck names
+    const resNormalizado = resultado === "Revisão" ? "Revisao" : resultado;
+    
     const niveis = [
       "CaveiraCards",
       `CaveiraCards::${plataforma}`,
-      `CaveiraCards::${plataforma}::${resultado}`,
-      `CaveiraCards::${plataforma}::${resultado}::${materiaLimpa}`,
+      `CaveiraCards::${plataforma}::${resNormalizado}`,
+      `CaveiraCards::${plataforma}::${resNormalizado}::${materiaLimpa}`,
     ];
     for (const deck of niveis) await ankiRequest("createDeck", { deck });
     return niveis[niveis.length - 1];
@@ -422,8 +425,19 @@
       "caveira-cards",
       resultado === "Erros" ? "caderno-de-erros" : "revisao",
       questao.plataforma.toLowerCase().replace(/\s+/g, "-"),
-      questao.materiaLimpa.toLowerCase().replace(/[\s:/]/g, "-"),
+      questao.materiaLimpa.toLowerCase().replace(/[\s:/\\?*^]/g, "-"),
     ].filter(Boolean);
+
+    // Constrói o Extra inicial com banca + explicação (resolução do professor padrão)
+    let extraInicial = "";
+    if (questao.banca) extraInicial += `<em style="font-size:0.9em; color:#64748b;">${questao.banca}</em><br><br>`;
+    if (questao.explicacao) {
+      extraInicial += `
+        <div class="cc-explicacao">
+          <div class="cc-explicacao-label">Resolução</div>
+          <div class="cc-explicacao-corpo">${questao.explicacao}</div>
+        </div>`.trim();
+    }
 
     const noteId = await ankiRequest("addNote", {
       note: {
@@ -432,7 +446,7 @@
         fields: {
           Frente: frente,
           Verso:  verso,
-          Extra:  questao.banca ? `<em style="">${questao.banca}</em>` : "",
+          Extra:  extraInicial,
         },
         tags,
         options: { allowDuplicate: false, duplicateScope: "deck" },

@@ -234,7 +234,7 @@
           explicacao = resClone.innerHTML.trim();
         }
 
-        const materiaLimpa = materia.replace(/[:"\/\\]/g, "").trim() || "Geral";
+        const materiaLimpa = materia.replace(/[:"\/\\\[\]]/g, "").trim() || "Geral";
         const resultado = this.detectarErro() ? "Erros" : "Revisão";
 
         return {

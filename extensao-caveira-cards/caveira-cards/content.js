@@ -478,6 +478,8 @@
     const hasProf = !!htmlProf;
     const hasAlunos = !!htmlAlunos;
 
+    if (!hasProf && !hasAlunos) return "";
+
     return `
       <div class="cc-tabs">
         <div class="cc-tabs-header">
