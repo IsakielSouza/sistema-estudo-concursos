@@ -254,7 +254,7 @@
 }
 .cc-tab-content { padding: 12px 16px; display: none; }
 .cc-tab-content.active { display: block; }
-`.trim(),old_string:
+
 /* ── Rodapé ── */
 .cc-fonte {
   margin-top: 16px; padding-top: 10px;
