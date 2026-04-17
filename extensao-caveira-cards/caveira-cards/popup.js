@@ -230,6 +230,20 @@ ankiToggle.addEventListener("change", async () => {
   }
 });
 
+// ── Eventos de Navegação ──
+function abrirPagina(path) {
+  chrome.tabs.create({ url: chrome.runtime.getURL(path) });
+}
+
+document.getElementById("btn-doacao").addEventListener("click", () => abrirPagina("doacao.html"));
+document.getElementById("btn-plataformas").addEventListener("click", () => abrirPagina("plataformas.html"));
+
+const btnHistIdle = document.getElementById("btn-historico-idle");
+if (btnHistIdle) btnHistIdle.addEventListener("click", () => abrirPagina("sessoes.html"));
+
+const btnHistSummary = document.getElementById("btn-historico-summary");
+if (btnHistSummary) btnHistSummary.addEventListener("click", () => abrirPagina("sessoes.html"));
+
 function agruparPorMateria(detalhes) {
   const grupos = {};
   detalhes.forEach(d => {

@@ -298,9 +298,9 @@
 
   <p class="section-title">Plataformas</p>
   <div class="platforms" style="margin-bottom: 12px;">
-    <a href="plataformas.html" target="_blank" class="btn" style="margin-bottom: 0;">
+    <button id="btn-plataformas" class="btn" style="margin-bottom: 0; width: 100%; justify-content: center;">
       <span>🌐 Plataformas homologadas</span>
-    </a>
+    </button>
   </div>
 
   <p class="section-title">Sessão de estudo</p>
@@ -312,9 +312,9 @@
         <span class="session-idle-label">📚 Nenhuma sessão ativa</span>
         <button class="btn-iniciar" id="btn-iniciar">Iniciar</button>
       </div>
-      <a href="sessoes.html" target="_blank" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 0; justify-content: center; background: #0b1222; width: 100%;">
+      <button id="btn-historico-idle" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 0; justify-content: center; background: #0b1222; width: 100%;">
         📊 Ver Histórico
-      </a>
+      </button>
     </div>
 
     <!-- Estado: ativa -->
@@ -341,9 +341,9 @@
       <div class="summary-label">Resumo da sessão</div>
       <div class="summary-val" id="summary-val">—</div>
       <button class="btn-copiar" id="btn-copiar">📋 Copiar resumo</button>
-      <a href="sessoes.html" target="_blank" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 6px; justify-content: center;">
+      <button id="btn-historico-summary" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 6px; justify-content: center; width: 100%;">
         📊 Ver Histórico Completo
-      </a>
+      </button>
       <button class="btn-nova-sessao" id="btn-nova-sessao">+ Nova sessão</button>
     </div>
 
@@ -357,7 +357,7 @@
     </label>
   </div>
   <a class="btn" href="guia.html" target="_blank">📖 Guia de instalação</a>
-  <a class="btn destaque" href="doacao.html" target="_blank">❤️ Apoiar o projeto</a>
+  <button class="btn destaque" id="btn-doacao">❤️ Apoiar o projeto</button>
 
   <div class="footer">
     Projeto livre &nbsp;·&nbsp;
