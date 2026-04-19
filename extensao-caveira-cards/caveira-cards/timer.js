@@ -44,9 +44,9 @@ const progressCircle = document.getElementById('timer-progress-circle');
 const indicators = document.getElementById('timer-indicators');
 
 const sessionIdle = document.getElementById('session-idle');
-const sessionStarting = document.getElementById('session-starting');
 const sessionActive = document.getElementById('session-active');
 const sessionSummary = document.getElementById('session-summary');
+const inputCaderno = document.getElementById('input-caderno');
 const sessionTimerEl = document.getElementById('session-timer');
 const questoesEl = document.getElementById('session-questoes');
 const acertosEl = document.getElementById('session-acertos');
@@ -142,10 +142,9 @@ function updateConfigDisplay() {
 }
 
 function mostrarEstadoSessao(estado) {
-  sessionIdle.style.display     = estado === 'idle'     ? 'flex'  : 'none';
-  sessionStarting.style.display = estado === 'starting' ? 'block' : 'none';
-  sessionActive.style.display   = estado === 'active'   ? 'block' : 'none';
-  sessionSummary.style.display  = estado === 'summary'  ? 'block' : 'none';
+  sessionIdle.style.display    = estado === 'idle'    ? 'flex'  : 'none';
+  sessionActive.style.display  = estado === 'active'  ? 'block' : 'none';
+  sessionSummary.style.display = estado === 'summary' ? 'block' : 'none';
 }
 
 function mostrarAviso(msg) {
@@ -259,9 +258,7 @@ resetBtn.addEventListener('click', () => {
 // ─── Play button ───
 playBtn.addEventListener('click', () => {
   if (!sessaoEstaAtiva()) {
-    if (sessionStarting.style.display === 'none') {
-      iniciarFluxoSessao();
-    }
+    iniciarSessao();
     return;
   }
   if (timerState.isRunning) pauseTimer();
@@ -282,25 +279,28 @@ floatingBtn.addEventListener('click', () => {
 });
 
 // ─── Session flow ───
-async function iniciarFluxoSessao() {
-  let cadernoDetectado = '';
+async function autoDetectCaderno() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab && tab.url && tab.url.includes('tecconcursos.com.br')) {
       const resp = await chrome.tabs.sendMessage(tab.id, { action: 'getCadernoName' });
-      cadernoDetectado = resp?.caderno || '';
+      return resp?.caderno || '';
     }
   } catch { /* silencioso */ }
-  document.getElementById('input-caderno').value = cadernoDetectado;
-  mostrarEstadoSessao('starting');
+  return '';
 }
 
-document.getElementById('btn-iniciar').addEventListener('click', iniciarFluxoSessao);
+async function preencherCadernoSeVazio() {
+  if (!inputCaderno || inputCaderno.value.trim()) return;
+  const detectado = await autoDetectCaderno();
+  if (detectado && !inputCaderno.value.trim()) inputCaderno.value = detectado;
+}
 
-document.getElementById('btn-confirmar-sessao').addEventListener('click', () => {
-  const caderno = document.getElementById('input-caderno').value.trim() || null;
+async function iniciarSessao() {
+  let caderno = inputCaderno?.value.trim() || '';
+  if (!caderno) caderno = await autoDetectCaderno();
   const inicio = Date.now();
-  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno, mode: timerState.mode };
+  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno: caderno || null, mode: timerState.mode };
 
   if (timerState.mode === 'livre') {
     timerState.elapsedSeconds = 0;
@@ -312,11 +312,7 @@ document.getElementById('btn-confirmar-sessao').addEventListener('click', () => 
   timerState.startedAt = inicio;
 
   chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
-});
-
-document.getElementById('btn-cancelar-sessao').addEventListener('click', () => {
-  mostrarEstadoSessao('idle');
-});
+}
 
 document.getElementById('btn-encerrar').addEventListener('click', () => {
   if (timerState.isRunning) {
@@ -427,6 +423,7 @@ chrome.storage.local.get(['timerState', 'sessaoAtiva'], ({ timerState: stored, s
   if (stored) timerState = { ...timerState, ...stored };
   sincronizarTimerUI();
   sincronizarSessaoUI(sessaoAtiva);
+  if (!sessaoEstaAtiva()) preencherCadernoSeVazio();
 });
 
 // ─── Storage listeners ───
@@ -440,6 +437,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     }
   }
   if ('sessaoAtiva' in changes) {
-    sincronizarSessaoUI(changes.sessaoAtiva.newValue);
+    const nova = changes.sessaoAtiva.newValue;
+    sincronizarSessaoUI(nova);
+    if (!(nova && nova.ativa) && inputCaderno) inputCaderno.value = '';
   }
 });

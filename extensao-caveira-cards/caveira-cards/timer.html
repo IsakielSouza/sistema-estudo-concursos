@@ -525,22 +525,13 @@
   <div class="session-box" id="session-box">
 
     <!-- Estado: idle -->
-    <div class="session-idle" id="session-idle" style="flex-direction: column; gap: 10px;">
-      <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-        <span class="session-idle-label">📚 Nenhuma sessão ativa</span>
-        <button class="btn-iniciar" id="btn-iniciar">Iniciar</button>
+    <div class="session-idle" id="session-idle" style="flex-direction: column; gap: 10px; align-items: stretch;">
+      <span class="session-idle-label">📚 Nenhuma sessão ativa — aperte ▶ para iniciar</span>
+      <div>
+        <div class="session-starting-label">🏷️ Tags para Anki (opcional)</div>
+        <input type="text" id="input-caderno" placeholder="Ex: PRF::Desafio200Q" autocomplete="off">
       </div>
       <button id="btn-historico-idle" class="btn-historico">📊 Ver Histórico</button>
-    </div>
-
-    <!-- Estado: iniciando (input caderno) -->
-    <div class="session-starting" id="session-starting" style="display:none">
-      <div class="session-starting-label">📓 Nome do caderno (opcional)</div>
-      <input type="text" id="input-caderno" placeholder="Ex: 04. DESAFIO 200 Q PRF | 04" autocomplete="off">
-      <div class="starting-actions">
-        <button class="btn-iniciar" id="btn-confirmar-sessao" style="flex: 1;">▶ Confirmar</button>
-        <button class="btn-cancelar-sessao" id="btn-cancelar-sessao">Cancelar</button>
-      </div>
     </div>
 
     <!-- Estado: ativa -->
