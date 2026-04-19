@@ -1,18 +1,17 @@
-// Timer state (recebido da aba anterior)
+// Estado unificado (espelhado de timer.html)
 let timerState = {
   mode: 'pomodoro',
   isRunning: false,
+  startedAt: null,
   remainingSeconds: 1500,
   totalSeconds: 1500,
   elapsedSeconds: 0,
   currentSession: 1,
-  config: {
-    focus: 25,
-    shortBreak: 5,
-    longBreak: 15,
-    sessions: 4
-  }
+  config: { focus: 25, shortBreak: 5, longBreak: 15, sessions: 4 }
 };
+
+let sessaoAtivaLocal = null;
+let tickInterval = null;
 
 // Elements
 const displayText = document.getElementById('fullscreen-display');
@@ -25,132 +24,137 @@ const closeBtn = document.getElementById('fullscreen-close-btn');
 const progressCircle = document.getElementById('fullscreen-progress-circle');
 const indicators = document.getElementById('fullscreen-indicators');
 
-let timerInterval = null;
-
-// Receber estado da aba anterior
-chrome.storage.local.get('timerState', (result) => {
-  if (result.timerState) {
-    timerState = { ...timerState, ...result.timerState };
-    updateDisplay();
-    updateIndicators();
-    if (timerState.isRunning) {
-      playBtn.innerHTML = '⏸';
-      statusMain.textContent = 'Executando';
-      timerInterval = setInterval(tick, 1000);
-    }
-  }
-});
-
-// Sincroniza com outras páginas
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== 'local' || !changes.timerState) return;
-  const nova = changes.timerState.newValue;
-  if (!nova) return;
-  timerState = nova;
-  updateDisplay();
-  updateIndicators();
-});
-
-// Play/Pause
-playBtn.addEventListener('click', () => {
-  if (timerState.isRunning) {
-    pauseTimer();
-  } else {
-    startTimer();
-  }
-});
-
-function startTimer() {
-  timerState.isRunning = true;
-  playBtn.innerHTML = '⏸';
-  statusMain.textContent = 'Executando';
-  timerInterval = setInterval(tick, 1000);
+function computeCurrentSeconds(state) {
+  const base = state.mode === 'livre'
+    ? (state.elapsedSeconds || 0)
+    : (state.remainingSeconds ?? state.totalSeconds);
+  if (!state.isRunning || !state.startedAt) return base;
+  const delta = Math.floor((Date.now() - state.startedAt) / 1000);
+  if (state.mode === 'livre') return base + delta;
+  return Math.max(0, base - delta);
 }
 
-function tick() {
-  if (timerState.mode === 'livre') {
-    timerState.elapsedSeconds++;
-  } else {
-    timerState.remainingSeconds--;
-    if (timerState.remainingSeconds < 0) {
-      pauseTimer();
-      timerState.remainingSeconds = 0;
-    }
-  }
-  updateDisplay();
-  saveState();
+function formatMMSS(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function pauseTimer() {
-  timerState.isRunning = false;
-  playBtn.innerHTML = '▶';
-  statusMain.textContent = 'Pausado';
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  saveState();
+function sessaoEstaAtiva() {
+  return !!(sessaoAtivaLocal && sessaoAtivaLocal.ativa);
 }
 
-// Voltar para timer normal
-backBtn.addEventListener('click', () => {
-  saveState();
-  window.location.href = 'timer.html';
-});
-
-// Finalizar sessão
-finishBtn.addEventListener('click', () => {
-  pauseTimer();
-  saveState();
-  window.location.href = 'timer.html';
-});
-
-// Fechar
-closeBtn.addEventListener('click', () => {
-  saveState();
-  window.location.href = 'timer.html';
-});
-
-// ESC para voltar
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    saveState();
-    window.location.href = 'timer.html';
-  }
-});
-
-// Atualizar display
 function updateDisplay() {
+  const secs = computeCurrentSeconds(timerState);
+  displayText.textContent = formatMMSS(secs);
+
   const circumference = 2 * Math.PI * 128;
-  let secs;
-  let progress;
-
-  if (timerState.mode === 'livre') {
-    secs = timerState.elapsedSeconds;
-    progress = 0;
-  } else {
-    secs = timerState.remainingSeconds;
-    progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
+  let progress = 0;
+  if (timerState.mode !== 'livre' && timerState.totalSeconds > 0) {
+    progress = (timerState.totalSeconds - secs) / timerState.totalSeconds;
   }
-
-  const minutes = Math.floor(secs / 60);
-  const seconds = secs % 60;
-  displayText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   progressCircle.style.strokeDasharray = `${circumference * progress} ${circumference}`;
 
   statusSub.textContent = timerState.mode === 'pomodoro' ? 'Foco' : 'Livre';
+  statusMain.textContent = sessaoEstaAtiva()
+    ? (timerState.isRunning ? 'Executando' : 'Pausado')
+    : 'Sem sessão ativa';
+
+  if (timerState.mode !== 'livre' && timerState.isRunning && secs === 0) {
+    pauseTimer();
+  }
 }
 
-// Atualizar indicadores
 function updateIndicators() {
-  const indicators_list = indicators.querySelectorAll('.fullscreen-indicator');
-  indicators_list.forEach((ind, idx) => {
+  const inds = indicators.querySelectorAll('.fullscreen-indicator');
+  inds.forEach((ind, idx) => {
     ind.classList.toggle('active', idx === timerState.currentSession - 1);
   });
 }
 
-// Salvar estado
-function saveState() {
-  chrome.storage.local.set({ timerState: timerState });
+function setPlayUI() {
+  playBtn.innerHTML = timerState.isRunning ? '⏸' : '▶';
 }
 
-// Inicializar
-updateDisplay();
-updateIndicators();
+function startTimer() {
+  timerState.isRunning = true;
+  timerState.startedAt = Date.now();
+  setPlayUI();
+  if (tickInterval) clearInterval(tickInterval);
+  tickInterval = setInterval(updateDisplay, 1000);
+  chrome.storage.local.set({ timerState });
+}
+
+function pauseTimer() {
+  if (timerState.isRunning) {
+    const secs = computeCurrentSeconds(timerState);
+    if (timerState.mode === 'livre') timerState.elapsedSeconds = secs;
+    else timerState.remainingSeconds = secs;
+  }
+  timerState.isRunning = false;
+  timerState.startedAt = null;
+  setPlayUI();
+  if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  chrome.storage.local.set({ timerState });
+}
+
+// Play/Pause — só funciona com sessão ativa
+playBtn.addEventListener('click', () => {
+  if (!sessaoEstaAtiva()) {
+    window.location.href = 'timer.html';
+    return;
+  }
+  if (timerState.isRunning) pauseTimer();
+  else startTimer();
+});
+
+// Voltar para timer normal
+backBtn.addEventListener('click', () => {
+  window.location.href = 'timer.html';
+});
+
+// Finalizar sessão → volta para timer.html (onde o resumo é mostrado)
+finishBtn.addEventListener('click', () => {
+  window.location.href = 'timer.html';
+});
+
+closeBtn.addEventListener('click', () => {
+  window.location.href = 'timer.html';
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') window.location.href = 'timer.html';
+});
+
+function sincronizarUI() {
+  setPlayUI();
+  updateDisplay();
+  updateIndicators();
+  if (timerState.isRunning) {
+    if (!tickInterval) tickInterval = setInterval(updateDisplay, 1000);
+  } else {
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  }
+}
+
+// Carrega estado ao abrir
+chrome.storage.local.get(['timerState', 'sessaoAtiva'], ({ timerState: stored, sessaoAtiva }) => {
+  if (stored) timerState = { ...timerState, ...stored };
+  sessaoAtivaLocal = sessaoAtiva || null;
+  sincronizarUI();
+});
+
+// Sincroniza com outras páginas
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== 'local') return;
+  if (changes.timerState && changes.timerState.newValue) {
+    timerState = { ...timerState, ...changes.timerState.newValue };
+    sincronizarUI();
+  }
+  if ('sessaoAtiva' in changes) {
+    sessaoAtivaLocal = changes.sessaoAtiva.newValue || null;
+    updateDisplay();
+  }
+});

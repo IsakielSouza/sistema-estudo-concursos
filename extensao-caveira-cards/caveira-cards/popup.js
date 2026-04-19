@@ -22,7 +22,35 @@ const questoesEl     = document.getElementById("session-questoes");
 const acertosEl      = document.getElementById("session-acertos");
 const summaryValEl   = document.getElementById("summary-val");
 
-let timerInterval = null;
+// Estado local compartilhado com timer.html (mesmo relogio em todos os lugares)
+let timerState = {
+  mode: "pomodoro",
+  isRunning: false,
+  startedAt: null,
+  remainingSeconds: 1500,
+  totalSeconds: 1500,
+  elapsedSeconds: 0,
+  config: { focus: 25, shortBreak: 5, longBreak: 15, sessions: 4 }
+};
+let popupTickInterval = null;
+
+function computeCurrentSeconds(state) {
+  const base = state.mode === "livre"
+    ? (state.elapsedSeconds || 0)
+    : (state.remainingSeconds ?? state.totalSeconds);
+  if (!state.isRunning || !state.startedAt) return base;
+  const delta = Math.floor((Date.now() - state.startedAt) / 1000);
+  if (state.mode === "livre") return base + delta;
+  return Math.max(0, base - delta);
+}
+
+function formatMMSS(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
 
 function formatarTimer(ms) {
   const total = Math.floor(ms / 1000);
@@ -55,22 +83,33 @@ function mostrarEstado(estado) {
   sessionSummary.style.display = estado === "summary"  ? "block" : "none";
 }
 
-function iniciarTimer(inicio) {
-  if (timerInterval) clearInterval(timerInterval);
-  const atualizar = () => { timerEl.textContent = formatarTimer(Date.now() - inicio); };
-  atualizar();
-  timerInterval = setInterval(atualizar, 1000);
+function atualizarDisplayTempo() {
+  if (!timerEl) return;
+  timerEl.textContent = formatMMSS(computeCurrentSeconds(timerState));
+}
+
+function iniciarTickPopup() {
+  if (popupTickInterval) clearInterval(popupTickInterval);
+  atualizarDisplayTempo();
+  popupTickInterval = setInterval(atualizarDisplayTempo, 1000);
+}
+
+function pararTickPopup() {
+  if (popupTickInterval) clearInterval(popupTickInterval);
+  popupTickInterval = null;
 }
 
 // Ler estado ao abrir popup
-chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
+chrome.storage.local.get(["sessaoAtiva", "timerState"], ({ sessaoAtiva, timerState: storedTimer }) => {
+  if (storedTimer) timerState = { ...timerState, ...storedTimer };
   if (sessaoAtiva && sessaoAtiva.ativa) {
     mostrarEstado("active");
     questoesEl.textContent = sessaoAtiva.questoes || 0;
     acertosEl.textContent  = sessaoAtiva.acertos  || 0;
-    iniciarTimer(sessaoAtiva.inicio);
     const cadernoEl = document.getElementById("session-caderno");
     if (cadernoEl) cadernoEl.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : "";
+    atualizarDisplayTempo();
+    if (timerState.isRunning) iniciarTickPopup();
   } else if (sessaoAtiva && !sessaoAtiva.ativa && sessaoAtiva.resumo) {
     summaryValEl.textContent = sessaoAtiva.resumo;
     const summaryC = document.getElementById("summary-caderno");
@@ -95,17 +134,22 @@ document.getElementById("btn-iniciar").addEventListener("click", async () => {
   mostrarEstado("starting");
 });
 
-// Confirmar sessão (com ou sem caderno)
+// Confirmar sessão — inicia sessão + timer no modo salvo (último escolhido em timer.html)
 document.getElementById("btn-confirmar-sessao").addEventListener("click", () => {
   const caderno = document.getElementById("input-caderno").value.trim() || null;
-  const sessao = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, caderno };
-  chrome.storage.local.set({ sessaoAtiva: sessao });
-  questoesEl.textContent = 0;
-  acertosEl.textContent  = 0;
-  const cadernoEl = document.getElementById("session-caderno");
-  if (cadernoEl) cadernoEl.textContent = caderno ? `📓 ${caderno}` : "";
-  iniciarTimer(sessao.inicio);
-  mostrarEstado("active");
+  const inicio = Date.now();
+  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno, mode: timerState.mode };
+
+  if (timerState.mode === "livre") {
+    timerState.elapsedSeconds = 0;
+  } else {
+    timerState.totalSeconds = (timerState.config?.focus ?? 25) * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+  }
+  timerState.isRunning = true;
+  timerState.startedAt = inicio;
+
+  chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
 });
 
 // Cancelar — volta para idle
@@ -115,24 +159,29 @@ document.getElementById("btn-cancelar-sessao").addEventListener("click", () => {
 
 // Encerrar sessão
 document.getElementById("btn-encerrar").addEventListener("click", () => {
-  if (timerInterval) clearInterval(timerInterval);
+  pararTickPopup();
+  if (timerState.isRunning) {
+    const secs = computeCurrentSeconds(timerState);
+    if (timerState.mode === "livre") timerState.elapsedSeconds = secs;
+    else timerState.remainingSeconds = secs;
+  }
+  timerState.isRunning = false;
+  timerState.startedAt = null;
+
   chrome.storage.local.get(["sessaoAtiva", "historicoSessoes"], ({ sessaoAtiva, historicoSessoes = [] }) => {
     const agora = Date.now();
     const duracaoMs = agora - (sessaoAtiva?.inicio || agora);
     const questoes = sessaoAtiva?.questoes || 0;
     const acertos  = sessaoAtiva?.acertos  || 0;
     const resumo = formatarResumo(duracaoMs, questoes, acertos);
-    
-    // Processar detalhes
-    const detalhes = sessaoAtiva.detalhes || [];
+
+    const detalhes = sessaoAtiva?.detalhes || [];
     const materiasSet = new Set(detalhes.map(d => d.materia));
     const listaMaterias = Array.from(materiasSet).join(", ");
-    
-    // Calcular média de tempo por questão
+
     const tempoTotalMs = detalhes.reduce((acc, d) => acc + d.tempoGastoMs, 0);
     const mediaTempoMs = questoes > 0 ? Math.round(tempoTotalMs / questoes) : 0;
-    
-    // Nova entrada para o histórico
+
     const novaSessao = {
       id: Date.now(),
       data: new Date().toLocaleDateString("pt-BR"),
@@ -148,14 +197,13 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
       materias: listaMaterias,
       caderno: sessaoAtiva.caderno || null,
       detalhesPorMateria: agruparPorMateria(detalhes),
-      detalhes: detalhes
+      detalhes
     };
 
-    const novoHistorico = [novaSessao, ...historicoSessoes];
-    
     chrome.storage.local.set({
       sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos, caderno: sessaoAtiva.caderno || null },
-      historicoSessoes: novoHistorico
+      historicoSessoes: [novaSessao, ...historicoSessoes],
+      timerState
     });
 
     summaryValEl.textContent = resumo;
@@ -176,17 +224,42 @@ document.getElementById("btn-copiar").addEventListener("click", () => {
 
 // Nova sessão
 document.getElementById("btn-nova-sessao").addEventListener("click", () => {
+  if (timerState.mode === "livre") timerState.elapsedSeconds = 0;
+  else timerState.remainingSeconds = timerState.totalSeconds;
   chrome.storage.local.remove("sessaoAtiva");
+  chrome.storage.local.set({ timerState });
   mostrarEstado("idle");
 });
 
-// Atualizar contadores em tempo real se o popup ficar aberto
+// Sincronização em tempo real com timer.html/fullscreen/floating
 chrome.storage.onChanged.addListener((changes) => {
+  if ("timerState" in changes) {
+    const nova = changes.timerState.newValue;
+    if (nova) {
+      timerState = { ...timerState, ...nova };
+      atualizarDisplayTempo();
+      if (timerState.isRunning) iniciarTickPopup();
+      else pararTickPopup();
+    }
+  }
   if ("sessaoAtiva" in changes) {
     const nova = changes.sessaoAtiva.newValue;
     if (nova && nova.ativa) {
       questoesEl.textContent = nova.questoes || 0;
       acertosEl.textContent  = nova.acertos  || 0;
+      const cadernoEl = document.getElementById("session-caderno");
+      if (cadernoEl) cadernoEl.textContent = nova.caderno ? `📓 ${nova.caderno}` : "";
+      mostrarEstado("active");
+      atualizarDisplayTempo();
+    } else if (nova && !nova.ativa && nova.resumo) {
+      pararTickPopup();
+      summaryValEl.textContent = nova.resumo;
+      const summaryC = document.getElementById("summary-caderno");
+      if (summaryC) summaryC.textContent = nova.caderno ? `📓 ${nova.caderno}` : "";
+      mostrarEstado("summary");
+    } else if (!nova) {
+      pararTickPopup();
+      mostrarEstado("idle");
     }
   }
 });

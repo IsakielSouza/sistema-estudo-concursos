@@ -7,23 +7,29 @@ try {
   }
 } catch (e) { /* silencioso */ }
 
-// Timer state
+// ═══════════════════════════════════════════════════
+// Estado unificado: sessão de estudo = timer
+// (Pomodoro countdown OU Livre contando para cima)
+// startedAt = timestamp quando a contagem atual começou;
+// baseline = remainingSeconds (pomodoro) / elapsedSeconds (livre)
+// valor atual = baseline ± (Date.now() - startedAt)/1000
+// ═══════════════════════════════════════════════════
 let timerState = {
-  mode: 'pomodoro', // 'pomodoro' ou 'livre'
+  mode: 'pomodoro',
   isRunning: false,
-  remainingSeconds: 1500, // 25 minutos
+  startedAt: null,
+  remainingSeconds: 1500,
   totalSeconds: 1500,
-  elapsedSeconds: 0, // usado no modo livre (incremental)
-  currentSession: 1, // qual sessão pomodoro
-  config: {
-    focus: 25,
-    shortBreak: 5,
-    longBreak: 15,
-    sessions: 4
-  }
+  elapsedSeconds: 0,
+  currentSession: 1,
+  config: { focus: 25, shortBreak: 5, longBreak: 15, sessions: 4 }
 };
 
-// Elements
+let sessaoAtivaLocal = null;
+let tickInterval = null;
+let avisoTimeout = null;
+
+// ─── Elements ───
 const configBtn = document.getElementById('timer-config-btn');
 const configContainer = document.getElementById('timer-config');
 const resetBtn = document.getElementById('timer-reset-btn');
@@ -34,248 +40,42 @@ const statusText = document.getElementById('timer-status-text');
 const playBtn = document.getElementById('timer-play-btn');
 const fullscreenBtn = document.getElementById('timer-fullscreen-btn');
 const floatingBtn = document.getElementById('timer-floating-btn');
-const backBtn = document.getElementById('timer-back-btn');
 const progressCircle = document.getElementById('timer-progress-circle');
 const indicators = document.getElementById('timer-indicators');
 
-let timerInterval = null;
-
-// Toggle configurações
-configBtn.addEventListener('click', () => {
-  configContainer.classList.toggle('show');
-  resetBtn.style.display = configContainer.classList.contains('show') ? 'block' : 'none';
-});
-
-// Abas
-pomodoroTab.addEventListener('click', () => switchMode('pomodoro'));
-livreTab.addEventListener('click', () => switchMode('livre'));
-
-function setActiveTab(mode) {
-  pomodoroTab.classList.toggle('active', mode === 'pomodoro');
-  livreTab.classList.toggle('active', mode === 'livre');
-}
-
-function switchMode(mode) {
-  if (timerState.mode === mode) return;
-  if (timerState.isRunning) {
-    mostrarAvisoTimer();
-    return;
-  }
-
-  timerState.mode = mode;
-  if (mode === 'livre') {
-    timerState.elapsedSeconds = 0;
-  } else {
-    timerState.remainingSeconds = timerState.totalSeconds;
-  }
-
-  setActiveTab(mode);
-  configContainer.classList.remove('show');
-  resetBtn.style.display = 'none';
-
-  updateDisplay();
-  saveState();
-}
-
-let avisoTimeout = null;
-function mostrarAvisoTimer() {
-  statusText.textContent = '⚠ Timer em andamento — pause para trocar';
-  statusText.style.color = '#ef4444';
-  if (avisoTimeout) clearTimeout(avisoTimeout);
-  avisoTimeout = setTimeout(() => {
-    statusText.style.color = '';
-    statusText.textContent = timerState.isRunning ? 'Executando' : 'Pausado';
-  }, 2500);
-}
-
-// Play/Pause
-playBtn.addEventListener('click', () => {
-  if (timerState.isRunning) {
-    pauseTimer();
-  } else {
-    startTimer();
-  }
-});
-
-function startTimer() {
-  timerState.isRunning = true;
-  playBtn.innerHTML = '⏸';
-  playBtn.style.backgroundColor = '#ef4444';
-  statusText.style.color = '';
-  statusText.textContent = 'Executando';
-
-  timerInterval = setInterval(() => {
-    if (timerState.mode === 'livre') {
-      timerState.elapsedSeconds++;
-    } else {
-      timerState.remainingSeconds--;
-      if (timerState.remainingSeconds < 0) {
-        pauseTimer();
-        timerState.remainingSeconds = 0;
-      }
-    }
-    updateDisplay();
-    saveState();
-  }, 1000);
-}
-
-function pauseTimer() {
-  timerState.isRunning = false;
-  playBtn.innerHTML = '▶';
-  playBtn.style.backgroundColor = '#22c55e';
-  statusText.style.color = '';
-  statusText.textContent = 'Pausado';
-  if (timerInterval) clearInterval(timerInterval);
-  saveState();
-}
-
-// Configuração
-document.querySelectorAll('.timer-config-input button').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const action = e.target.dataset.action;
-    const field = e.target.dataset.field;
-
-    if (action === 'increase') {
-      timerState.config[field]++;
-    } else if (action === 'decrease' && timerState.config[field] > 1) {
-      timerState.config[field]--;
-    }
-
-    updateConfigDisplay();
-  });
-});
-
-function updateConfigDisplay() {
-  document.getElementById('timer-config-focus').textContent = timerState.config.focus;
-  document.getElementById('timer-config-shortbreak').textContent = timerState.config.shortBreak;
-  document.getElementById('timer-config-longbreak').textContent = timerState.config.longBreak;
-  document.getElementById('timer-config-sessions').textContent = timerState.config.sessions;
-}
-
-// Reset
-resetBtn.addEventListener('click', () => {
-  timerState.currentSession = 1;
-  updateIndicators();
-  pauseTimer();
-});
-
-// Fullscreen (navega para tela fullscreen na mesma aba)
-fullscreenBtn.addEventListener('click', () => {
-  saveState();
-  window.location.href = 'timer-fullscreen.html';
-});
-
-// Floating
-floatingBtn.addEventListener('click', () => {
-  pauseTimer();
-  saveState();
-  chrome.windows.create({
-    url: chrome.runtime.getURL('timer-floating.html'),
-    type: 'popup',
-    width: 320,
-    height: 380
-  });
-});
-
-// Atualizar display
-function updateDisplay() {
-  const circumference = 2 * Math.PI * 62;
-  let secs;
-  let progress;
-
-  if (timerState.mode === 'livre') {
-    secs = timerState.elapsedSeconds;
-    progress = 0;
-  } else {
-    secs = timerState.remainingSeconds;
-    progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
-  }
-
-  const minutes = Math.floor(secs / 60);
-  const seconds = secs % 60;
-  displayText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  progressCircle.style.strokeDasharray = `${circumference * progress} ${circumference}`;
-}
-
-// Atualizar indicadores
-function updateIndicators() {
-  const indicators_list = indicators.querySelectorAll('.timer-indicator');
-  indicators_list.forEach((ind, idx) => {
-    ind.classList.toggle('active', idx === timerState.currentSession - 1);
-  });
-}
-
-// Salvar estado
-function saveState() {
-  chrome.storage.local.set({ timerState: timerState });
-}
-
-// Listener para atualizações do estado
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes.timerState) {
-    const nova = changes.timerState.newValue;
-    if (!nova) return;
-    const rodandoOutraPagina = nova.isRunning && !timerInterval;
-    timerState = nova;
-    setActiveTab(timerState.mode);
-    if (rodandoOutraPagina) {
-      playBtn.innerHTML = '⏸';
-      playBtn.style.backgroundColor = '#ef4444';
-      statusText.textContent = 'Executando';
-    } else if (!nova.isRunning && timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      playBtn.innerHTML = '▶';
-      playBtn.style.backgroundColor = '#22c55e';
-      statusText.textContent = 'Pausado';
-    }
-    updateDisplay();
-    updateIndicators();
-    updateConfigDisplay();
-  }
-});
-
-// Inicializar a partir do storage (sincroniza aba ativa com timer em andamento)
-chrome.storage.local.get('timerState', ({ timerState: stored }) => {
-  if (stored) {
-    timerState = { ...timerState, ...stored };
-    setActiveTab(timerState.mode);
-    if (timerState.isRunning) {
-      playBtn.innerHTML = '⏸';
-      playBtn.style.backgroundColor = '#ef4444';
-      statusText.textContent = 'Executando';
-    }
-  } else {
-    setActiveTab(timerState.mode);
-  }
-  updateDisplay();
-  updateConfigDisplay();
-  updateIndicators();
-});
-
-// ════════════════════════════════════════════════
-// Sessão de Estudo (sincronizada com popup)
-// ════════════════════════════════════════════════
-const sessionIdle     = document.getElementById('session-idle');
+const sessionIdle = document.getElementById('session-idle');
 const sessionStarting = document.getElementById('session-starting');
-const sessionActive   = document.getElementById('session-active');
-const sessionSummary  = document.getElementById('session-summary');
-const sessionTimerEl  = document.getElementById('session-timer');
-const questoesEl      = document.getElementById('session-questoes');
-const acertosEl       = document.getElementById('session-acertos');
-const summaryValEl    = document.getElementById('summary-val');
+const sessionActive = document.getElementById('session-active');
+const sessionSummary = document.getElementById('session-summary');
+const sessionTimerEl = document.getElementById('session-timer');
+const questoesEl = document.getElementById('session-questoes');
+const acertosEl = document.getElementById('session-acertos');
+const summaryValEl = document.getElementById('summary-val');
 
-let sessionTimerInterval = null;
+// ─── Helpers ───
+function computeCurrentSeconds(state) {
+  const base = state.mode === 'livre'
+    ? (state.elapsedSeconds || 0)
+    : (state.remainingSeconds ?? state.totalSeconds);
+  if (!state.isRunning || !state.startedAt) return base;
+  const delta = Math.floor((Date.now() - state.startedAt) / 1000);
+  if (state.mode === 'livre') return base + delta;
+  return Math.max(0, base - delta);
+}
+
+function formatMMSS(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 function formatarTimer(ms) {
   const total = Math.floor(ms / 1000);
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  if (h > 0) {
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  }
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 function formatarResumo(ms, questoes, acertos) {
@@ -283,31 +83,12 @@ function formatarResumo(ms, questoes, acertos) {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   let tempoStr = '';
-  if (h > 0 && m > 0)      tempoStr = `${h}h${String(m).padStart(2,'0')}min`;
+  if (h > 0 && m > 0)      tempoStr = `${h}h${String(m).padStart(2, '0')}min`;
   else if (h > 0)           tempoStr = `${h}h`;
   else if (totalMin === 0)  tempoStr = '< 1min';
   else                      tempoStr = `${m}min`;
   const plural = questoes !== 1 ? 'questões' : 'questão';
   return `⏱ ${tempoStr}  |  📚 ${questoes} ${plural}  |  ✅ ${acertos} acertos`;
-}
-
-function mostrarEstadoSessao(estado) {
-  sessionIdle.style.display     = estado === 'idle'     ? 'flex'  : 'none';
-  sessionStarting.style.display = estado === 'starting' ? 'block' : 'none';
-  sessionActive.style.display   = estado === 'active'   ? 'block' : 'none';
-  sessionSummary.style.display  = estado === 'summary'  ? 'block' : 'none';
-}
-
-function iniciarSessionTimer(inicio) {
-  if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-  const atualizar = () => { sessionTimerEl.textContent = formatarTimer(Date.now() - inicio); };
-  atualizar();
-  sessionTimerInterval = setInterval(atualizar, 1000);
-}
-
-function pararSessionTimer() {
-  if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-  sessionTimerInterval = null;
 }
 
 function agruparPorMateria(detalhes) {
@@ -320,27 +101,188 @@ function agruparPorMateria(detalhes) {
   return grupos;
 }
 
-// Ler estado ao abrir
-chrome.storage.local.get('sessaoAtiva', ({ sessaoAtiva }) => {
-  if (sessaoAtiva && sessaoAtiva.ativa) {
-    mostrarEstadoSessao('active');
-    questoesEl.textContent = sessaoAtiva.questoes || 0;
-    acertosEl.textContent  = sessaoAtiva.acertos  || 0;
-    iniciarSessionTimer(sessaoAtiva.inicio);
-    const cadernoEl = document.getElementById('session-caderno');
-    if (cadernoEl) cadernoEl.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : '';
-  } else if (sessaoAtiva && !sessaoAtiva.ativa && sessaoAtiva.resumo) {
-    summaryValEl.textContent = sessaoAtiva.resumo;
-    const summaryC = document.getElementById('summary-caderno');
-    if (summaryC) summaryC.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : '';
-    mostrarEstadoSessao('summary');
-  } else {
-    mostrarEstadoSessao('idle');
+function sessaoEstaAtiva() {
+  return !!(sessaoAtivaLocal && sessaoAtivaLocal.ativa);
+}
+
+// ─── UI Updaters ───
+function setActiveTab(mode) {
+  pomodoroTab.classList.toggle('active', mode === 'pomodoro');
+  livreTab.classList.toggle('active', mode === 'livre');
+}
+
+function updateDisplay() {
+  const secs = computeCurrentSeconds(timerState);
+  displayText.textContent = formatMMSS(secs);
+  const circumference = 2 * Math.PI * 62;
+  let progress = 0;
+  if (timerState.mode !== 'livre' && timerState.totalSeconds > 0) {
+    progress = (timerState.totalSeconds - secs) / timerState.totalSeconds;
   }
+  progressCircle.style.strokeDasharray = `${circumference * progress} ${circumference}`;
+  if (sessionTimerEl) sessionTimerEl.textContent = formatMMSS(secs);
+
+  if (timerState.mode !== 'livre' && timerState.isRunning && secs === 0) {
+    pauseTimer();
+  }
+}
+
+function updateIndicators() {
+  const inds = indicators.querySelectorAll('.timer-indicator');
+  inds.forEach((ind, idx) => {
+    ind.classList.toggle('active', idx === timerState.currentSession - 1);
+  });
+}
+
+function updateConfigDisplay() {
+  document.getElementById('timer-config-focus').textContent = timerState.config.focus;
+  document.getElementById('timer-config-shortbreak').textContent = timerState.config.shortBreak;
+  document.getElementById('timer-config-longbreak').textContent = timerState.config.longBreak;
+  document.getElementById('timer-config-sessions').textContent = timerState.config.sessions;
+}
+
+function mostrarEstadoSessao(estado) {
+  sessionIdle.style.display     = estado === 'idle'     ? 'flex'  : 'none';
+  sessionStarting.style.display = estado === 'starting' ? 'block' : 'none';
+  sessionActive.style.display   = estado === 'active'   ? 'block' : 'none';
+  sessionSummary.style.display  = estado === 'summary'  ? 'block' : 'none';
+}
+
+function mostrarAviso(msg) {
+  statusText.textContent = msg;
+  statusText.style.color = '#ef4444';
+  if (avisoTimeout) clearTimeout(avisoTimeout);
+  avisoTimeout = setTimeout(() => {
+    statusText.style.color = '';
+    statusText.textContent = timerState.isRunning ? 'Executando' : 'Pausado';
+  }, 2500);
+}
+
+function setPlayUIRunning() {
+  playBtn.innerHTML = '⏸';
+  playBtn.style.backgroundColor = '#ef4444';
+  statusText.style.color = '';
+  statusText.textContent = 'Executando';
+}
+
+function setPlayUIPaused() {
+  playBtn.innerHTML = '▶';
+  playBtn.style.backgroundColor = '#22c55e';
+  statusText.style.color = '';
+  statusText.textContent = 'Pausado';
+}
+
+// ─── Timer controls ───
+function startTimer() {
+  timerState.isRunning = true;
+  timerState.startedAt = Date.now();
+  setPlayUIRunning();
+  if (tickInterval) clearInterval(tickInterval);
+  tickInterval = setInterval(updateDisplay, 1000);
+  saveState();
+}
+
+function pauseTimer() {
+  if (timerState.isRunning) {
+    const secs = computeCurrentSeconds(timerState);
+    if (timerState.mode === 'livre') timerState.elapsedSeconds = secs;
+    else timerState.remainingSeconds = secs;
+  }
+  timerState.isRunning = false;
+  timerState.startedAt = null;
+  setPlayUIPaused();
+  if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  saveState();
+}
+
+function saveState() {
+  chrome.storage.local.set({ timerState });
+}
+
+// ─── Tab/Mode ───
+pomodoroTab.addEventListener('click', () => switchMode('pomodoro'));
+livreTab.addEventListener('click', () => switchMode('livre'));
+
+function switchMode(mode) {
+  if (timerState.mode === mode) return;
+  if (sessaoEstaAtiva()) {
+    mostrarAviso('⚠ Sessão em andamento — encerre para trocar');
+    return;
+  }
+  timerState.mode = mode;
+  if (mode === 'livre') {
+    timerState.elapsedSeconds = 0;
+  } else {
+    timerState.totalSeconds = timerState.config.focus * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+  }
+  setActiveTab(mode);
+  configContainer.classList.remove('show');
+  resetBtn.style.display = 'none';
+  updateDisplay();
+  saveState();
+}
+
+// ─── Config ───
+configBtn.addEventListener('click', () => {
+  if (sessaoEstaAtiva()) {
+    mostrarAviso('⚠ Sessão em andamento — encerre para configurar');
+    return;
+  }
+  configContainer.classList.toggle('show');
+  resetBtn.style.display = configContainer.classList.contains('show') ? 'block' : 'none';
 });
 
-// Iniciar sessão
-document.getElementById('btn-iniciar').addEventListener('click', async () => {
+document.querySelectorAll('.timer-config-input button').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    if (sessaoEstaAtiva()) return;
+    const action = e.target.dataset.action;
+    const field = e.target.dataset.field;
+    if (action === 'increase') timerState.config[field]++;
+    else if (action === 'decrease' && timerState.config[field] > 1) timerState.config[field]--;
+    if (field === 'focus' && timerState.mode === 'pomodoro') {
+      timerState.totalSeconds = timerState.config.focus * 60;
+      timerState.remainingSeconds = timerState.totalSeconds;
+      updateDisplay();
+    }
+    updateConfigDisplay();
+    saveState();
+  });
+});
+
+resetBtn.addEventListener('click', () => {
+  timerState.currentSession = 1;
+  updateIndicators();
+  saveState();
+});
+
+// ─── Play button ───
+playBtn.addEventListener('click', () => {
+  if (!sessaoEstaAtiva()) {
+    if (sessionStarting.style.display === 'none') {
+      iniciarFluxoSessao();
+    }
+    return;
+  }
+  if (timerState.isRunning) pauseTimer();
+  else startTimer();
+});
+
+// ─── Fullscreen / Floating nav ───
+fullscreenBtn.addEventListener('click', () => {
+  window.location.href = 'timer-fullscreen.html';
+});
+floatingBtn.addEventListener('click', () => {
+  chrome.windows.create({
+    url: chrome.runtime.getURL('timer-floating.html'),
+    type: 'popup',
+    width: 320,
+    height: 380
+  });
+});
+
+// ─── Session flow ───
+async function iniciarFluxoSessao() {
   let cadernoDetectado = '';
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -348,43 +290,54 @@ document.getElementById('btn-iniciar').addEventListener('click', async () => {
       const resp = await chrome.tabs.sendMessage(tab.id, { action: 'getCadernoName' });
       cadernoDetectado = resp?.caderno || '';
     }
-  } catch { /* not on TEC or content script not ready */ }
+  } catch { /* silencioso */ }
   document.getElementById('input-caderno').value = cadernoDetectado;
   mostrarEstadoSessao('starting');
-});
+}
 
-// Confirmar sessão
+document.getElementById('btn-iniciar').addEventListener('click', iniciarFluxoSessao);
+
 document.getElementById('btn-confirmar-sessao').addEventListener('click', () => {
   const caderno = document.getElementById('input-caderno').value.trim() || null;
-  const sessao = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, caderno };
-  chrome.storage.local.set({ sessaoAtiva: sessao });
-  questoesEl.textContent = 0;
-  acertosEl.textContent  = 0;
-  const cadernoEl = document.getElementById('session-caderno');
-  if (cadernoEl) cadernoEl.textContent = caderno ? `📓 ${caderno}` : '';
-  iniciarSessionTimer(sessao.inicio);
-  mostrarEstadoSessao('active');
+  const inicio = Date.now();
+  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno, mode: timerState.mode };
+
+  if (timerState.mode === 'livre') {
+    timerState.elapsedSeconds = 0;
+  } else {
+    timerState.totalSeconds = timerState.config.focus * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+  }
+  timerState.isRunning = true;
+  timerState.startedAt = inicio;
+
+  chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
 });
 
-// Cancelar
 document.getElementById('btn-cancelar-sessao').addEventListener('click', () => {
   mostrarEstadoSessao('idle');
 });
 
-// Encerrar sessão
 document.getElementById('btn-encerrar').addEventListener('click', () => {
-  pararSessionTimer();
+  if (timerState.isRunning) {
+    const secs = computeCurrentSeconds(timerState);
+    if (timerState.mode === 'livre') timerState.elapsedSeconds = secs;
+    else timerState.remainingSeconds = secs;
+  }
+  timerState.isRunning = false;
+  timerState.startedAt = null;
+  if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+
   chrome.storage.local.get(['sessaoAtiva', 'historicoSessoes'], ({ sessaoAtiva, historicoSessoes = [] }) => {
     const agora = Date.now();
     const duracaoMs = agora - (sessaoAtiva?.inicio || agora);
     const questoes = sessaoAtiva?.questoes || 0;
-    const acertos  = sessaoAtiva?.acertos  || 0;
+    const acertos = sessaoAtiva?.acertos || 0;
     const resumo = formatarResumo(duracaoMs, questoes, acertos);
 
-    const detalhes = sessaoAtiva.detalhes || [];
+    const detalhes = sessaoAtiva?.detalhes || [];
     const materiasSet = new Set(detalhes.map(d => d.materia));
     const listaMaterias = Array.from(materiasSet).join(', ');
-
     const tempoTotalMs = detalhes.reduce((acc, d) => acc + d.tempoGastoMs, 0);
     const mediaTempoMs = questoes > 0 ? Math.round(tempoTotalMs / questoes) : 0;
 
@@ -403,24 +356,17 @@ document.getElementById('btn-encerrar').addEventListener('click', () => {
       materias: listaMaterias,
       caderno: sessaoAtiva.caderno || null,
       detalhesPorMateria: agruparPorMateria(detalhes),
-      detalhes: detalhes
+      detalhes
     };
-
-    const novoHistorico = [novaSessao, ...historicoSessoes];
 
     chrome.storage.local.set({
       sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos, caderno: sessaoAtiva.caderno || null },
-      historicoSessoes: novoHistorico
+      historicoSessoes: [novaSessao, ...historicoSessoes],
+      timerState
     });
-
-    summaryValEl.textContent = resumo;
-    const summaryC = document.getElementById('summary-caderno');
-    if (summaryC) summaryC.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : '';
-    mostrarEstadoSessao('summary');
   });
 });
 
-// Copiar resumo
 document.getElementById('btn-copiar').addEventListener('click', () => {
   const btn = document.getElementById('btn-copiar');
   navigator.clipboard.writeText(summaryValEl.textContent).then(() => {
@@ -429,13 +375,13 @@ document.getElementById('btn-copiar').addEventListener('click', () => {
   });
 });
 
-// Nova sessão
 document.getElementById('btn-nova-sessao').addEventListener('click', () => {
+  if (timerState.mode === 'livre') timerState.elapsedSeconds = 0;
+  else timerState.remainingSeconds = timerState.totalSeconds;
   chrome.storage.local.remove('sessaoAtiva');
-  mostrarEstadoSessao('idle');
+  chrome.storage.local.set({ timerState });
 });
 
-// Ver histórico
 function abrirHistorico() {
   chrome.tabs.create({ url: chrome.runtime.getURL('sessoes.html') });
 }
@@ -443,33 +389,57 @@ document.getElementById('btn-historico-idle').addEventListener('click', abrirHis
 document.getElementById('btn-historico-active').addEventListener('click', abrirHistorico);
 document.getElementById('btn-historico-summary').addEventListener('click', abrirHistorico);
 
-// Sincronização em tempo real com popup
+// ─── Sync UI from state ───
+function sincronizarSessaoUI(sessao) {
+  sessaoAtivaLocal = sessao || null;
+  if (sessao && sessao.ativa) {
+    questoesEl.textContent = sessao.questoes || 0;
+    acertosEl.textContent  = sessao.acertos  || 0;
+    const cadernoEl = document.getElementById('session-caderno');
+    if (cadernoEl) cadernoEl.textContent = sessao.caderno ? `📓 ${sessao.caderno}` : '';
+    mostrarEstadoSessao('active');
+  } else if (sessao && !sessao.ativa && sessao.resumo) {
+    summaryValEl.textContent = sessao.resumo;
+    const summaryC = document.getElementById('summary-caderno');
+    if (summaryC) summaryC.textContent = sessao.caderno ? `📓 ${sessao.caderno}` : '';
+    mostrarEstadoSessao('summary');
+  } else {
+    mostrarEstadoSessao('idle');
+  }
+}
+
+function sincronizarTimerUI() {
+  setActiveTab(timerState.mode);
+  if (timerState.isRunning) {
+    if (!tickInterval) tickInterval = setInterval(updateDisplay, 1000);
+    setPlayUIRunning();
+  } else {
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+    setPlayUIPaused();
+  }
+  updateDisplay();
+  updateIndicators();
+  updateConfigDisplay();
+}
+
+// ─── Initial load ───
+chrome.storage.local.get(['timerState', 'sessaoAtiva'], ({ timerState: stored, sessaoAtiva }) => {
+  if (stored) timerState = { ...timerState, ...stored };
+  sincronizarTimerUI();
+  sincronizarSessaoUI(sessaoAtiva);
+});
+
+// ─── Storage listeners ───
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== 'local') return;
-
-  if ('sessaoAtiva' in changes) {
-    const nova = changes.sessaoAtiva.newValue;
-    if (nova && nova.ativa) {
-      // Sessão ativa atualizada
-      questoesEl.textContent = nova.questoes || 0;
-      acertosEl.textContent  = nova.acertos  || 0;
-      if (!sessionTimerInterval) {
-        iniciarSessionTimer(nova.inicio);
-        const cadernoEl = document.getElementById('session-caderno');
-        if (cadernoEl) cadernoEl.textContent = nova.caderno ? `📓 ${nova.caderno}` : '';
-        mostrarEstadoSessao('active');
-      }
-    } else if (nova && !nova.ativa && nova.resumo) {
-      // Sessão encerrada em outro lugar
-      pararSessionTimer();
-      summaryValEl.textContent = nova.resumo;
-      const summaryC = document.getElementById('summary-caderno');
-      if (summaryC) summaryC.textContent = nova.caderno ? `📓 ${nova.caderno}` : '';
-      mostrarEstadoSessao('summary');
-    } else if (!nova) {
-      // Sessão removida (nova sessão)
-      pararSessionTimer();
-      mostrarEstadoSessao('idle');
+  if (changes.timerState) {
+    const nova = changes.timerState.newValue;
+    if (nova) {
+      timerState = { ...timerState, ...nova };
+      sincronizarTimerUI();
     }
+  }
+  if ('sessaoAtiva' in changes) {
+    sincronizarSessaoUI(changes.sessaoAtiva.newValue);
   }
 });

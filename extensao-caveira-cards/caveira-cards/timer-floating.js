@@ -1,18 +1,17 @@
-// Timer state (recebido da aba anterior)
+// Estado unificado (espelhado de timer.html)
 let timerState = {
   mode: 'pomodoro',
   isRunning: false,
+  startedAt: null,
   remainingSeconds: 1500,
   totalSeconds: 1500,
   elapsedSeconds: 0,
   currentSession: 1,
-  config: {
-    focus: 25,
-    shortBreak: 5,
-    longBreak: 15,
-    sessions: 4
-  }
+  config: { focus: 25, shortBreak: 5, longBreak: 15, sessions: 4 }
 };
+
+let sessaoAtivaLocal = null;
+let tickInterval = null;
 
 // Elements
 const displayText = document.getElementById('floating-display');
@@ -23,103 +22,110 @@ const backBtn = document.getElementById('floating-back-btn');
 const progressFill = document.getElementById('floating-progress-fill');
 const progressDot = document.getElementById('floating-progress-dot');
 
-let timerInterval = null;
-
-// Receber estado da aba anterior
-chrome.storage.local.get('timerState', (result) => {
-  if (result.timerState) {
-    timerState = { ...timerState, ...result.timerState };
-    updateDisplay();
-    if (timerState.isRunning) {
-      playBtn.innerHTML = '⏸';
-      statusText.textContent = 'Executando';
-      timerInterval = setInterval(tick, 1000);
-    }
-  }
-});
-
-// Sincroniza com outras páginas
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== 'local' || !changes.timerState) return;
-  const nova = changes.timerState.newValue;
-  if (!nova) return;
-  timerState = nova;
-  updateDisplay();
-});
-
-// Play/Pause
-playBtn.addEventListener('click', () => {
-  if (timerState.isRunning) {
-    pauseTimer();
-  } else {
-    startTimer();
-  }
-});
-
-function startTimer() {
-  timerState.isRunning = true;
-  playBtn.innerHTML = '⏸';
-  statusText.textContent = 'Executando';
-  timerInterval = setInterval(tick, 1000);
+function computeCurrentSeconds(state) {
+  const base = state.mode === 'livre'
+    ? (state.elapsedSeconds || 0)
+    : (state.remainingSeconds ?? state.totalSeconds);
+  if (!state.isRunning || !state.startedAt) return base;
+  const delta = Math.floor((Date.now() - state.startedAt) / 1000);
+  if (state.mode === 'livre') return base + delta;
+  return Math.max(0, base - delta);
 }
 
-function tick() {
-  if (timerState.mode === 'livre') {
-    timerState.elapsedSeconds++;
-  } else {
-    timerState.remainingSeconds--;
-    if (timerState.remainingSeconds < 0) {
-      pauseTimer();
-      timerState.remainingSeconds = 0;
-    }
-  }
-  updateDisplay();
-  saveState();
+function formatMMSS(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function pauseTimer() {
-  timerState.isRunning = false;
-  playBtn.innerHTML = '▶';
-  statusText.textContent = 'Pausado';
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  saveState();
+function sessaoEstaAtiva() {
+  return !!(sessaoAtivaLocal && sessaoAtivaLocal.ativa);
 }
 
-// Voltar para timer normal
-backBtn.addEventListener('click', () => {
-  pauseTimer();
-  saveState();
-  window.close();
-});
-
-// Atualizar display
 function updateDisplay() {
-  let secs;
-  let progress;
+  const secs = computeCurrentSeconds(timerState);
+  displayText.textContent = formatMMSS(secs);
 
-  if (timerState.mode === 'livre') {
-    secs = timerState.elapsedSeconds;
-    progress = 0;
-  } else {
-    secs = timerState.remainingSeconds;
-    progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
+  let progress = 0;
+  if (timerState.mode !== 'livre' && timerState.totalSeconds > 0) {
+    progress = (timerState.totalSeconds - secs) / timerState.totalSeconds;
   }
-
-  const minutes = Math.floor(secs / 60);
-  const seconds = secs % 60;
-  displayText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
   const progressPercent = Math.max(0, Math.min(100, progress * 100));
   progressFill.style.width = `${progressPercent}%`;
   progressDot.style.left = `${progressPercent}%`;
 
   labelText.textContent = timerState.mode === 'pomodoro' ? 'Foco' : 'Livre';
+  statusText.textContent = sessaoEstaAtiva()
+    ? (timerState.isRunning ? 'Executando' : 'Pausado')
+    : 'Sem sessão';
+
+  if (timerState.mode !== 'livre' && timerState.isRunning && secs === 0) {
+    pauseTimer();
+  }
 }
 
-// Salvar estado
-function saveState() {
-  chrome.storage.local.set({ timerState: timerState });
+function setPlayUI() {
+  playBtn.innerHTML = timerState.isRunning ? '⏸' : '▶';
 }
 
-// Inicializar
-updateDisplay();
+function startTimer() {
+  timerState.isRunning = true;
+  timerState.startedAt = Date.now();
+  setPlayUI();
+  if (tickInterval) clearInterval(tickInterval);
+  tickInterval = setInterval(updateDisplay, 1000);
+  chrome.storage.local.set({ timerState });
+}
+
+function pauseTimer() {
+  if (timerState.isRunning) {
+    const secs = computeCurrentSeconds(timerState);
+    if (timerState.mode === 'livre') timerState.elapsedSeconds = secs;
+    else timerState.remainingSeconds = secs;
+  }
+  timerState.isRunning = false;
+  timerState.startedAt = null;
+  setPlayUI();
+  if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  chrome.storage.local.set({ timerState });
+}
+
+playBtn.addEventListener('click', () => {
+  if (!sessaoEstaAtiva()) return;
+  if (timerState.isRunning) pauseTimer();
+  else startTimer();
+});
+
+backBtn.addEventListener('click', () => {
+  window.close();
+});
+
+function sincronizarUI() {
+  setPlayUI();
+  updateDisplay();
+  if (timerState.isRunning) {
+    if (!tickInterval) tickInterval = setInterval(updateDisplay, 1000);
+  } else {
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  }
+}
+
+chrome.storage.local.get(['timerState', 'sessaoAtiva'], ({ timerState: stored, sessaoAtiva }) => {
+  if (stored) timerState = { ...timerState, ...stored };
+  sessaoAtivaLocal = sessaoAtiva || null;
+  sincronizarUI();
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== 'local') return;
+  if (changes.timerState && changes.timerState.newValue) {
+    timerState = { ...timerState, ...changes.timerState.newValue };
+    sincronizarUI();
+  }
+  if ('sessaoAtiva' in changes) {
+    sessaoAtivaLocal = changes.sessaoAtiva.newValue || null;
+    updateDisplay();
+  }
+});
