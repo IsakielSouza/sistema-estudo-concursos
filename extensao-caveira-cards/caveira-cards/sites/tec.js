@@ -450,8 +450,18 @@
               "button.discussao-comentario-nota-seta.nota-positiva"
             );
 
+            // Captura data de publicação se disponível no DOM
+            const dataEl = li.querySelector(
+              ".discussao-comentario-data, .comentario-data, time, [class*='comentario'][class*='data']"
+            );
+            const rawData = dataEl?.textContent?.trim() || "";
+            // Aceitar somente strings que contenham formato de data com dígitos separados por /-.
+            const dataPublicacao = rawData && /\d{2}[/\-.]\d{2}[/\-.]\d{2,4}/.test(rawData)
+              ? rawData
+              : undefined;
+
             // Props com _ são ignoradas pela serialização (anki.js usa só html/score/type)
-            return { score, html, type: "aluno", _liEl: li, _btnLike: btnLike };
+            return { score, html, type: "aluno", dataPublicacao, _liEl: li, _btnLike: btnLike };
           })
           .filter(Boolean);
 
