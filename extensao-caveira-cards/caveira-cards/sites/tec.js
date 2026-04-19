@@ -547,4 +547,12 @@
       }
     },
   };
+
+  // Responde ao popup quando ele pede o nome do caderno ativo
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg.action !== "getCadernoName") return false;
+    const el = document.querySelector(".caderno-subtitulo-secao-nome .titulo");
+    sendResponse({ caderno: el?.textContent?.trim() || null });
+    return false;
+  });
 })();
