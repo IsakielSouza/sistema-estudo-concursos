@@ -758,23 +758,37 @@
 
     try {
       const { frente, verso } = window.CaveiraCardBuilder.montarCard(questao);
-      const noteId = await window.CaveiraAnki.enviarQuestao(questao, frente, verso);
-      
+
+      // Build caderno tag if active session has a caderno name
+      const extraTags = [];
+      try {
+        const { sessaoAtiva } = await chrome.storage.local.get("sessaoAtiva");
+        if (sessaoAtiva?.caderno) {
+          const slug = sessaoAtiva.caderno
+            .toLowerCase()
+            .replace(/[|.\s/\\]+/g, "-")
+            .replace(/-{2,}/g, "-")
+            .replace(/^-|-$/g, "");
+          const res = questao.resultado === "Erros" ? "erros" : "revisao";
+          extraTags.push(`caderno::${slug}::${res}`);
+        }
+      } catch { /* caderno tag is optional — ignore if storage unavailable */ }
+
+      const noteId = await window.CaveiraAnki.enviarQuestao(questao, frente, verso, extraTags);
+
       noteIdAtual = noteId;
       overlay.classList.remove("loading", "errou", "acertou");
       overlay.classList.add("sucesso");
       titleEl.textContent = "Adicionado! ✓";
 
       // ── Auto-captura de comentários (TEC) ──
-      // Roda em segundo plano via API global (ver `autoCapturarComentarios`):
-      // professor SEMPRE é capturado; alunos só se o toggle estiver ativo.
       if (adapter.nomePlataforma === "TEC Concursos") {
         autoCapturarComentarios(adapter, questao, noteId);
       }
 
     } catch (err) {
       overlay.classList.remove("loading");
-      
+
       if (err.message.includes("duplicate")) {
         overlay.classList.remove("errou", "acertou");
         overlay.classList.add("sucesso");
