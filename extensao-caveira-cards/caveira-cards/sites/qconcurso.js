@@ -335,7 +335,18 @@
             const html = sanitizarHtml(textEl.innerHTML);
             if (!html || html.length < 5) return null;
 
-            return { score, html };
+            // Captura data de publicação se disponível no DOM do bloco
+            const dataEl = block.querySelector("time, .date, .created-at, [class*='date'], [class*='data']");
+            const rawData = dataEl?.getAttribute("datetime") || dataEl?.textContent?.trim();
+            let dataPublicacao;
+            if (rawData) {
+              const d = new Date(rawData);
+              dataPublicacao = isNaN(d.getTime())
+                ? (/\d/.test(rawData) ? rawData.trim() : undefined)
+                : d.toLocaleDateString("pt-BR");
+            }
+
+            return { score, html, dataPublicacao };
           }).filter(Boolean);
 
           comentarios.push(...items);
