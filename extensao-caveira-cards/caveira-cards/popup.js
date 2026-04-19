@@ -186,7 +186,7 @@ function atualizarToggleProfessor(ativo) {
 
 chrome.storage.local.get(
   ["caveiraCardsEnabled", "alunosCommentCaptureEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
-  ({ caveiraCardsEnabled, alunosCommentCaptureEnabled, manualCommentCaptureEnabled: legacyManual, professorCommentCaptureEnabled }) => {
+  ({ caveiraCardsEnabled, alunosCommentCaptureEnabled: alunosEnabled, manualCommentCaptureEnabled: legacyManual, professorCommentCaptureEnabled }) => {
     atualizarToggle(caveiraCardsEnabled !== false);
     atualizarToggleProfessor(professorCommentCaptureEnabled !== false);
     if (legacyManual !== undefined) {
@@ -194,7 +194,7 @@ chrome.storage.local.get(
       chrome.storage.local.remove("manualCommentCaptureEnabled");
       atualizarToggleManual(legacyManual !== false);
     } else {
-      atualizarToggleManual(alunosCommentCaptureEnabled !== false); // default: ativo
+      atualizarToggleManual(alunosEnabled !== false); // default: ativo
     }
   }
 );
