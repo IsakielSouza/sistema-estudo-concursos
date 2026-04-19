@@ -500,9 +500,10 @@
       `<div class="cc-comentario-prof"><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
     ).join("");
 
-    const htmlAlunos = alunos.map(c =>
-      `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}${c.dataPublicacao ? ' · ' + c.dataPublicacao : ''}</span><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
-    ).join("");
+    const htmlAlunos = alunos.map(c => {
+      const dataPart = c.dataPublicacao ? ' · ' + window.CaveiraCardBuilder.sanitizar(c.dataPublicacao) : '';
+      return `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}${dataPart}</span><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`;
+    }).join("");
 
     const hasProf = !!htmlProf;
     const hasAlunos = !!htmlAlunos;
