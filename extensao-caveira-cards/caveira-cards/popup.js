@@ -185,11 +185,17 @@ function atualizarToggleProfessor(ativo) {
 }
 
 chrome.storage.local.get(
-  ["caveiraCardsEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
-  ({ caveiraCardsEnabled, manualCommentCaptureEnabled, professorCommentCaptureEnabled }) => {
-    atualizarToggle(caveiraCardsEnabled !== false);                     // default: ativo
-    atualizarToggleManual(manualCommentCaptureEnabled === true);        // default: inativo
-    atualizarToggleProfessor(professorCommentCaptureEnabled !== false); // default: ativo
+  ["caveiraCardsEnabled", "alunosCommentCaptureEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
+  ({ caveiraCardsEnabled, alunosCommentCaptureEnabled, manualCommentCaptureEnabled: legacyManual, professorCommentCaptureEnabled }) => {
+    atualizarToggle(caveiraCardsEnabled !== false);
+    atualizarToggleProfessor(professorCommentCaptureEnabled !== false);
+    if (legacyManual !== undefined) {
+      chrome.storage.local.set({ alunosCommentCaptureEnabled: legacyManual });
+      chrome.storage.local.remove("manualCommentCaptureEnabled");
+      atualizarToggleManual(legacyManual !== false);
+    } else {
+      atualizarToggleManual(alunosCommentCaptureEnabled !== false); // default: ativo
+    }
   }
 );
 
@@ -201,7 +207,7 @@ toggle.addEventListener("change", () => {
 
 toggleManual.addEventListener("change", () => {
   const ativo = toggleManual.checked;
-  chrome.storage.local.set({ manualCommentCaptureEnabled: ativo });
+  chrome.storage.local.set({ alunosCommentCaptureEnabled: ativo });
   atualizarToggleManual(ativo);
 });
 

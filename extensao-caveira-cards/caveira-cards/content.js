@@ -22,15 +22,21 @@
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
-  let manualCommentCaptureEnabled = false;     // default: inativo (alunos)
-  let professorCommentCaptureEnabled = true;   // default: ativo  (professor)
+  let alunosCommentCaptureEnabled = true;      // default: ativo (alunos)
+  let professorCommentCaptureEnabled = true;   // default: ativo (professor)
 
   chrome.storage.local.get(
-    ["caveiraCardsEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
-    ({ caveiraCardsEnabled, manualCommentCaptureEnabled: manualEnabled, professorCommentCaptureEnabled: profEnabled }) => {
+    ["caveiraCardsEnabled", "alunosCommentCaptureEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
+    ({ caveiraCardsEnabled, alunosCommentCaptureEnabled: alunosEnabled, manualCommentCaptureEnabled: legacyManual, professorCommentCaptureEnabled: profEnabled }) => {
       extensaoAtiva = caveiraCardsEnabled !== false;
-      manualCommentCaptureEnabled = manualEnabled === true;
-      professorCommentCaptureEnabled = profEnabled !== false; // undefined → true
+      professorCommentCaptureEnabled = profEnabled !== false;
+      if (legacyManual !== undefined) {
+        chrome.storage.local.set({ alunosCommentCaptureEnabled: legacyManual });
+        chrome.storage.local.remove("manualCommentCaptureEnabled");
+        alunosCommentCaptureEnabled = legacyManual !== false;
+      } else {
+        alunosCommentCaptureEnabled = alunosEnabled !== false; // undefined → true
+      }
     }
   );
 
@@ -44,8 +50,8 @@
         verificar();
       }
     }
-    if ("manualCommentCaptureEnabled" in changes) {
-      manualCommentCaptureEnabled = changes.manualCommentCaptureEnabled.newValue === true;
+    if ("alunosCommentCaptureEnabled" in changes) {
+      alunosCommentCaptureEnabled = changes.alunosCommentCaptureEnabled.newValue !== false;
     }
     if ("professorCommentCaptureEnabled" in changes) {
       professorCommentCaptureEnabled = changes.professorCommentCaptureEnabled.newValue !== false;
@@ -53,13 +59,13 @@
   });
 
   // ── Monitorar cliques para Captura Manual (Like) ──
-  // Semântica do toggle `manualCommentCaptureEnabled` (conforme SKILL.md):
+  // Semântica do toggle `alunosCommentCaptureEnabled`:
   //   • Professor é SEMPRE enviado automaticamente (obrigatório).
-  //   • ALUNOS são enviados automaticamente APENAS com o toggle ATIVADO.
+  //   • ALUNOS são enviados automaticamente quando o toggle está ATIVO (default: ativo).
   //   • O clique no 👍 permite ao usuário adicionar 1 comentário avulso
   //     de aluno ao card existente (respeita o mesmo toggle).
   document.addEventListener("click", async (e) => {
-    if (!extensaoAtiva || !manualCommentCaptureEnabled) return;
+    if (!extensaoAtiva || !alunosCommentCaptureEnabled) return;
     if (typeof adapter.capturarUnicoComentario !== "function") return;
 
     // Identificar se o alvo é um botão de "Gostei" / "Like"
@@ -202,7 +208,7 @@
       }
       // TEC: a captura de comentários (professor + alunos) é feita
       // automaticamente em `enviarParaAnki` via `autoCapturarComentarios`,
-      // respeitando o toggle `manualCommentCaptureEnabled` (alunos).
+      // respeitando o toggle `alunosCommentCaptureEnabled` (alunos).
       return;
     }
 
@@ -575,7 +581,7 @@
        • professorCommentCaptureEnabled  → default TRUE
          ON  = captura comentário do professor automaticamente
          OFF = pula o professor
-       • manualCommentCaptureEnabled     → default FALSE
+       • alunosCommentCaptureEnabled     → default TRUE
          ON  = captura top N comentários dos alunos automaticamente
          OFF = pula os alunos (usuário ainda pode clicar 👍 p/ salvar avulso)
 
@@ -593,7 +599,7 @@
   }
 
   function coletarComentariosDeAlunos() {
-    return manualCommentCaptureEnabled === true;
+    return alunosCommentCaptureEnabled;
   }
 
   /* Marca comentários de ALUNOS como salvos no site de origem
