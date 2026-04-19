@@ -220,6 +220,188 @@
       transition: all 0.2s;
     }
     .timer-back-btn:hover { border-color: #3b6ff5; color: #e2e8f0; }
+
+    /* ── Sessão de Estudo (igual ao popup) ── */
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #334155;
+      margin-bottom: 8px;
+      margin-top: 20px;
+    }
+    .session-box {
+      background: #0f1729;
+      border: 1px solid #1e2d4d;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .session-idle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+    }
+    .session-idle-label {
+      font-size: 12px;
+      color: #64748b;
+    }
+    .btn-iniciar {
+      background: #14532d;
+      border: 1px solid #22c55e;
+      border-radius: 6px;
+      color: #4ade80;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-iniciar:hover { background: #166534; }
+    .session-active {
+      padding: 12px 14px;
+    }
+    .session-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1e2d4d;
+    }
+    .session-stat { text-align: center; }
+    .session-stat-val {
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .02em;
+    }
+    .session-stat-val.green { color: #4ade80; }
+    .session-stat-val.blue  { color: #93c5fd; }
+    .session-stat-val.gold  { color: #fbbf24; }
+    .session-stat-label {
+      font-size: 10px;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 2px;
+    }
+    .btn-encerrar {
+      width: 100%;
+      padding: 7px;
+      background: transparent;
+      border: 1px solid #ef4444;
+      border-radius: 7px;
+      color: #f87171;
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .btn-encerrar:hover { background: #3b0a0a; color: #fca5a5; }
+    .session-summary { padding: 12px 14px; }
+    .summary-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .summary-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e2e8f0;
+      background: #1a2540;
+      border: 1px solid #1e2d4d;
+      border-radius: 7px;
+      padding: 8px 10px;
+      text-align: center;
+      margin-bottom: 8px;
+      letter-spacing: .02em;
+    }
+    .btn-copiar {
+      width: 100%;
+      padding: 7px;
+      background: #1e3a5f;
+      border: 1px solid #3b6ff5;
+      border-radius: 7px;
+      color: #93c5fd;
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background .15s;
+      margin-bottom: 6px;
+    }
+    .btn-copiar:hover { background: #1e4080; }
+    .btn-nova-sessao {
+      width: 100%;
+      padding: 6px;
+      background: transparent;
+      border: 1px solid #1e2d4d;
+      border-radius: 7px;
+      color: #475569;
+      font-size: 11px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-nova-sessao:hover { border-color: #3b6ff5; color: #94a3b8; }
+    .session-starting { padding: 10px 14px; }
+    .session-starting-label {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    #input-caderno {
+      width: 100%;
+      background: #080d1a;
+      border: 1px solid #1e2d4d;
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: #e2e8f0;
+      font-size: 12px;
+      margin-bottom: 8px;
+      outline: none;
+    }
+    #input-caderno:focus { border-color: #3b6ff5; }
+    .starting-actions { display: flex; gap: 6px; }
+    .btn-cancelar-sessao {
+      background: transparent;
+      border: 1px solid #1e2d4d;
+      border-radius: 6px;
+      color: #475569;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-cancelar-sessao:hover { border-color: #3b6ff5; color: #94a3b8; }
+    .session-caderno-label {
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+      margin-top: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .btn-historico {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px;
+      background: #0b1222;
+      border: 1px solid #1e2d4d;
+      border-radius: 10px;
+      color: #94a3b8;
+      font-size: 11px;
+      cursor: pointer;
+      margin-top: 10px;
+      justify-content: center;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-historico:hover { border-color: #3b6ff5; color: #e2e8f0; }
   </style>
 </head>
 <body>
@@ -302,6 +484,62 @@
 
   <!-- Back button -->
   <button class="timer-back-btn" id="timer-back-btn" style="display: none; margin-top: 12px;">← Voltar</button>
+
+  <!-- Sessão de Estudo (sincronizada com popup) -->
+  <p class="section-title">Sessão de estudo</p>
+  <div class="session-box" id="session-box">
+
+    <!-- Estado: idle -->
+    <div class="session-idle" id="session-idle" style="flex-direction: column; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+        <span class="session-idle-label">📚 Nenhuma sessão ativa</span>
+        <button class="btn-iniciar" id="btn-iniciar">Iniciar</button>
+      </div>
+      <button id="btn-historico-idle" class="btn-historico">📊 Ver Histórico</button>
+    </div>
+
+    <!-- Estado: iniciando (input caderno) -->
+    <div class="session-starting" id="session-starting" style="display:none">
+      <div class="session-starting-label">📓 Nome do caderno (opcional)</div>
+      <input type="text" id="input-caderno" placeholder="Ex: 04. DESAFIO 200 Q PRF | 04" autocomplete="off">
+      <div class="starting-actions">
+        <button class="btn-iniciar" id="btn-confirmar-sessao" style="flex: 1;">▶ Confirmar</button>
+        <button class="btn-cancelar-sessao" id="btn-cancelar-sessao">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Estado: ativa -->
+    <div class="session-active" id="session-active" style="display:none">
+      <div class="session-stats">
+        <div class="session-stat">
+          <div class="session-stat-val green" id="session-timer">00:00</div>
+          <div class="session-stat-label">Tempo</div>
+        </div>
+        <div class="session-stat">
+          <div class="session-stat-val blue" id="session-questoes">0</div>
+          <div class="session-stat-label">Total</div>
+        </div>
+        <div class="session-stat">
+          <div class="session-stat-val gold" id="session-acertos">0</div>
+          <div class="session-stat-label">Acertos</div>
+        </div>
+      </div>
+      <button class="btn-encerrar" id="btn-encerrar">⏹ Encerrar sessão</button>
+      <div class="session-caderno-label" id="session-caderno"></div>
+      <button id="btn-historico-active" class="btn-historico">📊 Ver Histórico</button>
+    </div>
+
+    <!-- Estado: resumo -->
+    <div class="session-summary" id="session-summary" style="display:none">
+      <div class="summary-label">Resumo da sessão</div>
+      <div class="summary-val" id="summary-val">—</div>
+      <div class="session-caderno-label" id="summary-caderno"></div>
+      <button class="btn-copiar" id="btn-copiar">📋 Copiar resumo</button>
+      <button id="btn-historico-summary" class="btn-historico">📊 Ver Histórico Completo</button>
+      <button class="btn-nova-sessao" id="btn-nova-sessao">+ Nova sessão</button>
+    </div>
+
+  </div>
   </div>
 
   <script src="timer.js"></script>
