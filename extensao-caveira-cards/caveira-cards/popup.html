@@ -289,7 +289,6 @@
     font-size: 12px;
     margin-bottom: 8px;
     outline: none;
-    box-sizing: border-box;
   }
   #input-caderno:focus { border-color: #3b6ff5; }
   .starting-actions { display: flex; gap: 6px; }
@@ -373,7 +372,7 @@
     <!-- Estado: iniciando (input caderno) -->
     <div class="session-starting" id="session-starting" style="display:none">
       <div class="session-starting-label">📓 Nome do caderno (opcional)</div>
-      <input type="text" id="input-caderno" placeholder="Ex: 04. DESAFIO 200 Q PRF | 04">
+      <input type="text" id="input-caderno" placeholder="Ex: 04. DESAFIO 200 Q PRF | 04" autocomplete="off">
       <div class="starting-actions">
         <button class="btn-iniciar" id="btn-confirmar-sessao" style="flex: 1;">▶ Confirmar</button>
         <button class="btn-cancelar-sessao" id="btn-cancelar-sessao">Cancelar</button>
