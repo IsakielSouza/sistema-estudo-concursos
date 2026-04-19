@@ -1,3 +1,12 @@
+// Versão (lida do manifest.json)
+try {
+  const versionEl = document.getElementById('app-version');
+  if (versionEl) {
+    const { version } = chrome.runtime.getManifest();
+    versionEl.textContent = `v${version}`;
+  }
+} catch (e) { /* silencioso */ }
+
 // Timer state
 let timerState = {
   mode: 'pomodoro', // 'pomodoro' ou 'livre'

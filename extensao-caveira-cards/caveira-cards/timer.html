@@ -402,10 +402,45 @@
       transition: border-color .2s, color .2s;
     }
     .btn-historico:hover { border-color: #3b6ff5; color: #e2e8f0; }
+
+    /* ── Header padrão ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #1e2d4d;
+    }
+    .page-header img { width: 40px; height: 40px; border-radius: 50%; }
+    .page-header-text h1 { font-size: 15px; font-weight: 700; color: #fff; }
+    .page-header-text p { font-size: 11px; color: #3b6ff5; margin-top: 2px; }
+
+    /* ── Footer padrão ── */
+    .page-footer {
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid #1e2d4d;
+      text-align: center;
+      font-size: 10px;
+      color: #475569;
+    }
+    .page-footer a { color: #3b6ff5; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="timer-container">
+
+  <!-- Header padrão -->
+  <div class="page-header">
+    <img src="CaveiraCards.png" alt="CaveiraCards">
+    <div class="page-header-text">
+      <h1>CaveiraCards</h1>
+      <p>@isakielsouza</p>
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="timer-header">
     <button class="timer-header-btn" id="timer-config-btn" title="Configurações">⚙</button>
@@ -540,6 +575,15 @@
     </div>
 
   </div>
+
+  <!-- Footer padrão -->
+  <div class="page-footer">
+    Projeto livre &nbsp;·&nbsp;
+    <a href="https://instagram.com/isakielsouza" target="_blank">Instagram</a>
+    &nbsp;·&nbsp;
+    <span id="app-version">v—</span>
+  </div>
+
   </div>
 
   <script src="timer.js"></script>
