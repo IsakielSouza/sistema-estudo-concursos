@@ -88,10 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const a = sessaoAtiva.acertos || 0;
       const aproveitamento = q > 0 ? Math.round((a / q) * 100) + "%" : "0%";
       const mediaMs = q > 0 ? Math.round(duracaoMs / q) : 0;
-      
+
+      const cadernoAtivoHtml = sessaoAtiva.caderno
+        ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px;">📓 ${sessaoAtiva.caderno}</div>`
+        : "";
+
       html += `
         <tr style="background: rgba(59, 111, 245, 0.1); border-left: 4px solid #3b6ff5;">
-          <td class="row-data"><span style="background: #3b6ff5; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 8px;">AO VIVO</span> ${new Date(sessaoAtiva.inicio).toLocaleDateString("pt-BR")}</td>
+          <td class="row-data"><span style="background: #3b6ff5; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 8px;">AO VIVO</span> ${new Date(sessaoAtiva.inicio).toLocaleDateString("pt-BR")}${cadernoAtivoHtml}</td>
           <td>${formatarTimer(duracaoMs)}</td>
           <td>${q}</td>
           <td>${a}</td>
@@ -110,14 +114,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const aproveitamento = parseInt(sessao.aproveitamento);
       const classeCor = aproveitamento < 60 ? 'baixo' : '';
       const mediaStr = sessao.mediaTempoStr || (sessao.mediaTempoMs ? formatarTimer(sessao.mediaTempoMs) : "-");
-      
-      const materiasResumo = sessao.materias 
+
+      const materiasResumo = sessao.materias
         ? (sessao.materias.length > 50 ? sessao.materias.substring(0, 50) + "..." : sessao.materias)
         : "-";
 
+      const cadernoHtml = sessao.caderno
+        ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${sessao.caderno}">📓 ${sessao.caderno}</div>`
+        : "";
+
       return `
         <tr>
-          <td class="row-data">${sessao.data}</td>
+          <td class="row-data">${sessao.data}${cadernoHtml}</td>
           <td>${sessao.duracaoStr || (sessao.duracaoMs ? formatarTimer(sessao.duracaoMs) : "-")}</td>
           <td>${sessao.questoes}</td>
           <td>${sessao.acertos}</td>
@@ -190,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mediaTempoMs,
         mediaTempoStr: mediaTempoMs > 0 ? formatarTimer(mediaTempoMs) : "-",
         materias: listaMaterias || "Sessão sem questões mapeadas",
+        caderno: sessaoAtiva.caderno || null,
         detalhesPorMateria: agruparPorMateria(detalhes),
         detalhes: detalhes
       };
