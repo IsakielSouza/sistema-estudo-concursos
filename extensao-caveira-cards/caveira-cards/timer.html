@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px;
+      background: #080d1a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 16px;
+    }
+
+    /* Header */
+    .timer-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1e2d4d;
+    }
+    .timer-header-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1a2540;
+      border: 1px solid #f59e0b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .timer-header-btn:hover { background: #f59e0b; color: white; }
+    .timer-header-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .timer-indicators {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .timer-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #475569;
+    }
+    .timer-indicator.active {
+      background: #ef4444;
+    }
+
+    /* Abas */
+    .timer-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .timer-tab {
+      flex: 1;
+      padding: 7px;
+      background: #0f1729;
+      border: 1px solid #1e2d4d;
+      border-radius: 6px;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .timer-tab.active {
+      background: #22c55e;
+      color: white;
+      border-color: #22c55e;
+    }
+    .timer-tab:hover { border-color: #3b6ff5; color: #e2e8f0; }
+
+    /* Círculo */
+    .timer-circle-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    svg { display: block; }
+
+    /* Status */
+    .timer-status {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+
+    /* Configuração (escondida inicialmente) */
+    .timer-config {
+      display: none;
+      background: #0f1729;
+      border: 1px solid #1e2d4d;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .timer-config.show {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .timer-config-item {
+      text-align: center;
+    }
+    .timer-config-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .timer-config-input {
+      background: #080d1a;
+      border: 1px solid #1e2d4d;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+    }
+    .timer-config-input button {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 0;
+      width: 16px;
+    }
+    .timer-config-input button:hover { color: #e2e8f0; }
+    .timer-config-input span {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .timer-reset-btn {
+      width: 100%;
+      padding: 7px;
+      background: transparent;
+      border: 1px solid #1e2d4d;
+      border-radius: 6px;
+      color: #64748b;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: border-color 0.2s;
+    }
+    .timer-reset-btn:hover { border-color: #3b6ff5; color: #e2e8f0; }
+
+    /* Controles */
+    .timer-controls {
+      display: flex;
+      gap: 6px;
+    }
+    .timer-controls-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #0f1729;
+      border: 1px solid #1e2d4d;
+      color: #64748b;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .timer-controls-btn:hover { border-color: #3b6ff5; color: #e2e8f0; }
+    .timer-play-btn {
+      flex: 1;
+      background: #22c55e;
+      border: none;
+      color: white;
+      font-weight: 700;
+    }
+    .timer-play-btn:hover { background: #16a34a; }
+    .timer-play-btn:active { transform: scale(0.98); }
+
+    /* Back button */
+    .timer-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      padding: 8px 12px;
+      background: #0f1729;
+      border: 1px solid #1e2d4d;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 11px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .timer-back-btn:hover { border-color: #3b6ff5; color: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="timer-header">
+    <button class="timer-header-btn" id="timer-config-btn" title="Configurações">⚙</button>
+    <div class="timer-header-title">Sessão</div>
+    <div class="timer-indicators" id="timer-indicators">
+      <div class="timer-indicator active"></div>
+      <div class="timer-indicator"></div>
+      <div class="timer-indicator"></div>
+      <div class="timer-indicator"></div>
+    </div>
+  </div>
+
+  <!-- Abas -->
+  <div class="timer-tabs">
+    <button class="timer-tab active" data-mode="pomodoro" id="timer-tab-pomodoro">🍅 Pomodoro</button>
+    <button class="timer-tab" data-mode="livre" id="timer-tab-livre">⏱️ Tempo</button>
+  </div>
+
+  <!-- Configuração (escondida) -->
+  <div class="timer-config" id="timer-config">
+    <div class="timer-config-item">
+      <div class="timer-config-label">Foco</div>
+      <div class="timer-config-input">
+        <button data-action="decrease" data-field="focus">−</button>
+        <span id="timer-config-focus">25</span>
+        <button data-action="increase" data-field="focus">+</button>
+      </div>
+    </div>
+    <div class="timer-config-item">
+      <div class="timer-config-label">Pausa C.</div>
+      <div class="timer-config-input">
+        <button data-action="decrease" data-field="shortBreak">−</button>
+        <span id="timer-config-shortbreak">5</span>
+        <button data-action="increase" data-field="shortBreak">+</button>
+      </div>
+    </div>
+    <div class="timer-config-item">
+      <div class="timer-config-label">Pausa L.</div>
+      <div class="timer-config-input">
+        <button data-action="decrease" data-field="longBreak">−</button>
+        <span id="timer-config-longbreak">15</span>
+        <button data-action="increase" data-field="longBreak">+</button>
+      </div>
+    </div>
+    <div class="timer-config-item">
+      <div class="timer-config-label">Sessões</div>
+      <div class="timer-config-input">
+        <button data-action="decrease" data-field="sessions">−</button>
+        <span id="timer-config-sessions">4</span>
+        <button data-action="increase" data-field="sessions">+</button>
+      </div>
+    </div>
+  </div>
+  <button class="timer-reset-btn" id="timer-reset-btn" style="display: none;">↻ Resetar Sessões</button>
+
+  <!-- Círculo de progresso -->
+  <div class="timer-circle-container">
+    <svg width="140" height="140" id="timer-svg">
+      <circle cx="70" cy="70" r="62" fill="none" stroke="#1e2d4d" stroke-width="3"/>
+      <circle cx="70" cy="70" r="62" fill="none" stroke="#22c55e" stroke-width="3"
+              stroke-dasharray="213 390" stroke-linecap="round" id="timer-progress-circle"
+              style="transform: rotate(-90deg); transform-origin: 70px 70px;"/>
+      <text x="70" y="78" text-anchor="middle" style="font-size: 28px; font-weight: 700; fill: #22c55e; font-family: 'Courier New';" id="timer-display">00:00</text>
+    </svg>
+  </div>
+
+  <!-- Status -->
+  <div class="timer-status" id="timer-status-text">Pausado</div>
+
+  <!-- Controles -->
+  <div class="timer-controls">
+    <button class="timer-controls-btn" id="timer-fullscreen-btn" title="Modo Foco">⛶</button>
+    <button class="timer-controls-btn" id="timer-floating-btn" title="Janela Flutuante">⊞</button>
+    <button class="timer-controls-btn timer-play-btn" id="timer-play-btn">▶</button>
+  </div>
+
+  <!-- Back button -->
+  <button class="timer-back-btn" id="timer-back-btn" style="display: none; margin-top: 12px;">← Voltar</button>
+
+  <script src="timer.js"></script>
+</body>
+</html>

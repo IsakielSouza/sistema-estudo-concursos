@@ -325,3 +325,13 @@ function agruparPorMateria(detalhes) {
   });
   return grupos;
 }
+
+// ── Timer ──
+const btnTimer = document.getElementById('btn-timer');
+if (btnTimer) {
+  btnTimer.addEventListener('click', () => {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('timer.html')
+    });
+  });
+}
