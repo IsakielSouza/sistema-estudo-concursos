@@ -417,7 +417,7 @@
     return niveis[niveis.length - 1];
   }
 
-  async function enviarQuestao(questao, frente, verso) {
+  async function enviarQuestao(questao, frente, verso, extraTags = []) {
     const resultado = questao.resultado;
     const deckName  = await criarDecks(questao.plataforma, resultado, questao.materiaLimpa);
 
@@ -426,6 +426,7 @@
       resultado === "Erros" ? "caderno-de-erros" : "revisao",
       questao.plataforma.toLowerCase().replace(/\s+/g, "-"),
       questao.materiaLimpa.toLowerCase().replace(/[\s:/\\?*^]/g, "-"),
+      ...extraTags,
     ].filter(Boolean);
 
     // Constrói o Extra inicial com banca + explicação (resolução do professor padrão)
