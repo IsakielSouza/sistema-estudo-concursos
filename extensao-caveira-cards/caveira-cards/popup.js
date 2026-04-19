@@ -48,9 +48,10 @@ function formatarResumo(ms, questoes, acertos) {
 }
 
 function mostrarEstado(estado) {
-  sessionIdle.style.display    = estado === "idle"    ? "flex"  : "none";
-  sessionActive.style.display  = estado === "active"  ? "block" : "none";
-  sessionSummary.style.display = estado === "summary" ? "block" : "none";
+  sessionIdle.style.display    = estado === "idle"     ? "flex"  : "none";
+  document.getElementById("session-starting").style.display = estado === "starting" ? "block" : "none";
+  sessionActive.style.display  = estado === "active"   ? "block" : "none";
+  sessionSummary.style.display = estado === "summary"  ? "block" : "none";
 }
 
 function iniciarTimer(inicio) {
@@ -67,8 +68,12 @@ chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
     questoesEl.textContent = sessaoAtiva.questoes || 0;
     acertosEl.textContent  = sessaoAtiva.acertos  || 0;
     iniciarTimer(sessaoAtiva.inicio);
+    const cadernoEl = document.getElementById("session-caderno");
+    if (cadernoEl) cadernoEl.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : "";
   } else if (sessaoAtiva && !sessaoAtiva.ativa && sessaoAtiva.resumo) {
     summaryValEl.textContent = sessaoAtiva.resumo;
+    const summaryC = document.getElementById("summary-caderno");
+    if (summaryC) summaryC.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : "";
     mostrarEstado("summary");
   } else {
     mostrarEstado("idle");
@@ -76,13 +81,35 @@ chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
 });
 
 // Iniciar sessão
-document.getElementById("btn-iniciar").addEventListener("click", () => {
-  const sessao = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true };
+document.getElementById("btn-iniciar").addEventListener("click", async () => {
+  let cadernoDetectado = "";
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.url && tab.url.includes("tecconcursos.com.br")) {
+      const resp = await chrome.tabs.sendMessage(tab.id, { action: "getCadernoName" });
+      cadernoDetectado = resp?.caderno || "";
+    }
+  } catch { /* not on TEC or content script not ready — leave field empty */ }
+  document.getElementById("input-caderno").value = cadernoDetectado;
+  mostrarEstado("starting");
+});
+
+// Confirmar sessão (com ou sem caderno)
+document.getElementById("btn-confirmar-sessao").addEventListener("click", () => {
+  const caderno = document.getElementById("input-caderno").value.trim() || undefined;
+  const sessao = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, caderno };
   chrome.storage.local.set({ sessaoAtiva: sessao });
   questoesEl.textContent = 0;
   acertosEl.textContent  = 0;
+  const cadernoEl = document.getElementById("session-caderno");
+  if (cadernoEl) cadernoEl.textContent = caderno ? `📓 ${caderno}` : "";
   iniciarTimer(sessao.inicio);
   mostrarEstado("active");
+});
+
+// Cancelar — volta para idle
+document.getElementById("btn-cancelar-sessao").addEventListener("click", () => {
+  mostrarEstado("idle");
 });
 
 // Encerrar sessão
@@ -118,6 +145,7 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
       mediaTempoMs,
       mediaTempoStr: mediaTempoMs > 0 ? formatarTimer(mediaTempoMs) : "-",
       materias: listaMaterias,
+      caderno: sessaoAtiva.caderno || null,
       detalhesPorMateria: agruparPorMateria(detalhes),
       detalhes: detalhes
     };
@@ -130,6 +158,8 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
     });
 
     summaryValEl.textContent = resumo;
+    const summaryC = document.getElementById("summary-caderno");
+    if (summaryC) summaryC.textContent = sessaoAtiva.caderno ? `📓 ${sessaoAtiva.caderno}` : "";
     mostrarEstado("summary");
   });
 });
