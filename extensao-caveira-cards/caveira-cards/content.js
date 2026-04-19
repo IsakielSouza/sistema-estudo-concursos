@@ -450,6 +450,23 @@
     overlayEl = overlay;
     mostrandoOverlay = false; // overlay criado — libera para próxima questão
 
+    // Banner: sem sessão ativa
+    chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
+      if (!sessaoAtiva || !sessaoAtiva.ativa) {
+        const banner = document.createElement("div");
+        banner.className = "cc-session-banner";
+        banner.innerHTML = `<span>📚 Sem sessão ativa</span><button class="cc-session-banner-btn" id="cc-btn-iniciar-sessao">▶ Iniciar</button>`;
+        overlay.appendChild(banner);
+        document.getElementById("cc-btn-iniciar-sessao").addEventListener("click", e => {
+          e.stopPropagation();
+          const novaSessao = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, caderno: null };
+          chrome.storage.local.set({ sessaoAtiva: novaSessao });
+          banner.innerHTML = `<span style="color:#4ade80">✓ Sessão iniciada</span>`;
+          setTimeout(() => { if (banner.isConnected) banner.remove(); }, 2000);
+        });
+      }
+    });
+
     // Registra questão respondida e atualiza atividade
     if (contextoValido()) {
       try {
