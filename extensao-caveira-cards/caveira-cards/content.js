@@ -772,7 +772,7 @@
           const res = questao.resultado === "Erros" ? "erros" : "revisao";
           extraTags.push(`caderno::${slug}::${res}`);
         }
-      } catch { /* caderno tag is optional — ignore if storage unavailable */ }
+      } catch (e) { console.warn("[CaveiraCards] caderno tag skipped:", e); }
 
       const noteId = await window.CaveiraAnki.enviarQuestao(questao, frente, verso, extraTags);
 
