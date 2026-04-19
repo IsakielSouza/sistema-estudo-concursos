@@ -22,12 +22,17 @@
 
   // ── Toggle liga/desliga ──
   let extensaoAtiva = true;
-  let manualCommentCaptureEnabled = false;
+  let manualCommentCaptureEnabled = false;     // default: inativo (alunos)
+  let professorCommentCaptureEnabled = true;   // default: ativo  (professor)
 
-  chrome.storage.local.get(["caveiraCardsEnabled", "manualCommentCaptureEnabled"], ({ caveiraCardsEnabled, manualCommentCaptureEnabled: manualEnabled }) => {
-    extensaoAtiva = caveiraCardsEnabled !== false;
-    manualCommentCaptureEnabled = manualEnabled === true;
-  });
+  chrome.storage.local.get(
+    ["caveiraCardsEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
+    ({ caveiraCardsEnabled, manualCommentCaptureEnabled: manualEnabled, professorCommentCaptureEnabled: profEnabled }) => {
+      extensaoAtiva = caveiraCardsEnabled !== false;
+      manualCommentCaptureEnabled = manualEnabled === true;
+      professorCommentCaptureEnabled = profEnabled !== false; // undefined → true
+    }
+  );
 
   chrome.storage.onChanged.addListener((changes) => {
     if ("caveiraCardsEnabled" in changes) {
@@ -42,16 +47,24 @@
     if ("manualCommentCaptureEnabled" in changes) {
       manualCommentCaptureEnabled = changes.manualCommentCaptureEnabled.newValue === true;
     }
+    if ("professorCommentCaptureEnabled" in changes) {
+      professorCommentCaptureEnabled = changes.professorCommentCaptureEnabled.newValue !== false;
+    }
   });
 
   // ── Monitorar cliques para Captura Manual (Like) ──
+  // Semântica do toggle `manualCommentCaptureEnabled` (conforme SKILL.md):
+  //   • Professor é SEMPRE enviado automaticamente (obrigatório).
+  //   • ALUNOS são enviados automaticamente APENAS com o toggle ATIVADO.
+  //   • O clique no 👍 permite ao usuário adicionar 1 comentário avulso
+  //     de aluno ao card existente (respeita o mesmo toggle).
   document.addEventListener("click", async (e) => {
     if (!extensaoAtiva || !manualCommentCaptureEnabled) return;
     if (typeof adapter.capturarUnicoComentario !== "function") return;
 
     // Identificar se o alvo é um botão de "Gostei" / "Like"
     let btnLike = null;
-    
+
     if (adapter.nomePlataforma === "TEC Concursos") {
       btnLike = e.target.closest("button.discussao-comentario-nota-seta.nota-positiva");
     } else if (adapter.nomePlataforma === "QConcursos") {
@@ -99,7 +112,13 @@
       const cleanHtml = html.replace(/^<hr[^>]*>/, "");
       
       const status = await window.CaveiraAnki.atualizarExtra(noteId, cleanHtml);
-      
+
+      // Marca o <li> como salvo (sem re-clicar no 👍 — o usuário já clicou)
+      if (typeof adapter.marcarComentarioComoSalvo === "function") {
+        try { await adapter.marcarComentarioComoSalvo(comentario, { click: false }); }
+        catch (e) { console.warn("[CaveiraCards] marcarComentarioComoSalvo (manual):", e); }
+      }
+
       // Feedback de sucesso ou duplicidade
       const badge = document.createElement("span");
       badge.innerText = status === "exists" ? "Já enviado" : "✓ Anki";
@@ -181,19 +200,9 @@
       if (!overlayEl && !mostrandoOverlay && questao) {
         mostrarOverlay(questao);
       }
-
-      // ── Lógica Dinâmica do Botão de Comentários (TEC) ──
-      // O botão manual só aparece se a auto-captura não capturou (fallback)
-      if (overlayEl && overlayEl.classList.contains("sucesso") && !comentariosAutoCapturados) {
-        const painelAberto = !!document.querySelector(".questao-complementos-cabecalho");
-        const btnExistente = overlayEl.querySelector(".cc-btn-comentarios");
-
-        if (painelAberto && !btnExistente) {
-          injetarBotaoComentarios(overlayEl, questao, noteIdAtual);
-        } else if (!painelAberto && btnExistente) {
-          btnExistente.remove();
-        }
-      }
+      // TEC: a captura de comentários (professor + alunos) é feita
+      // automaticamente em `enviarParaAnki` via `autoCapturarComentarios`,
+      // respeitando o toggle `manualCommentCaptureEnabled` (alunos).
       return;
     }
 
@@ -545,85 +554,175 @@
     });
   }
 
-  // ── Simulação de tecla (TEC usa atalhos de teclado) ──
-  function simularTecla(key, keyCode) {
-    ["keydown", "keypress", "keyup"].forEach(tipo => {
-      document.dispatchEvent(new KeyboardEvent(tipo, {
-        key, keyCode, which: keyCode, bubbles: true, cancelable: true
-      }));
-    });
+  /* ══════════════════════════════════════════════════════════════
+     API GLOBAL DE COMENTÁRIOS — reaproveitável por qualquer adapter
+     ──────────────────────────────────────────────────────────────
+     Toggles (controlados pelo popup, persistidos em chrome.storage.local):
+       • professorCommentCaptureEnabled  → default TRUE
+         ON  = captura comentário do professor automaticamente
+         OFF = pula o professor
+       • manualCommentCaptureEnabled     → default FALSE
+         ON  = captura top N comentários dos alunos automaticamente
+         OFF = pula os alunos (usuário ainda pode clicar 👍 p/ salvar avulso)
+
+     Hooks opcionais que o adapter pode expor:
+       adapter.abrirPaineisComentarios(tipo)    → "comentario" | "discussao"
+       adapter.capturarComentarioProfessor()    → { html, type:"professor" } | null
+       adapter.capturarComentariosAlunos(max)   → [{ html, score, type:"aluno" }]
+
+     Fallback para adapters antigos:
+       adapter.capturarComentarios(el)          → array concatenado (prof+alunos)
+  ══════════════════════════════════════════════════════════════ */
+
+  function coletarComentarioDoProfessor() {
+    return professorCommentCaptureEnabled === true;
   }
 
-  // ── Auto-abertura do painel de comentários (TEC) ──
-  async function abrirPainelComentariosTEC(tipo = "discussao") {
-    // Verifica se o painel solicitado já está aberto
-    const painelAberto = document.querySelector(`.questao-complementos-${tipo}`);
-    if (painelAberto) return true;
+  function coletarComentariosDeAlunos() {
+    return manualCommentCaptureEnabled === true;
+  }
 
-    // Seletor do botão: comentario ou discussao
-    const selector = `button[ng-click="vm.abrirComplemento('${tipo}')"]`;
-    const botao = document.querySelector(selector);
+  /* Marca comentários de ALUNOS como salvos no site de origem
+     (clicando no "Gostei" via adapter) para:
+       1. Deixar claro visualmente o que foi enviado ao Anki
+       2. Permitir nova captura de N comentários ADICIONAIS sem duplicar,
+          já que a próxima coleta pula li[data-caveira-liked=true]. */
+  async function marcarComentariosSalvos(adapter, comentarios) {
+    if (!Array.isArray(comentarios) || !comentarios.length) return;
+    if (typeof adapter.marcarComentarioComoSalvo !== "function") return;
+    const alvos = comentarios.filter(c => c && c.type !== "professor");
+    for (const item of alvos) {
+      try { await adapter.marcarComentarioComoSalvo(item); }
+      catch (e) { console.warn("[CaveiraCards] marcarComentarioComoSalvo:", e); }
+    }
+  }
 
-    if (botao) {
-      botao.click();
+  async function capturarComentariosDoAdapter(adapter, questaoEl = null) {
+    const capturados = [];
+
+    // 1. PROFESSOR (apenas se toggle ativo)
+    if (coletarComentarioDoProfessor()) {
+      if (typeof adapter.abrirPaineisComentarios === "function") {
+        try {
+          const ok = await adapter.abrirPaineisComentarios("comentario");
+          console.log("[CaveiraCards] abrirPaineis(comentario) →", ok);
+          // pequeno delay de cortesia, o adapter já aguarda o conteúdo internamente
+          await new Promise(r => setTimeout(r, 200));
+        } catch (e) {
+          console.warn("[CaveiraCards] abrirPaineisComentarios(comentario):", e);
+        }
+      }
+      if (typeof adapter.capturarComentarioProfessor === "function") {
+        try {
+          const prof = await adapter.capturarComentarioProfessor();
+          console.log("[CaveiraCards] capturarComentarioProfessor →", prof ? "OK" : "nulo");
+          if (prof) capturados.push(prof);
+        } catch (e) {
+          console.warn("[CaveiraCards] capturarComentarioProfessor:", e);
+        }
+      }
     } else {
-      // Atalhos nativos: O para comentário, F para discussão
-      const char = tipo === "comentario" ? "o" : "f";
-      const code = tipo === "comentario" ? 79 : 70;
-      simularTecla(char, code);
+      console.log("[CaveiraCards] professor DESATIVADO no toggle — pulando");
     }
 
-    // Aguarda até 3s para o painel aparecer
-    for (let i = 0; i < 30; i++) {
-      await new Promise(r => setTimeout(r, 100));
-      if (document.querySelector(`.questao-complementos-${tipo}`)) return true;
-      if (tipo === "discussao") {
-        const ul = document.querySelector("ul.discussao-comentarios, .discussao ul");
-        if (ul && ul.offsetParent !== null) return true;
+    // 2. ALUNOS (apenas se toggle ativo)
+    if (coletarComentariosDeAlunos()) {
+      if (typeof adapter.abrirPaineisComentarios === "function") {
+        try {
+          const ok = await adapter.abrirPaineisComentarios("discussao");
+          console.log("[CaveiraCards] abrirPaineis(discussao) →", ok);
+          await new Promise(r => setTimeout(r, 200));
+        } catch (e) {
+          console.warn("[CaveiraCards] abrirPaineisComentarios(discussao):", e);
+        }
+      }
+      if (typeof adapter.capturarComentariosAlunos === "function") {
+        try {
+          const alunos = await adapter.capturarComentariosAlunos(5);
+          console.log("[CaveiraCards] capturarComentariosAlunos →", alunos.length);
+          if (alunos && alunos.length) capturados.push(...alunos);
+        } catch (e) {
+          console.warn("[CaveiraCards] capturarComentariosAlunos:", e);
+        }
       }
     }
-    return false;
+
+    // 3. Fallback para adapters antigos (sem hooks separados)
+    const semHooksNovos =
+      typeof adapter.capturarComentarioProfessor !== "function" &&
+      typeof adapter.capturarComentariosAlunos !== "function";
+
+    if (capturados.length === 0 && semHooksNovos &&
+        typeof adapter.capturarComentarios === "function") {
+      try {
+        const todos = await adapter.capturarComentarios(questaoEl);
+        if (Array.isArray(todos)) {
+          const filtrados = todos.filter(c => {
+            if (c.type === "professor") return coletarComentarioDoProfessor();
+            return coletarComentariosDeAlunos();
+          });
+          capturados.push(...filtrados);
+        }
+      } catch (e) {
+        console.warn("[CaveiraCards] capturarComentarios (compat):", e);
+      }
+    }
+
+    return capturados;
   }
 
-  // ── Auto-captura de comentários após envio ao Anki (TEC) ──
-  async function autoCapturarComentariosTEC(questao, noteId) {
-    if (typeof adapter.capturarComentarios !== "function") return;
+  // ── Auto-captura de comentários após envio ao Anki (qualquer adapter) ──
+  async function autoCapturarComentarios(adapter, questao, noteId, questaoEl = null) {
+    if (!noteId) return;
     const overlay = overlayEl;
     if (!overlay) return;
 
-    const subEl   = overlay.querySelector(".cc-sub");
+    const subEl = overlay.querySelector(".cc-sub");
     const titleEl = overlay.querySelector(".cc-title");
 
+    const temHooksNovos =
+      typeof adapter.capturarComentarioProfessor === "function" ||
+      typeof adapter.capturarComentariosAlunos === "function";
+    const temCapturaCompat = typeof adapter.capturarComentarios === "function";
+    if (!temHooksNovos && !temCapturaCompat) return;
+
+    // Se o usuário desativou AMBOS os toggles, não tem nada pra capturar
+    if (!coletarComentarioDoProfessor() && !coletarComentariosDeAlunos()) {
+      console.log("[CaveiraCards] nenhum toggle de comentário ativo — pulando captura");
+      return;
+    }
+
     try {
-      subEl.textContent = "Abrindo comentários...";
-      
-      // 1. Tenta abrir e capturar comentário do Professor
-      await abrirPainelComentariosTEC("comentario");
-      await new Promise(r => setTimeout(r, 800)); // Espera render
+      if (subEl) subEl.textContent = "Capturando comentários...";
 
-      // 2. Tenta abrir e capturar Fórum (Alunos)
-      await abrirPainelComentariosTEC("discussao");
-      await new Promise(r => setTimeout(r, 800));
-
-      subEl.textContent = "Capturando comentários...";
-
-      const comentarios = await adapter.capturarComentarios();
+      const comentarios = await capturarComentariosDoAdapter(adapter, questaoEl);
 
       if (!comentarios || !comentarios.length) {
-        subEl.textContent = `${questao.resultado} · ${questao.materia}`;
+        if (subEl) subEl.textContent = `${questao.resultado} · ${questao.materia}`;
         return;
       }
 
-      const comentariosHtml = formatarComentarios(comentarios).replace(/^<hr[^>]*>/, "");
-      await window.CaveiraAnki.atualizarExtra(noteId, comentariosHtml);
+      const html = formatarComentarios(comentarios).replace(/^<hr[^>]*>/, "");
+      await window.CaveiraAnki.atualizarExtra(noteId, html);
+
+      // Marca cada comentário de aluno com "Gostei" na plataforma de origem
+      // → sinaliza visualmente o que foi salvo e evita duplicar no próximo ciclo
+      await marcarComentariosSalvos(adapter, comentarios);
 
       comentariosAutoCapturados = true;
-      titleEl.textContent = "Adicionado! ✓";
-      subEl.textContent = "💬 Comentários capturados";
 
+      const temProf = comentarios.some(c => c.type === "professor");
+      const nAlunos = comentarios.filter(c => c.type !== "professor").length;
+      let desc = "";
+      if (temProf && nAlunos > 0) desc = `💬 Professor + ${nAlunos} aluno${nAlunos > 1 ? "s" : ""}`;
+      else if (temProf)           desc = "💬 Comentário do professor";
+      else if (nAlunos > 0)       desc = `💬 ${nAlunos} comentário${nAlunos > 1 ? "s" : ""} de alunos`;
+
+      if (titleEl) titleEl.textContent = "Adicionado! ✓";
+      if (subEl)   subEl.textContent   = desc || `${questao.resultado} · ${questao.materia}`;
     } catch (err) {
-      console.warn("[CaveiraCards] Auto-comentários falhou:", err);
-      subEl.textContent = `${questao.resultado} · ${questao.materia}`;
+      console.warn("[CaveiraCards] autoCapturarComentarios falhou:", err);
+      if (subEl) subEl.textContent = `${questao.resultado} · ${questao.materia}`;
     }
   }
 
@@ -646,9 +745,10 @@
       titleEl.textContent = "Adicionado! ✓";
 
       // ── Auto-captura de comentários (TEC) ──
-      // Roda em segundo plano: abre o painel e captura os top comentários automaticamente.
+      // Roda em segundo plano via API global (ver `autoCapturarComentarios`):
+      // professor SEMPRE é capturado; alunos só se o toggle estiver ativo.
       if (adapter.nomePlataforma === "TEC Concursos") {
-        autoCapturarComentariosTEC(questao, noteId);
+        autoCapturarComentarios(adapter, questao, noteId);
       }
 
       // ── Incrementar contadores da sessão ativa ──

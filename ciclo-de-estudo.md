@@ -1,6 +1,5 @@
 Em todos os ciclo deve ser possivel criar uma nova disciplina, usuario digita o nome, atribui peso, e experencia, tambem por padrao deve ter a disciplina Estudo Livre, nela nao tem peso, mais precisa balancer um valor pequeno entre mais ou menos 3 horas semanais para atividas extra, como exmplo, redacao, simulados, revisar base de uma assunto extra, etc
 
-
 opcao de chave liga/desliga se materia ja Completou edital?
 [ ] sim, diminuie hora em 50%
 [ ] nao, manter horario que foi distribuido no inicio do calculo do ciclo
@@ -25,8 +24,6 @@ Inglês ou Espanhol, 8
 Física, 5
 Geopolítica, 5
 Legislação da PRF, 2
-
-
 
 exemplo de 26 horas, para algumas materias:
  26h total

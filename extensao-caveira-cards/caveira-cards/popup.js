@@ -1,5 +1,17 @@
 // popup.js — lógica do popup CaveiraCards
 
+// ── Versão (lida do manifest.json) ──
+try {
+  const versionEl = document.getElementById("app-version");
+  if (versionEl) {
+    const { version } = chrome.runtime.getManifest();
+    versionEl.textContent = `v${version}`;
+  }
+} catch (e) {
+  /* silencioso — fallback mostra "v—" */
+}
+
+
 // ── Sessão de Estudo ──
 const sessionIdle    = document.getElementById("session-idle");
 const sessionActive  = document.getElementById("session-active");
@@ -153,6 +165,8 @@ const toggle = document.getElementById("toggle-enabled");
 const toggleLabel = document.getElementById("toggle-label");
 const toggleManual = document.getElementById("toggle-manual");
 const toggleManualLabel = document.getElementById("toggle-manual-label");
+const toggleProfessor = document.getElementById("toggle-professor");
+const toggleProfessorLabel = document.getElementById("toggle-professor-label");
 
 function atualizarToggle(ativo) {
   toggle.checked = ativo;
@@ -165,10 +179,19 @@ function atualizarToggleManual(ativo) {
   toggleManualLabel.style.color = ativo ? "#93c5fd" : "#64748b";
 }
 
-chrome.storage.local.get(["caveiraCardsEnabled", "manualCommentCaptureEnabled"], ({ caveiraCardsEnabled, manualCommentCaptureEnabled }) => {
-  atualizarToggle(caveiraCardsEnabled !== false); // default: ativo
-  atualizarToggleManual(manualCommentCaptureEnabled === true); // default: inativo
-});
+function atualizarToggleProfessor(ativo) {
+  toggleProfessor.checked = ativo;
+  toggleProfessorLabel.style.color = ativo ? "#93c5fd" : "#64748b";
+}
+
+chrome.storage.local.get(
+  ["caveiraCardsEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
+  ({ caveiraCardsEnabled, manualCommentCaptureEnabled, professorCommentCaptureEnabled }) => {
+    atualizarToggle(caveiraCardsEnabled !== false);                     // default: ativo
+    atualizarToggleManual(manualCommentCaptureEnabled === true);        // default: inativo
+    atualizarToggleProfessor(professorCommentCaptureEnabled !== false); // default: ativo
+  }
+);
 
 toggle.addEventListener("change", () => {
   const ativo = toggle.checked;
@@ -180,6 +203,12 @@ toggleManual.addEventListener("change", () => {
   const ativo = toggleManual.checked;
   chrome.storage.local.set({ manualCommentCaptureEnabled: ativo });
   atualizarToggleManual(ativo);
+});
+
+toggleProfessor.addEventListener("change", () => {
+  const ativo = toggleProfessor.checked;
+  chrome.storage.local.set({ professorCommentCaptureEnabled: ativo });
+  atualizarToggleProfessor(ativo);
 });
 
 // ── Toggle Anki ──

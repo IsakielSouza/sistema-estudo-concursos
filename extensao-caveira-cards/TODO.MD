@@ -1,6 +1,6 @@
-- [x] Por padrão para todos sites deve salvar comentario do professor! (TEC, QConcurso, ProjetoCaveira)
-- [x] Separar Professor e Alunos em abas no Anki.
-- [x] Evitar duplicidade e permitir múltiplos comentários na mesma questão via anexo inteligente.
+- Por padrão para todos sites deve salvar comentario do professor! (TEC, QConcurso, ProjetoCaveira)
+- Separar Professor e Alunos em abas no Anki.
+- Evitar duplicidade e permitir múltiplos comentários na mesma questão via anexo inteligente.
 
 Feature nova:
 [x] salvar comentários dos alunos de forma manual
@@ -20,7 +20,6 @@ add também um link de sugestões ou relatar bug, nele vai abrir um link de goog
 add detalhes a pagina como minha rede social, direitos footer padrão e header com base na outra tela de guia de instalação
 [x] Salvar git commit 
 
-
 [x]  Task: remover do pop tela inicio o nome das plataformas, e deixar apenas um butão link para navegar para nova tela
 no popup principal remover butão onde mostra Configurar Anki, trocar por um toogle igual butão de liga/desliga mostrando se Anki esta ligado ou desligado (ativo), apenas nome: Anki e lado toogle mostrando se esta ligado ou desligado
 [x] Salvar git commit 
@@ -31,8 +30,10 @@ no popup principal remover butão onde mostra Configurar Anki, trocar por um too
 [x] Task: Histórico rico de sessões (Tempo por questão, média, matérias agrupadas).
 [x] Task: Exportação JSON e Limpeza segura de histórico.
 
-
-
 TODO:
 Criar Decks manuais na extensão de questões para desafios: (1k, 200 fds)
 iniciar uma sessão de estudos associando Deck
+
+
+
+[https://docs.google.com/forms/d/e/1FAIpQLScFUBk5DGpqb_WgPi0N4V3dnG1xl-NKTy-yFXXNmy5yCCwtlg/viewform?usp=publish-editor](https://docs.google.com/forms/d/e/1FAIpQLScFUBk5DGpqb_WgPi0N4V3dnG1xl-NKTy-yFXXNmy5yCCwtlg/viewform?usp=publish-editor)
