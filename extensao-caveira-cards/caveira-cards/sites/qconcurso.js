@@ -336,13 +336,13 @@
             if (!html || html.length < 5) return null;
 
             // Captura data de publicação se disponível no DOM do bloco
-            const dataEl = block.querySelector("time, .date, .created-at, [class*='date'], [class*='data']");
+            const dataEl = block.querySelector("time, .date, .created-at, [class*='date']");
             const rawData = dataEl?.getAttribute("datetime") || dataEl?.textContent?.trim();
             let dataPublicacao;
             if (rawData) {
               const d = new Date(rawData);
               dataPublicacao = isNaN(d.getTime())
-                ? (/\d/.test(rawData) ? rawData.trim() : undefined)
+                ? (typeof rawData === "string" && /\d/.test(rawData) ? rawData.trim() : undefined)
                 : d.toLocaleDateString("pt-BR");
             }
 
