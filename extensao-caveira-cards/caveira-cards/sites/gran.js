@@ -155,7 +155,18 @@
           const score = c.curtidas || c.likes || c.total_curtidas || 0;
           const html = sanitizarHtml(c.texto || c.conteudo || c.content || "");
           if (!html || html.length < 10) return null;
-          return { score, html };
+
+          // Captura data de publicação a partir dos campos do Vue data
+          const rawData = c.created_at || c.data || c.publicadoEm || c.date || c.dataCriacao;
+          let dataPublicacao;
+          if (rawData) {
+            const d = new Date(rawData);
+            dataPublicacao = isNaN(d.getTime())
+              ? (typeof rawData === "string" && /\d/.test(rawData) ? rawData.trim() : undefined)
+              : d.toLocaleDateString("pt-BR");
+          }
+
+          return { score, html, dataPublicacao };
         }).filter(Boolean);
 
         // Top 5 por relevância (curtidas)
