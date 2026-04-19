@@ -118,16 +118,10 @@ resetBtn.addEventListener('click', () => {
   pauseTimer();
 });
 
-// Fullscreen
+// Fullscreen (navega para tela fullscreen na mesma aba)
 fullscreenBtn.addEventListener('click', () => {
-  pauseTimer();
   saveState();
-  chrome.windows.create({
-    url: chrome.runtime.getURL('timer-fullscreen.html'),
-    type: 'popup',
-    width: 800,
-    height: 600
-  });
+  window.location.href = 'timer-fullscreen.html';
 });
 
 // Floating

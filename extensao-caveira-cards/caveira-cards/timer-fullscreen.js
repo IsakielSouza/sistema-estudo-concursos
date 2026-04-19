@@ -71,32 +71,28 @@ function pauseTimer() {
 
 // Voltar para timer normal
 backBtn.addEventListener('click', () => {
-  pauseTimer();
   saveState();
-  window.close();
+  window.location.href = 'timer.html';
 });
 
 // Finalizar sessão
 finishBtn.addEventListener('click', () => {
   pauseTimer();
   saveState();
-  // Aqui pode adicionar lógica para marcar sessão como finalizada
-  window.close();
+  window.location.href = 'timer.html';
 });
 
 // Fechar
 closeBtn.addEventListener('click', () => {
-  pauseTimer();
   saveState();
-  window.close();
+  window.location.href = 'timer.html';
 });
 
-// ESC para fechar
+// ESC para voltar
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    pauseTimer();
     saveState();
-    window.close();
+    window.location.href = 'timer.html';
   }
 });
 
