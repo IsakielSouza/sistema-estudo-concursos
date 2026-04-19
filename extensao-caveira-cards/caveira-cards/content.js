@@ -763,7 +763,7 @@
       const extraTags = [];
       try {
         const { sessaoAtiva } = await chrome.storage.local.get("sessaoAtiva");
-        if (sessaoAtiva?.caderno) {
+        if (sessaoAtiva?.ativa && sessaoAtiva?.caderno) {
           const slug = sessaoAtiva.caderno
             .toLowerCase()
             .replace(/[|.\s/\\]+/g, "-")
