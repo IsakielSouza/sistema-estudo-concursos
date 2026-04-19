@@ -169,7 +169,7 @@ CaveiraCards transforma o seu estudo para concursos em um ciclo contínuo de rev
   Storage utilizado (chrome.storage.local):
     sessaoAtiva: {
       inicio:          number   // timestamp ms do início
-      questoes:        number   // total de cards enviados ao Anki na sessão
+      questoes:        number   // total de questões respondidas na sessão (contado ao exibir o overlay)
       ativa:           boolean  // true enquanto sessão em curso
       ultimaAtividade: number   // timestamp ms da última questão respondida
       // quando ativa=false (sessão encerrada pelo usuário):

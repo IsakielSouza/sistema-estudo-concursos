@@ -444,12 +444,26 @@
     overlayEl = overlay;
     mostrandoOverlay = false; // overlay criado — libera para próxima questão
 
-    // Registra que houve atividade agora
+    // Registra questão respondida e atualiza atividade
     if (contextoValido()) {
       try {
         chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
           if (sessaoAtiva && sessaoAtiva.ativa) {
-            sessaoAtiva.ultimaAtividade = Date.now();
+            const agora = Date.now();
+            const ultimaAtividade = sessaoAtiva.ultimaAtividade || sessaoAtiva.inicio;
+
+            sessaoAtiva.questoes = (sessaoAtiva.questoes || 0) + 1;
+            if (questao.resultado !== "Erros") {
+              sessaoAtiva.acertos = (sessaoAtiva.acertos || 0) + 1;
+            }
+            if (!sessaoAtiva.detalhes) sessaoAtiva.detalhes = [];
+            sessaoAtiva.detalhes.push({
+              materia: questao.materia,
+              resultado: questao.resultado,
+              tempoGastoMs: agora - ultimaAtividade,
+              timestamp: agora
+            });
+            sessaoAtiva.ultimaAtividade = agora;
             chrome.storage.local.set({ sessaoAtiva });
           }
         });
@@ -749,37 +763,6 @@
       // professor SEMPRE é capturado; alunos só se o toggle estiver ativo.
       if (adapter.nomePlataforma === "TEC Concursos") {
         autoCapturarComentarios(adapter, questao, noteId);
-      }
-
-      // ── Incrementar contadores da sessão ativa ──
-      if (contextoValido()) {
-        try {
-          chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
-            if (sessaoAtiva && sessaoAtiva.ativa) {
-              const agora = Date.now();
-              const ultimaAtividade = sessaoAtiva.ultimaAtividade || sessaoAtiva.inicio;
-              
-              // Dados da questão atual
-              const detalheQuestao = {
-                materia: questao.materia,
-                resultado: questao.resultado,
-                tempoGastoMs: agora - ultimaAtividade,
-                timestamp: agora
-              };
-
-              sessaoAtiva.questoes = (sessaoAtiva.questoes || 0) + 1;
-              if (questao.resultado !== "Erros") {
-                sessaoAtiva.acertos = (sessaoAtiva.acertos || 0) + 1;
-              }
-              
-              if (!sessaoAtiva.detalhes) sessaoAtiva.detalhes = [];
-              sessaoAtiva.detalhes.push(detalheQuestao);
-              
-              sessaoAtiva.ultimaAtividade = agora;
-              chrome.storage.local.set({ sessaoAtiva });
-            }
-          });
-        } catch { /* contexto inválido — ignora */ }
       }
 
     } catch (err) {
