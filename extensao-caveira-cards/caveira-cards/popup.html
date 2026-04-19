@@ -269,6 +269,51 @@
     transition: border-color .15s, color .15s;
   }
   .btn-nova-sessao:hover { border-color: #3b6ff5; color: #94a3b8; }
+
+  /* ── Caderno input (session starting state) ── */
+  .session-starting {
+    padding: 10px 14px;
+  }
+  .session-starting-label {
+    font-size: 11px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+  #input-caderno {
+    width: 100%;
+    background: #080d1a;
+    border: 1px solid #1e2d4d;
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: #e2e8f0;
+    font-size: 12px;
+    margin-bottom: 8px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  #input-caderno:focus { border-color: #3b6ff5; }
+  .starting-actions { display: flex; gap: 6px; }
+  .btn-cancelar-sessao {
+    background: transparent;
+    border: 1px solid #1e2d4d;
+    border-radius: 6px;
+    color: #475569;
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-cancelar-sessao:hover { border-color: #3b6ff5; color: #94a3b8; }
+  /* ── Caderno label in active/summary states ── */
+  .session-caderno-label {
+    font-size: 11px;
+    color: #64748b;
+    text-align: center;
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 </style>
 </head>
 <body>
@@ -325,6 +370,16 @@
       </button>
     </div>
 
+    <!-- Estado: iniciando (input caderno) -->
+    <div class="session-starting" id="session-starting" style="display:none">
+      <div class="session-starting-label">📓 Nome do caderno (opcional)</div>
+      <input type="text" id="input-caderno" placeholder="Ex: 04. DESAFIO 200 Q PRF | 04">
+      <div class="starting-actions">
+        <button class="btn-iniciar" id="btn-confirmar-sessao" style="flex: 1;">▶ Confirmar</button>
+        <button class="btn-cancelar-sessao" id="btn-cancelar-sessao">Cancelar</button>
+      </div>
+    </div>
+
     <!-- Estado: ativa -->
     <div class="session-active" id="session-active" style="display:none">
       <div class="session-stats">
@@ -342,6 +397,7 @@
         </div>
       </div>
       <button class="btn-encerrar" id="btn-encerrar">⏹ Encerrar sessão</button>
+      <div class="session-caderno-label" id="session-caderno"></div>
       <button id="btn-historico-active" class="btn" style="padding: 6px; font-size: 11px; margin-top: 10px; margin-bottom: 0; justify-content: center; background: #0b1222; width: 100%;">
         📊 Ver Histórico
       </button>
@@ -351,6 +407,7 @@
     <div class="session-summary" id="session-summary" style="display:none">
       <div class="summary-label">Resumo da sessão</div>
       <div class="summary-val" id="summary-val">—</div>
+      <div class="session-caderno-label" id="summary-caderno"></div>
       <button class="btn-copiar" id="btn-copiar">📋 Copiar resumo</button>
       <button id="btn-historico-summary" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 6px; justify-content: center; width: 100%;">
         📊 Ver Histórico Completo
