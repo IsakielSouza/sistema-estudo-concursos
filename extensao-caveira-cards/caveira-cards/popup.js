@@ -14,9 +14,9 @@ try {
 
 // ── Sessão de Estudo ──
 const sessionIdle     = document.getElementById("session-idle");
-const sessionStarting = document.getElementById("session-starting");
 const sessionActive   = document.getElementById("session-active");
 const sessionSummary  = document.getElementById("session-summary");
+const inputCaderno    = document.getElementById("input-caderno");
 const timerEl        = document.getElementById("session-timer");
 const questoesEl     = document.getElementById("session-questoes");
 const acertosEl      = document.getElementById("session-acertos");
@@ -77,10 +77,9 @@ function formatarResumo(ms, questoes, acertos) {
 }
 
 function mostrarEstado(estado) {
-  sessionIdle.style.display    = estado === "idle"     ? "flex"  : "none";
-  sessionStarting.style.display = estado === "starting" ? "block" : "none";
-  sessionActive.style.display  = estado === "active"   ? "block" : "none";
-  sessionSummary.style.display = estado === "summary"  ? "block" : "none";
+  sessionIdle.style.display   = estado === "idle"   ? "flex"  : "none";
+  sessionActive.style.display = estado === "active" ? "block" : "none";
+  sessionSummary.style.display = estado === "summary" ? "block" : "none";
 }
 
 function atualizarDisplayTempo() {
@@ -117,28 +116,37 @@ chrome.storage.local.get(["sessaoAtiva", "timerState"], ({ sessaoAtiva, timerSta
     mostrarEstado("summary");
   } else {
     mostrarEstado("idle");
+    preencherCadernoSeVazio();
   }
 });
 
-// Iniciar sessão
-document.getElementById("btn-iniciar").addEventListener("click", async () => {
-  let cadernoDetectado = "";
+// Auto-detect caderno ao carregar popup (se idle)
+async function preencherCadernoSeVazio() {
+  if (!inputCaderno || inputCaderno.value.trim()) return;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab && tab.url && tab.url.includes("tecconcursos.com.br")) {
       const resp = await chrome.tabs.sendMessage(tab.id, { action: "getCadernoName" });
-      cadernoDetectado = resp?.caderno || "";
+      const detectado = resp?.caderno || "";
+      if (detectado && !inputCaderno.value.trim()) inputCaderno.value = detectado;
     }
-  } catch { /* not on TEC or content script not ready — leave field empty */ }
-  document.getElementById("input-caderno").value = cadernoDetectado;
-  mostrarEstado("starting");
-});
+  } catch { /* silencioso */ }
+}
 
-// Confirmar sessão — inicia sessão + timer no modo salvo (último escolhido em timer.html)
-document.getElementById("btn-confirmar-sessao").addEventListener("click", () => {
-  const caderno = document.getElementById("input-caderno").value.trim() || null;
+// Iniciar sessão — direto, usa o que estiver no input
+async function iniciarSessao() {
+  let caderno = inputCaderno?.value.trim() || "";
+  if (!caderno) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url && tab.url.includes("tecconcursos.com.br")) {
+        const resp = await chrome.tabs.sendMessage(tab.id, { action: "getCadernoName" });
+        caderno = resp?.caderno || "";
+      }
+    } catch { /* silencioso */ }
+  }
   const inicio = Date.now();
-  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno, mode: timerState.mode };
+  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno: caderno || null, mode: timerState.mode };
 
   if (timerState.mode === "livre") {
     timerState.elapsedSeconds = 0;
@@ -150,12 +158,9 @@ document.getElementById("btn-confirmar-sessao").addEventListener("click", () => 
   timerState.startedAt = inicio;
 
   chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
-});
+}
 
-// Cancelar — volta para idle
-document.getElementById("btn-cancelar-sessao").addEventListener("click", () => {
-  mostrarEstado("idle");
-});
+document.getElementById("btn-iniciar").addEventListener("click", iniciarSessao);
 
 // Encerrar sessão
 document.getElementById("btn-encerrar").addEventListener("click", () => {
@@ -250,6 +255,7 @@ chrome.storage.onChanged.addListener((changes) => {
       mostrarEstado("summary");
     } else if (!nova) {
       pararTickPopup();
+      if (inputCaderno) inputCaderno.value = "";
       mostrarEstado("idle");
     }
   }
