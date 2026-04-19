@@ -92,27 +92,28 @@ Selector: `.caderno-subtitulo-secao-nome .titulo` — already confirmed present 
 
 ### 4. Tag Injection in Anki Send
 
-In `content.js`, inside `enviarParaAnki()`, after building the `tags` array, add caderno tag if session has a caderno:
+The `tags` array is built inside `enviarQuestao()` in `shared/anki.js`. The cleanest injection point is an `extraTags` parameter added to `enviarQuestao`.
 
-**Name normalization:**
-```
-"04. DESAFIO 200 Q PRF | 04"
-  → lowercase:          "04. desafio 200 q prf | 04"
-  → replace [|.\s/\\]+: "04-desafio-200-q-prf-04"
-  → collapse --:        "04-desafio-200-q-prf-04"
-  → trim leading/trail: "04-desafio-200-q-prf-04"
-```
-
-**Tags added:**
-```
-caderno::04-desafio-200-q-prf-04::erros     ← quando resultado === "Erros"
-caderno::04-desafio-200-q-prf-04::revisao   ← quando resultado !== "Erros"
-```
-
-**Implementation pattern:**
+**`shared/anki.js` — signature change:**
 ```js
-// Inside enviarParaAnki(), after tags array is built, before ankiRequest
-chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
+async function enviarQuestao(questao, frente, verso, extraTags = []) {
+  // ...existing code...
+  const tags = [
+    "caveira-cards",
+    resultado === "Erros" ? "caderno-de-erros" : "revisao",
+    questao.plataforma.toLowerCase().replace(/\s+/g, "-"),
+    questao.materiaLimpa.toLowerCase().replace(/[\s:/\\?*^]/g, "-"),
+    ...extraTags,   // ← injected here
+  ].filter(Boolean);
+  // ...rest unchanged...
+}
+```
+
+**`content.js` — `enviarParaAnki()` reads sessaoAtiva and builds caderno tags:**
+```js
+async function enviarParaAnki(questao, frente, verso) {
+  const { sessaoAtiva } = await chrome.storage.local.get("sessaoAtiva");
+  const extraTags = [];
   if (sessaoAtiva?.caderno) {
     const slug = sessaoAtiva.caderno
       .toLowerCase()
@@ -120,13 +121,16 @@ chrome.storage.local.get("sessaoAtiva", ({ sessaoAtiva }) => {
       .replace(/-{2,}/g, "-")
       .replace(/^-|-$/g, "");
     const res = questao.resultado === "Erros" ? "erros" : "revisao";
-    tags.push(`caderno::${slug}::${res}`);
+    extraTags.push(`caderno::${slug}::${res}`);
   }
-  // proceed with ankiRequest("addNote", ...)
-});
+  return window.CaveiraAnki.enviarQuestao(questao, frente, verso, extraTags);
+}
 ```
 
-Note: `enviarParaAnki` must be refactored to delay the `ankiRequest` call until inside this storage callback, since it becomes async.
+**Name normalization example:**
+```
+"04. DESAFIO 200 Q PRF | 04"  →  "04-desafio-200-q-prf-04"
+```
 
 ### 5. Session History Display (`sessoes.html`)
 
@@ -145,7 +149,8 @@ Sessions without `caderno` show nothing extra — no visual regression.
 | `popup.html` | Add caderno input section (hidden by default, shown on Iniciar click) |
 | `popup.js` | Tab query + sendMessage + show input + store caderno in sessaoAtiva; show caderno in active/summary states |
 | `sites/tec.js` | Add `chrome.runtime.onMessage` handler for `getCadernoName` |
-| `content.js` | In `enviarParaAnki()`: read `sessaoAtiva.caderno`, build slug, push tag before sending |
+| `shared/anki.js` | Add `extraTags = []` parameter to `enviarQuestao()`, spread into tags array |
+| `content.js` | In `enviarParaAnki()`: read `sessaoAtiva.caderno`, build slug, pass as `extraTags` |
 | `sessoes.html` | Render `caderno` field in session history rows |
 
 ---
