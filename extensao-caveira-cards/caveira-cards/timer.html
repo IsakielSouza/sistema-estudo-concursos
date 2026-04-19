@@ -4,17 +4,23 @@
   <meta charset="UTF-8">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      width: 320px;
+    html, body {
+      width: 100%;
       min-height: 100vh;
+    }
+    body {
       background: linear-gradient(135deg, #0a0e1a 0%, #0f1729 100%);
       color: #e2e8f0;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      padding: 16px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 20px;
+    }
+    .timer-container {
+      width: 320px;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Header */
@@ -217,6 +223,7 @@
   </style>
 </head>
 <body>
+  <div class="timer-container">
   <!-- Header -->
   <div class="timer-header">
     <button class="timer-header-btn" id="timer-config-btn" title="Configurações">⚙</button>
@@ -295,6 +302,7 @@
 
   <!-- Back button -->
   <button class="timer-back-btn" id="timer-back-btn" style="display: none; margin-top: 12px;">← Voltar</button>
+  </div>
 
   <script src="timer.js"></script>
 </body>
