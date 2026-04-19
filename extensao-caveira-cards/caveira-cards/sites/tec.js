@@ -5,7 +5,7 @@
 //   detectarErro()  / detectarAcerto()          → bool
 //   capturarQuestao()                            → objeto questão
 //   capturarComentarioProfessor()                → { html, type:"professor" } | null
-//   capturarComentariosAlunos(max=5)             → [{ html, score, type:"aluno", _liEl, _btnLike }]
+//   capturarComentariosAlunos(max=5)             → [{ html, score, type:"aluno", dataPublicacao?, _liEl, _btnLike }]
 //   abrirPaineisComentarios(tipo)                → bool  ("comentario" | "discussao")
 //   capturarComentarios(el?)                     → compat (prof + alunos concatenados, até 5+1)
 //   capturarUnicoComentario(btnLike)             → captura avulsa via clique no 👍
@@ -456,7 +456,7 @@
             );
             const rawData = dataEl?.textContent?.trim() || "";
             // Aceitar somente strings que contenham formato de data com dígitos separados por /-.
-            const dataPublicacao = rawData && /\d{2}[/\-.]\d{2}[/\-.]\d{2,4}/.test(rawData)
+            const dataPublicacao = rawData && /^\d{2}[/\-.]\d{2}[/\-.]\d{2}(?:\d{2})?$/.test(rawData)
               ? rawData
               : undefined;
 
