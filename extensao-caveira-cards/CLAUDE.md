@@ -162,7 +162,7 @@ CaveiraCards transforma o seu estudo para concursos em um ciclo contínuo de rev
        "⏸ Sessão pausada"  com opções  [🆕 Nova sessão]  [▶ Continuar]
        • Nova sessão: zera questões e reinicia o timer
        • Continuar: apenas atualiza o timestamp de atividade
-  ✅ Após envio pro Anki → sessaoAtiva.questoes++ e ultimaAtividade são atualizados
+  ✅ Ao exibir o overlay → sessaoAtiva.questoes++, acertos e ultimaAtividade são atualizados
   ✅ Durante o dialog: questões que ainda não foram processadas aguardam
        (não entram em processadas até mostrandoOverlay = false)
 
