@@ -501,7 +501,7 @@
     ).join("");
 
     const htmlAlunos = alunos.map(c =>
-      `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}</span><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
+      `<div class="cc-comentario"><span class="cc-score">▲ ${c.score}${c.dataPublicacao ? ' · ' + c.dataPublicacao : ''}</span><div>${window.CaveiraCardBuilder.sanitizar(c.html)}</div></div>`
     ).join("");
 
     const hasProf = !!htmlProf;
