@@ -42,6 +42,38 @@ function formatMMSS(secs) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function formatarTimer(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatarResumo(ms, questoes, acertos) {
+  const totalMin = Math.round(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  let tempoStr = '';
+  if (h > 0 && m > 0)      tempoStr = `${h}h${String(m).padStart(2, '0')}min`;
+  else if (h > 0)           tempoStr = `${h}h`;
+  else if (totalMin === 0)  tempoStr = '< 1min';
+  else                      tempoStr = `${m}min`;
+  const plural = questoes !== 1 ? 'questões' : 'questão';
+  return `⏱ ${tempoStr}  |  📚 ${questoes} ${plural}  |  ✅ ${acertos} acertos`;
+}
+
+function agruparPorMateria(detalhes) {
+  const grupos = {};
+  detalhes.forEach(d => {
+    if (!grupos[d.materia]) grupos[d.materia] = { questoes: 0, acertos: 0 };
+    grupos[d.materia].questoes++;
+    if (d.resultado !== 'Erros') grupos[d.materia].acertos++;
+  });
+  return grupos;
+}
+
 function sessaoEstaAtiva() {
   return !!(sessaoAtivaLocal && sessaoAtivaLocal.ativa);
 }
@@ -115,9 +147,60 @@ backBtn.addEventListener('click', () => {
   window.location.href = 'timer.html';
 });
 
-// Finalizar sessão → volta para timer.html (onde o resumo é mostrado)
+// Finalizar sessão — mesmo comportamento que popup/timer.html
 finishBtn.addEventListener('click', () => {
-  window.location.href = 'timer.html';
+  if (!sessaoEstaAtiva()) {
+    window.location.href = 'timer.html';
+    return;
+  }
+  if (timerState.isRunning) {
+    const secs = computeCurrentSeconds(timerState);
+    if (timerState.mode === 'livre') timerState.elapsedSeconds = secs;
+    else timerState.remainingSeconds = secs;
+  }
+  timerState.isRunning = false;
+  timerState.startedAt = null;
+  if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+
+  chrome.storage.local.get(['sessaoAtiva', 'historicoSessoes'], ({ sessaoAtiva, historicoSessoes = [] }) => {
+    const agora = Date.now();
+    const duracaoMs = agora - (sessaoAtiva?.inicio || agora);
+    const questoes = sessaoAtiva?.questoes || 0;
+    const acertos = sessaoAtiva?.acertos || 0;
+    const resumo = formatarResumo(duracaoMs, questoes, acertos);
+
+    const detalhes = sessaoAtiva?.detalhes || [];
+    const materiasSet = new Set(detalhes.map(d => d.materia));
+    const listaMaterias = Array.from(materiasSet).join(', ');
+    const tempoTotalMs = detalhes.reduce((acc, d) => acc + d.tempoGastoMs, 0);
+    const mediaTempoMs = questoes > 0 ? Math.round(tempoTotalMs / questoes) : 0;
+
+    const novaSessao = {
+      id: Date.now(),
+      data: new Date().toLocaleDateString('pt-BR'),
+      inicio: sessaoAtiva.inicio,
+      fim: agora,
+      duracaoMs,
+      duracaoStr: formatarTimer(duracaoMs),
+      questoes,
+      acertos,
+      aproveitamento: questoes > 0 ? Math.round((acertos / questoes) * 100) + '%' : '0%',
+      mediaTempoMs,
+      mediaTempoStr: mediaTempoMs > 0 ? formatarTimer(mediaTempoMs) : '-',
+      materias: listaMaterias,
+      caderno: sessaoAtiva.caderno || null,
+      detalhesPorMateria: agruparPorMateria(detalhes),
+      detalhes
+    };
+
+    chrome.storage.local.set({
+      sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos, caderno: sessaoAtiva.caderno || null },
+      historicoSessoes: [novaSessao, ...historicoSessoes],
+      timerState
+    }, () => {
+      window.location.href = 'timer.html';
+    });
+  });
 });
 
 closeBtn.addEventListener('click', () => {

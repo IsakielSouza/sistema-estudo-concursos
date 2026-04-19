@@ -213,15 +213,6 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
   });
 });
 
-// Copiar resumo
-document.getElementById("btn-copiar").addEventListener("click", () => {
-  const btn = document.getElementById("btn-copiar");
-  navigator.clipboard.writeText(summaryValEl.textContent).then(() => {
-    btn.textContent = "✓ Copiado!";
-    setTimeout(() => { btn.textContent = "📋 Copiar resumo"; }, 1800);
-  });
-});
-
 // Nova sessão
 document.getElementById("btn-nova-sessao").addEventListener("click", () => {
   if (timerState.mode === "livre") timerState.elapsedSeconds = 0;
