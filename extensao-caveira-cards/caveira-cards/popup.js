@@ -13,9 +13,10 @@ try {
 
 
 // ── Sessão de Estudo ──
-const sessionIdle    = document.getElementById("session-idle");
-const sessionActive  = document.getElementById("session-active");
-const sessionSummary = document.getElementById("session-summary");
+const sessionIdle     = document.getElementById("session-idle");
+const sessionStarting = document.getElementById("session-starting");
+const sessionActive   = document.getElementById("session-active");
+const sessionSummary  = document.getElementById("session-summary");
 const timerEl        = document.getElementById("session-timer");
 const questoesEl     = document.getElementById("session-questoes");
 const acertosEl      = document.getElementById("session-acertos");
@@ -49,7 +50,7 @@ function formatarResumo(ms, questoes, acertos) {
 
 function mostrarEstado(estado) {
   sessionIdle.style.display    = estado === "idle"     ? "flex"  : "none";
-  document.getElementById("session-starting").style.display = estado === "starting" ? "block" : "none";
+  sessionStarting.style.display = estado === "starting" ? "block" : "none";
   sessionActive.style.display  = estado === "active"   ? "block" : "none";
   sessionSummary.style.display = estado === "summary"  ? "block" : "none";
 }
@@ -96,7 +97,7 @@ document.getElementById("btn-iniciar").addEventListener("click", async () => {
 
 // Confirmar sessão (com ou sem caderno)
 document.getElementById("btn-confirmar-sessao").addEventListener("click", () => {
-  const caderno = document.getElementById("input-caderno").value.trim() || undefined;
+  const caderno = document.getElementById("input-caderno").value.trim() || null;
   const sessao = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, caderno };
   chrome.storage.local.set({ sessaoAtiva: sessao });
   questoesEl.textContent = 0;
@@ -153,7 +154,7 @@ document.getElementById("btn-encerrar").addEventListener("click", () => {
     const novoHistorico = [novaSessao, ...historicoSessoes];
     
     chrome.storage.local.set({
-      sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos },
+      sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos, caderno: sessaoAtiva.caderno || null },
       historicoSessoes: novoHistorico
     });
 
