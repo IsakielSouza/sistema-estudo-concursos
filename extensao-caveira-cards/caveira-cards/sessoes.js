@@ -1,6 +1,10 @@
 // sessoes.js — Lógica de gestão de histórico de sessões
 
 document.addEventListener("DOMContentLoaded", () => {
+  function esc(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   const form = document.getElementById("manual-form");
   const lista = document.getElementById("historico-lista");
   const btnLimpar = document.getElementById("btn-limpar-tudo");
@@ -90,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const mediaMs = q > 0 ? Math.round(duracaoMs / q) : 0;
 
       const cadernoAtivoHtml = sessaoAtiva.caderno
-        ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px;">📓 ${sessaoAtiva.caderno}</div>`
+        ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${esc(sessaoAtiva.caderno)}">📓 ${esc(sessaoAtiva.caderno)}</div>`
         : "";
 
       html += `
@@ -120,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         : "-";
 
       const cadernoHtml = sessao.caderno
-        ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${sessao.caderno}">📓 ${sessao.caderno}</div>`
+        ? `<div style="font-size: 10px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="${esc(sessao.caderno)}">📓 ${esc(sessao.caderno)}</div>`
         : "";
 
       return `
@@ -206,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const novoHistorico = [novaSessao, ...historicoSessoes];
       
       chrome.storage.local.set({
-        sessaoAtiva: { ativa: false, inicio: sessaoAtiva.inicio, fim: agora, questoes: q, acertos: a },
+        sessaoAtiva: { ativa: false, inicio: sessaoAtiva.inicio, fim: agora, questoes: q, acertos: a, caderno: sessaoAtiva.caderno || null },
         historicoSessoes: novoHistorico
       }, () => {
         renderizar(novoHistorico, { ativa: false });
