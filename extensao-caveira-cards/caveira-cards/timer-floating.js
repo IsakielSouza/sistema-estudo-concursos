@@ -4,6 +4,7 @@ let timerState = {
   isRunning: false,
   remainingSeconds: 1500,
   totalSeconds: 1500,
+  elapsedSeconds: 0,
   currentSession: 1,
   config: {
     focus: 25,
@@ -27,9 +28,23 @@ let timerInterval = null;
 // Receber estado da aba anterior
 chrome.storage.local.get('timerState', (result) => {
   if (result.timerState) {
-    timerState = result.timerState;
+    timerState = { ...timerState, ...result.timerState };
     updateDisplay();
+    if (timerState.isRunning) {
+      playBtn.innerHTML = '⏸';
+      statusText.textContent = 'Executando';
+      timerInterval = setInterval(tick, 1000);
+    }
   }
+});
+
+// Sincroniza com outras páginas
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== 'local' || !changes.timerState) return;
+  const nova = changes.timerState.newValue;
+  if (!nova) return;
+  timerState = nova;
+  updateDisplay();
 });
 
 // Play/Pause
@@ -45,23 +60,28 @@ function startTimer() {
   timerState.isRunning = true;
   playBtn.innerHTML = '⏸';
   statusText.textContent = 'Executando';
+  timerInterval = setInterval(tick, 1000);
+}
 
-  timerInterval = setInterval(() => {
+function tick() {
+  if (timerState.mode === 'livre') {
+    timerState.elapsedSeconds++;
+  } else {
     timerState.remainingSeconds--;
     if (timerState.remainingSeconds < 0) {
       pauseTimer();
       timerState.remainingSeconds = 0;
     }
-    updateDisplay();
-    saveState();
-  }, 1000);
+  }
+  updateDisplay();
+  saveState();
 }
 
 function pauseTimer() {
   timerState.isRunning = false;
   playBtn.innerHTML = '▶';
   statusText.textContent = 'Pausado';
-  if (timerInterval) clearInterval(timerInterval);
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   saveState();
 }
 
@@ -74,22 +94,26 @@ backBtn.addEventListener('click', () => {
 
 // Atualizar display
 function updateDisplay() {
-  const minutes = Math.floor(timerState.remainingSeconds / 60);
-  const seconds = timerState.remainingSeconds % 60;
+  let secs;
+  let progress;
+
+  if (timerState.mode === 'livre') {
+    secs = timerState.elapsedSeconds;
+    progress = 0;
+  } else {
+    secs = timerState.remainingSeconds;
+    progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
+  }
+
+  const minutes = Math.floor(secs / 60);
+  const seconds = secs % 60;
   displayText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-  // Atualizar barra de progresso
-  const progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
   const progressPercent = Math.max(0, Math.min(100, progress * 100));
   progressFill.style.width = `${progressPercent}%`;
   progressDot.style.left = `${progressPercent}%`;
 
-  // Atualizar label
-  if (timerState.mode === 'pomodoro') {
-    labelText.textContent = 'Foco';
-  } else {
-    labelText.textContent = 'Tempo Livre';
-  }
+  labelText.textContent = timerState.mode === 'pomodoro' ? 'Foco' : 'Livre';
 }
 
 // Salvar estado

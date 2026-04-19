@@ -13,6 +13,7 @@ let timerState = {
   isRunning: false,
   remainingSeconds: 1500, // 25 minutos
   totalSeconds: 1500,
+  elapsedSeconds: 0, // usado no modo livre (incremental)
   currentSession: 1, // qual sessão pomodoro
   config: {
     focus: 25,
@@ -49,19 +50,42 @@ configBtn.addEventListener('click', () => {
 pomodoroTab.addEventListener('click', () => switchMode('pomodoro'));
 livreTab.addEventListener('click', () => switchMode('livre'));
 
-function switchMode(mode) {
-  timerState.mode = mode;
+function setActiveTab(mode) {
   pomodoroTab.classList.toggle('active', mode === 'pomodoro');
   livreTab.classList.toggle('active', mode === 'livre');
+}
 
+function switchMode(mode) {
+  if (timerState.mode === mode) return;
+  if (timerState.isRunning) {
+    mostrarAvisoTimer();
+    return;
+  }
+
+  timerState.mode = mode;
+  if (mode === 'livre') {
+    timerState.elapsedSeconds = 0;
+  } else {
+    timerState.remainingSeconds = timerState.totalSeconds;
+  }
+
+  setActiveTab(mode);
   configContainer.classList.remove('show');
   resetBtn.style.display = 'none';
 
-  if (timerState.isRunning) {
-    pauseTimer();
-  }
-
   updateDisplay();
+  saveState();
+}
+
+let avisoTimeout = null;
+function mostrarAvisoTimer() {
+  statusText.textContent = '⚠ Timer em andamento — pause para trocar';
+  statusText.style.color = '#ef4444';
+  if (avisoTimeout) clearTimeout(avisoTimeout);
+  avisoTimeout = setTimeout(() => {
+    statusText.style.color = '';
+    statusText.textContent = timerState.isRunning ? 'Executando' : 'Pausado';
+  }, 2500);
 }
 
 // Play/Pause
@@ -77,15 +101,21 @@ function startTimer() {
   timerState.isRunning = true;
   playBtn.innerHTML = '⏸';
   playBtn.style.backgroundColor = '#ef4444';
+  statusText.style.color = '';
   statusText.textContent = 'Executando';
 
   timerInterval = setInterval(() => {
-    timerState.remainingSeconds--;
-    if (timerState.remainingSeconds < 0) {
-      pauseTimer();
-      timerState.remainingSeconds = 0;
+    if (timerState.mode === 'livre') {
+      timerState.elapsedSeconds++;
+    } else {
+      timerState.remainingSeconds--;
+      if (timerState.remainingSeconds < 0) {
+        pauseTimer();
+        timerState.remainingSeconds = 0;
+      }
     }
     updateDisplay();
+    saveState();
   }, 1000);
 }
 
@@ -93,8 +123,10 @@ function pauseTimer() {
   timerState.isRunning = false;
   playBtn.innerHTML = '▶';
   playBtn.style.backgroundColor = '#22c55e';
+  statusText.style.color = '';
   statusText.textContent = 'Pausado';
   if (timerInterval) clearInterval(timerInterval);
+  saveState();
 }
 
 // Configuração
@@ -147,14 +179,21 @@ floatingBtn.addEventListener('click', () => {
 
 // Atualizar display
 function updateDisplay() {
-  const minutes = Math.floor(timerState.remainingSeconds / 60);
-  const seconds = timerState.remainingSeconds % 60;
-  displayText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-  // Atualizar círculo progressivo
   const circumference = 2 * Math.PI * 62;
-  const progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
-  const dashoffset = circumference * (1 - progress);
+  let secs;
+  let progress;
+
+  if (timerState.mode === 'livre') {
+    secs = timerState.elapsedSeconds;
+    progress = 0;
+  } else {
+    secs = timerState.remainingSeconds;
+    progress = (timerState.totalSeconds - timerState.remainingSeconds) / timerState.totalSeconds;
+  }
+
+  const minutes = Math.floor(secs / 60);
+  const seconds = secs % 60;
+  displayText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   progressCircle.style.strokeDasharray = `${circumference * progress} ${circumference}`;
 }
 
@@ -174,16 +213,45 @@ function saveState() {
 // Listener para atualizações do estado
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && changes.timerState) {
-    timerState = changes.timerState.newValue;
+    const nova = changes.timerState.newValue;
+    if (!nova) return;
+    const rodandoOutraPagina = nova.isRunning && !timerInterval;
+    timerState = nova;
+    setActiveTab(timerState.mode);
+    if (rodandoOutraPagina) {
+      playBtn.innerHTML = '⏸';
+      playBtn.style.backgroundColor = '#ef4444';
+      statusText.textContent = 'Executando';
+    } else if (!nova.isRunning && timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      playBtn.innerHTML = '▶';
+      playBtn.style.backgroundColor = '#22c55e';
+      statusText.textContent = 'Pausado';
+    }
     updateDisplay();
     updateIndicators();
+    updateConfigDisplay();
   }
 });
 
-// Inicializar
-updateDisplay();
-updateConfigDisplay();
-updateIndicators();
+// Inicializar a partir do storage (sincroniza aba ativa com timer em andamento)
+chrome.storage.local.get('timerState', ({ timerState: stored }) => {
+  if (stored) {
+    timerState = { ...timerState, ...stored };
+    setActiveTab(timerState.mode);
+    if (timerState.isRunning) {
+      playBtn.innerHTML = '⏸';
+      playBtn.style.backgroundColor = '#ef4444';
+      statusText.textContent = 'Executando';
+    }
+  } else {
+    setActiveTab(timerState.mode);
+  }
+  updateDisplay();
+  updateConfigDisplay();
+  updateIndicators();
+});
 
 // ════════════════════════════════════════════════
 // Sessão de Estudo (sincronizada com popup)
