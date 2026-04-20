@@ -21,6 +21,16 @@ const playBtn = document.getElementById('floating-play-btn');
 const backBtn = document.getElementById('floating-back-btn');
 const progressFill = document.getElementById('floating-progress-fill');
 const progressDot = document.getElementById('floating-progress-dot');
+const modeToggle = document.getElementById('mode-toggle');
+const modeToggleLabel = document.getElementById('mode-toggle-label');
+
+function atualizarModeToggle(mode) {
+  if (!modeToggle) return;
+  const isPomodoro = mode === 'pomodoro';
+  modeToggle.checked = isPomodoro;
+  modeToggleLabel.textContent = isPomodoro ? 'Modo: Pomodoro' : 'Modo: Livre';
+  modeToggleLabel.style.color = isPomodoro ? '#22c55e' : '#3b6ff5';
+}
 
 function computeCurrentSeconds(state) {
   const base = state.mode === 'livre'
@@ -102,7 +112,29 @@ backBtn.addEventListener('click', () => {
   window.close();
 });
 
+modeToggle.addEventListener('change', () => {
+  const isPomodoro = modeToggle.checked;
+  const mode = isPomodoro ? 'pomodoro' : 'livre';
+  
+  if (sessaoEstaAtiva()) {
+    atualizarModeToggle(timerState.mode); 
+    return;
+  }
+
+  timerState.mode = mode;
+  if (mode === 'livre') {
+    timerState.elapsedSeconds = 0;
+  } else {
+    timerState.totalSeconds = timerState.config.focus * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+  }
+  atualizarModeToggle(mode);
+  updateDisplay();
+  chrome.storage.local.set({ timerState });
+});
+
 function sincronizarUI() {
+  atualizarModeToggle(timerState.mode);
   setPlayUI();
   updateDisplay();
   if (timerState.isRunning) {

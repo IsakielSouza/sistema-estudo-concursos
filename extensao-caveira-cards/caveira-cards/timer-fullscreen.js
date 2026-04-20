@@ -23,6 +23,16 @@ const finishBtn = document.getElementById('fullscreen-finish-btn');
 const closeBtn = document.getElementById('fullscreen-close-btn');
 const progressCircle = document.getElementById('fullscreen-progress-circle');
 const indicators = document.getElementById('fullscreen-indicators');
+const modeToggle = document.getElementById('mode-toggle');
+const modeToggleLabel = document.getElementById('mode-toggle-label');
+
+function atualizarModeToggle(mode) {
+  if (!modeToggle) return;
+  const isPomodoro = mode === 'pomodoro';
+  modeToggle.checked = isPomodoro;
+  modeToggleLabel.textContent = isPomodoro ? 'Modo: Pomodoro' : 'Modo: Livre';
+  modeToggleLabel.style.color = isPomodoro ? '#22c55e' : '#3b6ff5';
+}
 
 function computeCurrentSeconds(state) {
   const base = state.mode === 'livre'
@@ -241,7 +251,33 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') window.location.href = 'timer.html';
 });
 
+modeToggle.addEventListener('change', () => {
+  const isPomodoro = modeToggle.checked;
+  const mode = isPomodoro ? 'pomodoro' : 'livre';
+  
+  if (sessaoEstaAtiva()) {
+    // Para simplificar, vamos apenas avisar se o usuário tentar trocar com sessão ativa
+    // Mas no fullscreen não temos o "mostrarAviso" fácil, vamos apenas reverter se necessário
+    // ou permitir se o timer.js também permitir.
+    // Na verdade, vamos seguir o padrão do timer.js: impedir se ativa.
+    atualizarModeToggle(timerState.mode); 
+    return;
+  }
+
+  timerState.mode = mode;
+  if (mode === 'livre') {
+    timerState.elapsedSeconds = 0;
+  } else {
+    timerState.totalSeconds = timerState.config.focus * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+  }
+  atualizarModeToggle(mode);
+  updateDisplay();
+  chrome.storage.local.set({ timerState });
+});
+
 function sincronizarUI() {
+  atualizarModeToggle(timerState.mode);
   setPlayUI();
   updateDisplay();
   updateIndicators();

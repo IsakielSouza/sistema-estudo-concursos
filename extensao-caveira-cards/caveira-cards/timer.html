@@ -67,6 +67,46 @@
       background: #ef4444;
     }
 
+    /* ── Toggle switch (padrão do sistema) ── */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #0f1729;
+      border: 1px solid #1e2d4d;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .toggle-label-text { font-size: 12px; font-weight: 500; }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #334155;
+      transition: .2s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px; width: 14px;
+      left: 3px; bottom: 3px;
+      background: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background: #22c55e; }
+    input:checked + .slider:before { transform: translateX(16px); }
+
     /* Abas */
     .timer-tabs {
       display: flex;
@@ -442,10 +482,13 @@
     </div>
   </div>
 
-  <!-- Abas -->
-  <div class="timer-tabs">
-    <button class="timer-tab active" data-mode="pomodoro" id="timer-tab-pomodoro">🍅 Pomodoro</button>
-    <button class="timer-tab" data-mode="livre" id="timer-tab-livre">⏱️ Livre</button>
+  <!-- Modo (Toggle padrão do sistema) -->
+  <div class="toggle-wrap">
+    <span id="mode-toggle-label" class="toggle-label-text" style="color: #22c55e;">Modo: Pomodoro</span>
+    <label class="switch">
+      <input type="checkbox" id="mode-toggle" checked>
+      <span class="slider"></span>
+    </label>
   </div>
 
   <!-- Configuração (escondida) -->
@@ -499,6 +542,19 @@
   <!-- Status -->
   <div class="timer-status" id="timer-status-text">Pausado</div>
 
+  <!-- Ações ao finalizar Pomodoro -->
+  <div id="pomodoro-finish-actions" style="display: none; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+    <button class="timer-play-btn" id="btn-continuar-estudo" style="background: #1e3a8a; border-color: #3b82f6; color: #93c5fd;">
+      ▶ Continuar Estudo (Livre)
+    </button>
+    <button class="timer-play-btn" id="btn-proximo-ciclo" style="background: #14532d; border-color: #22c55e; color: #4ade80; display: none;">
+      🍅 Próximo Ciclo
+    </button>
+    <button class="btn-encerrar" id="btn-encerrar-timer" style="padding: 10px; font-size: 13px;">
+      ⏹ Encerrar Sessão
+    </button>
+  </div>
+
   <!-- Controles -->
   <div class="timer-controls">
     <button class="timer-controls-btn" id="timer-fullscreen-btn" title="Modo Foco">⛶</button>
@@ -517,8 +573,8 @@
     <div class="session-idle" id="session-idle" style="flex-direction: column; gap: 10px; align-items: stretch;">
       <span class="session-idle-label">📚 Nenhuma sessão ativa — aperte ▶ para iniciar</span>
       <div>
-        <div class="session-starting-label">🏷️ Tags para Anki (opcional)</div>
-        <input type="text" id="input-caderno" placeholder="Ex: PRF::Desafio200Q" autocomplete="off">
+        <div class="session-starting-label">🏷️ Tags para Anki (separadas por vírgula)</div>
+        <input type="text" id="input-caderno" placeholder="Ex: PRF, Simulado, Aula01" autocomplete="off">
       </div>
       <button id="btn-historico-idle" class="btn-historico">📊 Ver Histórico</button>
     </div>

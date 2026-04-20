@@ -33,8 +33,8 @@ let avisoTimeout = null;
 const configBtn = document.getElementById('timer-config-btn');
 const configContainer = document.getElementById('timer-config');
 const resetBtn = document.getElementById('timer-reset-btn');
-const pomodoroTab = document.getElementById('timer-tab-pomodoro');
-const livreTab = document.getElementById('timer-tab-livre');
+const modeToggle = document.getElementById('mode-toggle');
+const modeToggleLabel = document.getElementById('mode-toggle-label');
 const displayText = document.getElementById('timer-display');
 const statusText = document.getElementById('timer-status-text');
 const playBtn = document.getElementById('timer-play-btn');
@@ -51,6 +51,12 @@ const sessionTimerEl = document.getElementById('session-timer');
 const questoesEl = document.getElementById('session-questoes');
 const acertosEl = document.getElementById('session-acertos');
 const summaryValEl = document.getElementById('summary-val');
+
+// ─── Finish Pomodoro UI ───
+const finishActions = document.getElementById('pomodoro-finish-actions');
+const btnContinuarLivre = document.getElementById('btn-continuar-estudo');
+const btnProximoCiclo = document.getElementById('btn-proximo-ciclo');
+const btnEncerrarTimer = document.getElementById('btn-encerrar-timer');
 
 // ─── Notificações e som ───
 function playBeep() {
@@ -137,9 +143,12 @@ function sessaoEstaAtiva() {
 }
 
 // ─── UI Updaters ───
-function setActiveTab(mode) {
-  pomodoroTab.classList.toggle('active', mode === 'pomodoro');
-  livreTab.classList.toggle('active', mode === 'livre');
+function atualizarModeToggle(mode) {
+  if (!modeToggle) return;
+  const isPomodoro = mode === 'pomodoro';
+  modeToggle.checked = isPomodoro;
+  modeToggleLabel.textContent = isPomodoro ? 'Modo: Pomodoro' : 'Modo: Livre';
+  modeToggleLabel.style.color = isPomodoro ? '#22c55e' : '#3b6ff5';
 }
 
 function updateDisplay() {
@@ -157,7 +166,45 @@ function updateDisplay() {
     playBeep();
     showTimerFinishNotification();
     pauseTimer();
+    if (finishActions) {
+      finishActions.style.display = 'flex';
+      // Se houver mais ciclos previstos, mostra o botão de próximo ciclo
+      if (timerState.currentSession < timerState.config.sessions) {
+        if (btnProximoCiclo) btnProximoCiclo.style.display = 'block';
+      } else {
+        if (btnProximoCiclo) btnProximoCiclo.style.display = 'none';
+      }
+    }
   }
+}
+
+// ─── Listeners para Ações de Fim de Pomodoro ───
+if (btnContinuarLivre) {
+  btnContinuarLivre.addEventListener('click', () => {
+    if (finishActions) finishActions.style.display = 'none';
+    switchMode('livre');
+    startTimer();
+  });
+}
+
+if (btnProximoCiclo) {
+  btnProximoCiclo.addEventListener('click', () => {
+    if (finishActions) finishActions.style.display = 'none';
+    timerState.currentSession++;
+    timerState.totalSeconds = timerState.config.focus * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+    updateIndicators();
+    updateDisplay();
+    startTimer();
+    saveState();
+  });
+}
+
+if (btnEncerrarTimer) {
+  btnEncerrarTimer.addEventListener('click', () => {
+    if (finishActions) finishActions.style.display = 'none';
+    document.getElementById('btn-encerrar').click();
+  });
 }
 
 function updateIndicators() {
@@ -232,23 +279,35 @@ function saveState() {
 }
 
 // ─── Tab/Mode ───
-pomodoroTab.addEventListener('click', () => switchMode('pomodoro'));
-livreTab.addEventListener('click', () => switchMode('livre'));
+modeToggle.addEventListener('change', () => {
+  const isPomodoro = modeToggle.checked;
+  const mode = isPomodoro ? 'pomodoro' : 'livre';
+  switchMode(mode);
+});
 
 function switchMode(mode) {
   if (timerState.mode === mode) return;
-  if (sessaoEstaAtiva()) {
-    mostrarAviso('⚠ Sessão em andamento — encerre para trocar');
+  const currentSecs = computeCurrentSeconds(timerState);
+  // Permite trocar se o timer estiver em 0 (mesmo com sessão ativa) ou se não houver sessão ativa
+  if (sessaoEstaAtiva() && currentSecs > 0 && !timerState.isRunning) {
+    mostrarAviso('⚠ Termine o tempo atual ou encerre a sessão para trocar');
+    atualizarModeToggle(timerState.mode);
+    return;
+  }
+  if (timerState.isRunning) {
+    mostrarAviso('⚠ Pause o timer para trocar de modo');
+    atualizarModeToggle(timerState.mode);
     return;
   }
   timerState.mode = mode;
+  if (finishActions) finishActions.style.display = 'none';
   if (mode === 'livre') {
     timerState.elapsedSeconds = 0;
   } else {
     timerState.totalSeconds = timerState.config.focus * 60;
     timerState.remainingSeconds = timerState.totalSeconds;
   }
-  setActiveTab(mode);
+  atualizarModeToggle(mode);
   configContainer.classList.remove('show');
   resetBtn.style.display = 'none';
   updateDisplay();
@@ -430,7 +489,7 @@ function sincronizarSessaoUI(sessao) {
 }
 
 function sincronizarTimerUI() {
-  setActiveTab(timerState.mode);
+  atualizarModeToggle(timerState.mode);
   if (timerState.isRunning) {
     if (!tickInterval) tickInterval = setInterval(updateDisplay, 1000);
     setPlayUIRunning();

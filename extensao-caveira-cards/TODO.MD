@@ -37,3 +37,9 @@ iniciar uma sessão de estudos associando Deck
 
 [ ] - timer precisa adicionar contador de horas apartir de 59:59, exemplo: 01:00, atualmente esta ficando 60:00.
 
+Bugs & Melhorias Timer:
+[ ] - Permitir trocar modo (Pomodoro/Livre) mesmo após timer finalizar (corrigir bloqueio por sessão ativa).
+[ ] - Oferecer botões de "Continuar" ou "Encerrar sessão" ao finalizar o Pomodoro.
+[ ] - Corrigir sinal sonoro (beep) que não toca quando o usuário está em outra aba (migrar para background/offscreen).
+
+

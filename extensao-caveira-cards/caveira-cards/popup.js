@@ -236,6 +236,7 @@ chrome.storage.onChanged.addListener((changes) => {
       atualizarDisplayTempo();
       if (timerState.isRunning) iniciarTickPopup();
       else pararTickPopup();
+      atualizarModeToggle(timerState.mode);
     }
   }
   if ("sessaoAtiva" in changes) {
@@ -268,6 +269,8 @@ const toggleManual = document.getElementById("toggle-manual");
 const toggleManualLabel = document.getElementById("toggle-manual-label");
 const toggleProfessor = document.getElementById("toggle-professor");
 const toggleProfessorLabel = document.getElementById("toggle-professor-label");
+const modeToggle = document.getElementById("mode-toggle");
+const modeToggleLabel = document.getElementById("mode-toggle-label");
 
 function atualizarToggle(ativo) {
   toggle.checked = ativo;
@@ -285,11 +288,22 @@ function atualizarToggleProfessor(ativo) {
   toggleProfessorLabel.style.color = ativo ? "#93c5fd" : "#64748b";
 }
 
+function atualizarModeToggle(mode) {
+  if (!modeToggle) return;
+  const isPomodoro = mode === "pomodoro";
+  modeToggle.checked = isPomodoro;
+  modeToggleLabel.textContent = isPomodoro ? "Modo: Pomodoro" : "Modo: Livre";
+  modeToggleLabel.style.color = isPomodoro ? "#22c55e" : "#3b6ff5";
+}
+
 chrome.storage.local.get(
-  ["caveiraCardsEnabled", "alunosCommentCaptureEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled"],
-  ({ caveiraCardsEnabled, alunosCommentCaptureEnabled: alunosEnabled, manualCommentCaptureEnabled: legacyManual, professorCommentCaptureEnabled }) => {
+  ["caveiraCardsEnabled", "alunosCommentCaptureEnabled", "manualCommentCaptureEnabled", "professorCommentCaptureEnabled", "timerState"],
+  ({ caveiraCardsEnabled, alunosCommentCaptureEnabled: alunosEnabled, manualCommentCaptureEnabled: legacyManual, professorCommentCaptureEnabled, timerState: storedTimer }) => {
     atualizarToggle(caveiraCardsEnabled !== false);
     atualizarToggleProfessor(professorCommentCaptureEnabled !== false);
+    if (storedTimer) {
+      atualizarModeToggle(storedTimer.mode);
+    }
     if (legacyManual !== undefined) {
       chrome.storage.local.set({ alunosCommentCaptureEnabled: legacyManual });
       chrome.storage.local.remove("manualCommentCaptureEnabled");
@@ -316,6 +330,41 @@ toggleProfessor.addEventListener("change", () => {
   const ativo = toggleProfessor.checked;
   chrome.storage.local.set({ professorCommentCaptureEnabled: ativo });
   atualizarToggleProfessor(ativo);
+});
+
+modeToggle.addEventListener("change", () => {
+  const isPomodoro = modeToggle.checked;
+  const mode = isPomodoro ? "pomodoro" : "livre";
+
+  chrome.storage.local.get(["sessaoAtiva", "timerState"], ({ sessaoAtiva, timerState: current }) => {
+    const state = current || timerState;
+    const currentSecs = computeCurrentSeconds(state);
+    
+    // Bloqueia se estiver rodando ou se tiver tempo sobrando em uma sessão ativa
+    if (state.isRunning) {
+      atualizarModeToggle(state.mode);
+      return;
+    }
+    if (sessaoAtiva?.ativa && currentSecs > 0) {
+      atualizarModeToggle(state.mode);
+      return;
+    }
+
+    const newState = { ...state, mode };
+    
+    // Se não estiver rodando, reseta os segundos baseado no modo
+    if (!newState.isRunning) {
+      if (mode === "livre") {
+        newState.elapsedSeconds = 0;
+      } else {
+        newState.totalSeconds = (newState.config?.focus ?? 25) * 60;
+        newState.remainingSeconds = newState.totalSeconds;
+      }
+    }
+    
+    chrome.storage.local.set({ timerState: newState });
+    atualizarModeToggle(mode);
+  });
 });
 
 // ── Toggle Anki ──

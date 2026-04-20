@@ -776,18 +776,28 @@
     try {
       const { frente, verso } = window.CaveiraCardBuilder.montarCard(questao);
 
-      // Build caderno tag if active session has a caderno name
+      // Build caderno tags if active session has a caderno name (supports multiple tags via comma)
       const extraTags = [];
       try {
         const { sessaoAtiva } = await chrome.storage.local.get("sessaoAtiva");
         if (sessaoAtiva?.ativa && sessaoAtiva?.caderno) {
-          const slug = sessaoAtiva.caderno
-            .toLowerCase()
-            .replace(/[|.\s/\\]+/g, "-")
-            .replace(/-{2,}/g, "-")
-            .replace(/^-|-$/g, "");
+          const tagsInput = sessaoAtiva.caderno.split(",");
           const res = questao.resultado === "Erros" ? "erros" : "revisao";
-          extraTags.push(`caderno::${slug}::${res}`);
+          
+          tagsInput.forEach(tagRaw => {
+            const tagTrimmed = tagRaw.trim();
+            if (!tagTrimmed) return;
+            
+            const slug = tagTrimmed
+              .toLowerCase()
+              .replace(/[|.\s/\\]+/g, "-")
+              .replace(/-{2,}/g, "-")
+              .replace(/^-|-$/g, "");
+            
+            if (slug) {
+              extraTags.push(`caderno::${slug}::${res}`);
+            }
+          });
         }
       } catch (e) { console.warn("[CaveiraCards] caderno tag skipped:", e); }
 
