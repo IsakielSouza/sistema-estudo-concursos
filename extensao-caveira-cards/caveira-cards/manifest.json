@@ -8,7 +8,8 @@
   "permissions": [
     "storage",
     "tabs",
-    "windows"
+    "windows",
+    "notifications"
   ],
   "host_permissions": [
     "https://www.tecconcursos.com.br/*",
