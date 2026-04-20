@@ -35,5 +35,5 @@ Criar Decks manuais na extensão de questões para desafios: (1k, 200 fds)
 iniciar uma sessão de estudos associando Deck
 
 
+[ ] - timer precisa adicionar contador de horas apartir de 59:59, exemplo: 01:00, atualmente esta ficando 60:00.
 
-[https://docs.google.com/forms/d/e/1FAIpQLScFUBk5DGpqb_WgPi0N4V3dnG1xl-NKTy-yFXXNmy5yCCwtlg/viewform?usp=publish-editor](https://docs.google.com/forms/d/e/1FAIpQLScFUBk5DGpqb_WgPi0N4V3dnG1xl-NKTy-yFXXNmy5yCCwtlg/viewform?usp=publish-editor)
