@@ -1,0 +1,106 @@
+<h2>Timer: Versão Normal vs Fullscreen</h2>
+<p class="subtitle">Dois layouts completamente diferentes</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;">
+
+  <!-- Versão Normal (Popup) -->
+  <div style="background: #080d1a; border: 1px solid #1e2d4d; border-radius: 12px; padding: 16px; max-width: 280px;">
+    <h3 style="color: #e2e8f0; font-size: 14px; margin-bottom: 16px; text-align: center;">Versão Normal (Popup)</h3>
+
+    <!-- Header minimalista -->
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #1e2d4d;">
+      <button style="width: 32px; height: 32px; border-radius: 50%; background: #1a2540; border: 1px solid #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; flex-shrink: 0;">⚙</button>
+      <div style="font-size: 13px; font-weight: 600; color: #e2e8f0;">Sessão</div>
+      <div style="display: flex; gap: 6px; margin-left: auto;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></div>
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+      </div>
+    </div>
+
+    <!-- Abas -->
+    <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+      <button style="flex: 1; padding: 6px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;">🍅 Pomodoro</button>
+      <button style="flex: 1; padding: 6px; background: #0f1729; color: #64748b; border: 1px solid #1e2d4d; border-radius: 6px; font-size: 10px; cursor: pointer;">⏱️ Tempo</button>
+    </div>
+
+    <!-- Círculo pequeno -->
+    <svg width="140" height="140" style="display: block; margin: 0 auto 12px;">
+      <circle cx="70" cy="70" r="62" fill="none" stroke="#1e2d4d" stroke-width="3"/>
+      <circle cx="70" cy="70" r="62" fill="none" stroke="#22c55e" stroke-width="3"
+              stroke-dasharray="213 390" stroke-linecap="round"
+              style="transform: rotate(-90deg); transform-origin: 70px 70px;"/>
+      <text x="70" y="78" text-anchor="middle" style="font-size: 28px; font-weight: 700; fill: #22c55e; font-family: 'Courier New';">00:00</text>
+    </svg>
+
+    <div style="text-align: center; font-size: 11px; color: #94a3b8; margin-bottom: 12px;">Pausado</div>
+
+    <!-- Controles -->
+    <div style="display: flex; gap: 6px;">
+      <button style="width: 32px; height: 32px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 14px; cursor: pointer;">⛶</button>
+      <button style="width: 32px; height: 32px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 14px; cursor: pointer;">⊞</button>
+      <button style="flex: 1; height: 32px; border-radius: 50%; background: #22c55e; border: none; color: white; font-size: 14px; cursor: pointer;">▶</button>
+    </div>
+  </div>
+
+  <!-- Versão Fullscreen (Foco) -->
+  <div style="background: linear-gradient(135deg, #0a0e1a 0%, #0f1729 100%); border: 1px solid #1e2d4d; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 500px; position: relative;">
+    <h3 style="color: #e2e8f0; font-size: 14px; margin-bottom: 16px; position: absolute; top: 16px;">Versão Fullscreen</h3>
+
+    <!-- Header minimalista (no topo) -->
+    <div style="position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: center; gap: 8px;">
+      <div style="width: 28px; height: 28px; border-radius: 50%; background: #1a2540; border: 1px solid #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 12px;">⚙</div>
+      <div style="font-size: 13px; font-weight: 600; color: #e2e8f0;">Sessão</div>
+      <div style="display: flex; gap: 5px; margin-left: 8px;">
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: #ef4444;"></div>
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: #475569;"></div>
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: #475569;"></div>
+        <div style="width: 7px; height: 7px; border-radius: 50%; background: #475569;"></div>
+      </div>
+      <button style="margin-left: auto; width: 28px; height: 28px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 14px; cursor: pointer;">✕</button>
+    </div>
+
+    <!-- Círculo grande (centro) -->
+    <svg width="280" height="280" style="display: block; margin-bottom: 20px;">
+      <circle cx="140" cy="140" r="128" fill="none" stroke="#1e2d4d" stroke-width="4"/>
+      <circle cx="140" cy="140" r="128" fill="none" stroke="#22c55e" stroke-width="4"
+              stroke-dasharray="554 804" stroke-linecap="round"
+              style="transform: rotate(-90deg); transform-origin: 140px 140px; filter: drop-shadow(0 0 16px rgba(34, 197, 94, 0.4));"/>
+      <text x="140" y="150" text-anchor="middle" style="font-size: 56px; font-weight: 700; fill: #22c55e; font-family: 'Courier New'; letter-spacing: 0.05em;">00:00</text>
+    </svg>
+
+    <!-- Status -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="font-size: 14px; color: #94a3b8; margin-bottom: 4px;">Pausado</div>
+      <div style="font-size: 12px; color: #64748b;">Foco</div>
+    </div>
+
+    <!-- Ícones pequenos (dentro do círculo) -->
+    <div style="display: flex; gap: 8px; margin-bottom: 32px;">
+      <button style="width: 32px; height: 32px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 14px; cursor: pointer;">⛶</button>
+      <button style="width: 32px; height: 32px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 14px; cursor: pointer;">⊞</button>
+    </div>
+
+    <!-- Controles na base -->
+    <div style="display: flex; gap: 16px; align-items: center;">
+      <button style="width: 48px; height: 48px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 18px; cursor: pointer;">←</button>
+      <button style="width: 60px; height: 60px; border-radius: 50%; background: #22c55e; border: none; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);">▶</button>
+      <button style="padding: 12px 20px; background: transparent; border: 1px solid #1e2d4d; border-radius: 20px; color: #64748b; font-size: 12px; cursor: pointer;">Finalizar</button>
+    </div>
+
+    <!-- ESC hint -->
+    <div style="position: absolute; bottom: 16px; font-size: 10px; color: #475569;">
+      Pressione <kbd style="background: #1e2d4d; padding: 2px 6px; border-radius: 3px;">ESC</kbd>
+    </div>
+  </div>
+
+</div>
+
+<style>
+kbd {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  vertical-align: middle;
+}
+</style>

@@ -1,0 +1,104 @@
+<h2>Timer: Versão Normal vs Fullscreen</h2>
+<p class="subtitle">Duas modos de uso com círculo progressivo</p>
+
+<div class="options">
+  <!-- Opção A: Versão Normal (Popup) -->
+  <div class="option" data-choice="normal" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Versão Normal (Popup)</h3>
+      <p style="color: #64748b; font-size: 13px; margin-bottom: 12px;">Exibição compacta no popup da extensão</p>
+      <div style="background: #080d1a; border: 1px solid #1e2d4d; border-radius: 12px; padding: 16px; max-width: 280px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 16px;">
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Sessão de Foco</div>
+
+          <!-- Círculo de progresso simples -->
+          <svg width="120" height="120" style="margin: 0 auto; display: block;">
+            <!-- Círculo de fundo -->
+            <circle cx="60" cy="60" r="55" fill="none" stroke="#1e2d4d" stroke-width="3"/>
+            <!-- Círculo de progresso (65% completo) -->
+            <circle cx="60" cy="60" r="55" fill="none" stroke="#22c55e" stroke-width="3"
+                    stroke-dasharray="234 360" stroke-linecap="round"
+                    style="transform: rotate(-90deg); transform-origin: 60px 60px;"/>
+            <!-- Texto no centro -->
+            <text x="60" y="65" text-anchor="middle" style="font-size: 28px; font-weight: 700; fill: #22c55e; font-family: 'Courier New';">00:00</text>
+          </svg>
+
+          <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Pausado</div>
+        </div>
+
+        <!-- Controles -->
+        <div style="display: flex; gap: 8px; justify-content: center;">
+          <!-- Ícone de Fullscreen -->
+          <button style="width: 36px; height: 36px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Modo Foco">⛶</button>
+
+          <!-- Ícone de Janela Flutuante -->
+          <button style="width: 36px; height: 36px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Janela Flutuante">⊞</button>
+
+          <!-- Play/Pause -->
+          <button style="width: 40px; height: 40px; border-radius: 50%; background: #22c55e; border: none; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Play">▶</button>
+        </div>
+      </div>
+      <p style="color: #475569; font-size: 12px; margin-top: 8px;">Controles: Foco (fullscreen) | Flutuante | Play/Pause</p>
+    </div>
+  </div>
+
+  <!-- Opção B: Versão Fullscreen (Foco) -->
+  <div class="option" data-choice="fullscreen" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Versão Fullscreen (Foco Total)</h3>
+      <p style="color: #64748b; font-size: 13px; margin-bottom: 12px;">Tela cheia para máxima concentração</p>
+      <div style="background: linear-gradient(135deg, #0a0e1a 0%, #0f1729 100%); border: 1px solid #1e2d4d; border-radius: 12px; padding: 24px; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+
+        <!-- Header minimalista -->
+        <div style="position: absolute; top: 16px; right: 16px;">
+          <button style="width: 32px; height: 32px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 14px; cursor: pointer;">✕</button>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="font-size: 12px; color: #64748b; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.08em;">Sessão de Foco</div>
+
+          <!-- Grande círculo de progresso -->
+          <svg width="240" height="240" style="margin: 0 auto; display: block;">
+            <!-- Círculo de fundo -->
+            <circle cx="120" cy="120" r="110" fill="none" stroke="#1e2d4d" stroke-width="4"/>
+            <!-- Círculo de progresso (65% completo) -->
+            <circle cx="120" cy="120" r="110" fill="none" stroke="#22c55e" stroke-width="4"
+                    stroke-dasharray="468 720" stroke-linecap="round"
+                    style="transform: rotate(-90deg); transform-origin: 120px 120px; filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.3));"/>
+            <!-- Texto no centro -->
+            <text x="120" y="128" text-anchor="middle" style="font-size: 56px; font-weight: 700; fill: #22c55e; font-family: 'Courier New'; letter-spacing: 0.05em;">00:00</text>
+          </svg>
+        </div>
+
+        <!-- Status -->
+        <div style="text-align: center; margin: 20px 0; font-size: 14px;">
+          <div style="color: #94a3b8; margin-bottom: 8px;">Pausado</div>
+          <div style="color: #64748b; font-size: 12px;">Próximo: Pausa (5 min)</div>
+        </div>
+
+        <!-- Controles principais -->
+        <div style="display: flex; gap: 16px; margin-top: 24px;">
+          <button style="width: 56px; height: 56px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Voltar">←</button>
+
+          <button style="width: 64px; height: 64px; border-radius: 50%; background: #22c55e; border: none; color: white; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);" title="Play">▶</button>
+        </div>
+
+        <!-- Dica de saída -->
+        <div style="position: absolute; bottom: 16px; font-size: 11px; color: #475569;">
+          Pressione <kbd style="background: #1e2d4d; padding: 2px 6px; border-radius: 3px; border: 1px solid #2d3d5d;">ESC</kbd> para sair
+        </div>
+      </div>
+      <p style="color: #475569; font-size: 12px; margin-top: 8px;">Círculo progride com tempo | Voltar para versão normal | Pressione ESC para sair</p>
+    </div>
+  </div>
+</div>
+
+<style>
+kbd {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  vertical-align: middle;
+}
+</style>

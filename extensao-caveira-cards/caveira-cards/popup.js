@@ -22,14 +22,24 @@ const questoesEl     = document.getElementById("session-questoes");
 const acertosEl      = document.getElementById("session-acertos");
 const summaryValEl   = document.getElementById("summary-val");
 
+// ─── Elements Fim de Pomodoro ───
+const finishActions = document.getElementById('pomodoro-finish-actions');
+const btnPopupContinuar = document.getElementById('btn-popup-continuar');
+const btnPopupPausa = document.getElementById('btn-popup-pausa');
+const btnPopupProximo = document.getElementById('btn-popup-proximo');
+const btnPopupEncerrarTimer = document.getElementById('btn-popup-encerrar-timer');
+const btnEncerrarSessao = document.getElementById('btn-encerrar');
+
 // Estado local compartilhado com timer.html (mesmo relogio em todos os lugares)
 let timerState = {
   mode: "pomodoro",
   isRunning: false,
+  isBreak: false,
   startedAt: null,
   remainingSeconds: 1500,
   totalSeconds: 1500,
   elapsedSeconds: 0,
+  currentSession: 1,
   config: { focus: 25, shortBreak: 5, longBreak: 15, sessions: 4 }
 };
 let popupTickInterval = null;
@@ -84,7 +94,75 @@ function mostrarEstado(estado) {
 
 function atualizarDisplayTempo() {
   if (!timerEl) return;
-  timerEl.textContent = formatMMSS(computeCurrentSeconds(timerState));
+  const secs = computeCurrentSeconds(timerState);
+  timerEl.textContent = formatMMSS(secs);
+
+  // Lógica de ações ao finalizar Pomodoro
+  if (timerState.mode !== 'livre' && !timerState.isRunning && secs === 0 && (timerState.startedAt || timerState.remainingSeconds === 0)) {
+    if (finishActions) {
+      finishActions.style.display = 'flex';
+      btnEncerrarSessao.style.display = 'none';
+
+      if (!timerState.isBreak) {
+        // Acabou o FOCO
+        const isLongBreak = (timerState.currentSession % (timerState.config?.sessions ?? 4) === 0);
+        if (btnPopupPausa) {
+          btnPopupPausa.textContent = isLongBreak ? "☕ L.Pausa" : "☕ Pausa";
+          btnPopupPausa.style.display = 'block';
+        }
+        if (btnPopupProximo) btnPopupProximo.style.display = 'none';
+      } else {
+        // Acabou a PAUSA
+        if (btnPopupPausa) btnPopupPausa.style.display = 'none';
+        if (timerState.currentSession < (timerState.config?.sessions ?? 4)) {
+          if (btnPopupProximo) btnPopupProximo.style.display = 'block';
+        }
+      }
+    }
+  } else {
+    if (finishActions) {
+      finishActions.style.display = 'none';
+      btnEncerrarSessao.style.display = 'block';
+    }
+  }
+}
+
+// ─── Listeners para Ações de Fim de Pomodoro (Popup) ───
+if (btnPopupContinuar) {
+  btnPopupContinuar.addEventListener('click', () => {
+    chrome.storage.local.get(["timerState"], ({ timerState: current }) => {
+      const newState = { ...(current || timerState), mode: 'livre', isBreak: false, isRunning: true, startedAt: Date.now(), elapsedSeconds: 0 };
+      chrome.storage.local.set({ timerState: newState });
+    });
+  });
+}
+
+if (btnPopupPausa) {
+  btnPopupPausa.addEventListener('click', () => {
+    chrome.storage.local.get(["timerState"], ({ timerState: current }) => {
+      const state = current || timerState;
+      const isLongBreak = (state.currentSession % (state.config?.sessions ?? 4) === 0);
+      const breakMinutes = isLongBreak ? (state.config?.longBreak ?? 15) : (state.config?.shortBreak ?? 5);
+      const newState = { ...state, mode: 'pomodoro', isBreak: true, isRunning: true, startedAt: Date.now(), remainingSeconds: breakMinutes * 60, totalSeconds: breakMinutes * 60 };
+      chrome.storage.local.set({ timerState: newState });
+    });
+  });
+}
+
+if (btnPopupProximo) {
+  btnPopupProximo.addEventListener('click', () => {
+    chrome.storage.local.get(["timerState"], ({ timerState: current }) => {
+      const state = current || timerState;
+      const newState = { ...state, currentSession: state.currentSession + 1, isBreak: false, isRunning: true, startedAt: Date.now(), remainingSeconds: (state.config?.focus ?? 25) * 60, totalSeconds: (state.config?.focus ?? 25) * 60 };
+      chrome.storage.local.set({ timerState: newState });
+    });
+  });
+}
+
+if (btnPopupEncerrarTimer) {
+  btnPopupEncerrarTimer.addEventListener('click', () => {
+    btnEncerrarSessao.click();
+  });
 }
 
 function iniciarTickPopup() {
@@ -165,6 +243,8 @@ document.getElementById("btn-iniciar").addEventListener("click", iniciarSessao);
 // Encerrar sessão
 document.getElementById("btn-encerrar").addEventListener("click", () => {
   pararTickPopup();
+  if (finishActions) finishActions.style.display = 'none';
+  btnEncerrarSessao.style.display = 'block';
   if (timerState.isRunning) {
     const secs = computeCurrentSeconds(timerState);
     if (timerState.mode === "livre") timerState.elapsedSeconds = secs;

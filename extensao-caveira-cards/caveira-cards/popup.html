@@ -372,6 +372,25 @@
           <div class="session-stat-label">Acertos</div>
         </div>
       </div>
+      
+      <!-- Ações ao finalizar Pomodoro (Popup - Minimalista) -->
+      <div id="pomodoro-finish-actions" style="display: none; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+        <button class="btn destaque" id="btn-popup-continuar" style="padding: 6px; font-size: 11px; background: #1e3a8a; border-color: #3b82f6;">
+          ▶ Continuar Estudo (Livre)
+        </button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn" id="btn-popup-pausa" style="flex: 2; padding: 6px; font-size: 11px; background: #92400e; border-color: #f59e0b; color: #fef3c7; margin-bottom: 0;">
+            ☕ Pausa
+          </button>
+          <button class="btn" id="btn-popup-proximo" style="flex: 2; padding: 6px; font-size: 11px; background: #14532d; border-color: #22c55e; color: #4ade80; display: none; margin-bottom: 0;">
+            🍅 Ciclo
+          </button>
+          <button class="btn-encerrar" id="btn-popup-encerrar-timer" style="flex: 1; padding: 4px; font-size: 10px;">
+            ⏹ Sair
+          </button>
+        </div>
+      </div>
+
       <button class="btn-encerrar" id="btn-encerrar">⏹ Encerrar sessão</button>
       <div class="session-caderno-label" id="session-caderno"></div>
       <button id="btn-historico-active" class="btn" style="padding: 6px; font-size: 11px; margin-top: 10px; margin-bottom: 0; justify-content: center; background: #0b1222; width: 100%;">

@@ -17,6 +17,7 @@ try {
 let timerState = {
   mode: 'pomodoro',
   isRunning: false,
+  isBreak: false,
   startedAt: null,
   remainingSeconds: 1500,
   totalSeconds: 1500,
@@ -43,6 +44,13 @@ const floatingBtn = document.getElementById('timer-floating-btn');
 const progressCircle = document.getElementById('timer-progress-circle');
 const indicators = document.getElementById('timer-indicators');
 
+const configInputs = {
+  focus: document.getElementById('timer-config-focus'),
+  shortBreak: document.getElementById('timer-config-shortbreak'),
+  longBreak: document.getElementById('timer-config-longbreak'),
+  sessions: document.getElementById('timer-config-sessions')
+};
+
 const sessionIdle = document.getElementById('session-idle');
 const sessionActive = document.getElementById('session-active');
 const sessionSummary = document.getElementById('session-summary');
@@ -55,6 +63,7 @@ const summaryValEl = document.getElementById('summary-val');
 // ─── Finish Pomodoro UI ───
 const finishActions = document.getElementById('pomodoro-finish-actions');
 const btnContinuarLivre = document.getElementById('btn-continuar-estudo');
+const btnIniciarPausa = document.getElementById('btn-iniciar-pausa');
 const btnProximoCiclo = document.getElementById('btn-proximo-ciclo');
 const btnEncerrarTimer = document.getElementById('btn-encerrar-timer');
 
@@ -166,15 +175,44 @@ function updateDisplay() {
     playBeep();
     showTimerFinishNotification();
     pauseTimer();
-    if (finishActions) {
-      finishActions.style.display = 'flex';
-      // Se houver mais ciclos previstos, mostra o botão de próximo ciclo
-      if (timerState.currentSession < timerState.config.sessions) {
-        if (btnProximoCiclo) btnProximoCiclo.style.display = 'block';
-      } else {
+
+    // Se acabou o FOCO, mostra as opções de PAUSA ou CONTINUAR
+    if (!timerState.isBreak) {
+      const isLongBreak = (timerState.currentSession % timerState.config.sessions === 0);
+      const breakMinutes = isLongBreak ? timerState.config.longBreak : timerState.config.shortBreak;
+      
+      // Prepara visualmente o tempo da pausa
+      timerState.remainingSeconds = breakMinutes * 60;
+      timerState.totalSeconds = breakMinutes * 60;
+      
+      if (finishActions) {
+        finishActions.style.display = 'flex';
+        if (btnIniciarPausa) {
+          btnIniciarPausa.textContent = isLongBreak ? '☕ Pausa Longa' : '☕ Iniciar Pausa';
+        }
         if (btnProximoCiclo) btnProximoCiclo.style.display = 'none';
       }
+    } else {
+      // Se acabou a PAUSA, volta pro foco ou próximo ciclo
+      timerState.isBreak = false;
+      timerState.remainingSeconds = timerState.config.focus * 60;
+      timerState.totalSeconds = timerState.config.focus * 60;
+      
+      if (timerState.currentSession < timerState.config.sessions) {
+        if (finishActions) {
+          finishActions.style.display = 'flex';
+          if (btnProximoCiclo) btnProximoCiclo.style.display = 'block';
+          if (btnIniciarPausa) btnIniciarPausa.style.display = 'none';
+          if (btnContinuarLivre) btnContinuarLivre.style.display = 'block';
+        }
+      } else {
+        mostrarAviso('🎉 Bloco de Pomodoro concluído!');
+        timerState.currentSession = 1; 
+      }
     }
+    updateIndicators();
+    updateDisplay(); // Atualiza o display com o novo tempo preparado
+    saveState();
   }
 }
 
@@ -187,10 +225,32 @@ if (btnContinuarLivre) {
   });
 }
 
+if (btnIniciarPausa) {
+  btnIniciarPausa.addEventListener('click', () => {
+    if (finishActions) finishActions.style.display = 'none';
+    const isLongBreak = (timerState.currentSession % timerState.config.sessions === 0);
+    const breakMinutes = isLongBreak ? timerState.config.longBreak : timerState.config.shortBreak;
+    
+    timerState.mode = 'pomodoro';
+    timerState.isBreak = true;
+    timerState.totalSeconds = breakMinutes * 60;
+    timerState.remainingSeconds = timerState.totalSeconds;
+    
+    atualizarModeToggle('pomodoro');
+    updateIndicators();
+    updateDisplay();
+    startTimer();
+    saveState();
+  });
+}
+
 if (btnProximoCiclo) {
   btnProximoCiclo.addEventListener('click', () => {
     if (finishActions) finishActions.style.display = 'none';
+    if (btnIniciarPausa) btnIniciarPausa.style.display = 'block'; // Garante que volta o botão de pausa
+
     timerState.currentSession++;
+    timerState.isBreak = false;
     timerState.totalSeconds = timerState.config.focus * 60;
     timerState.remainingSeconds = timerState.totalSeconds;
     updateIndicators();
@@ -210,16 +270,43 @@ if (btnEncerrarTimer) {
 function updateIndicators() {
   const inds = indicators.querySelectorAll('.timer-indicator');
   inds.forEach((ind, idx) => {
-    ind.classList.toggle('active', idx === timerState.currentSession - 1);
+    ind.classList.remove('active', 'completed', 'break');
+    if (idx < timerState.currentSession - 1) {
+      ind.classList.add('completed');
+    } else if (idx === timerState.currentSession - 1) {
+      if (timerState.isBreak) ind.classList.add('break');
+      else ind.classList.add('active');
+    }
   });
 }
 
 function updateConfigDisplay() {
-  document.getElementById('timer-config-focus').textContent = timerState.config.focus;
-  document.getElementById('timer-config-shortbreak').textContent = timerState.config.shortBreak;
-  document.getElementById('timer-config-longbreak').textContent = timerState.config.longBreak;
-  document.getElementById('timer-config-sessions').textContent = timerState.config.sessions;
+  configInputs.focus.value = timerState.config.focus;
+  configInputs.shortBreak.value = timerState.config.shortBreak;
+  configInputs.longBreak.value = timerState.config.longBreak;
+  configInputs.sessions.value = timerState.config.sessions;
 }
+
+// ─── Listeners para Edição Direta ───
+Object.entries(configInputs).forEach(([field, input]) => {
+  if (!input) return;
+  input.addEventListener('change', () => {
+    let val = parseInt(input.value);
+    if (isNaN(val) || val < 1) val = 1;
+    if (field === 'sessions' && val > 99) val = 99;
+    else if (val > 999) val = 999;
+    
+    timerState.config[field] = val;
+    input.value = val;
+
+    if (field === 'focus' && timerState.mode === 'pomodoro' && !timerState.isRunning && !sessaoEstaAtiva()) {
+      timerState.totalSeconds = timerState.config.focus * 60;
+      timerState.remainingSeconds = timerState.totalSeconds;
+      updateDisplay();
+    }
+    saveState();
+  });
+});
 
 function mostrarEstadoSessao(estado) {
   sessionIdle.style.display    = estado === 'idle'    ? 'flex'  : 'none';
@@ -253,6 +340,7 @@ function setPlayUIPaused() {
 
 // ─── Timer controls ───
 function startTimer() {
+  if (finishActions) finishActions.style.display = 'none';
   timerState.isRunning = true;
   timerState.startedAt = Date.now();
   setPlayUIRunning();
@@ -331,7 +419,11 @@ document.querySelectorAll('.timer-config-input button').forEach(btn => {
     const field = e.target.dataset.field;
     if (action === 'increase') timerState.config[field]++;
     else if (action === 'decrease' && timerState.config[field] > 1) timerState.config[field]--;
-    if (field === 'focus' && timerState.mode === 'pomodoro') {
+    
+    // Sincroniza o input
+    if (configInputs[field]) configInputs[field].value = timerState.config[field];
+
+    if (field === 'focus' && timerState.mode === 'pomodoro' && !timerState.isRunning) {
       timerState.totalSeconds = timerState.config.focus * 60;
       timerState.remainingSeconds = timerState.totalSeconds;
       updateDisplay();

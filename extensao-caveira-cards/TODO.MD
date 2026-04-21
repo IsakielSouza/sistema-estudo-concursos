@@ -30,16 +30,16 @@ no popup principal remover butão onde mostra Configurar Anki, trocar por um too
 [x] Task: Histórico rico de sessões (Tempo por questão, média, matérias agrupadas).
 [x] Task: Exportação JSON e Limpeza segura de histórico.
 
-TODO:
-Criar Decks manuais na extensão de questões para desafios: (1k, 200 fds)
-iniciar uma sessão de estudos associando Deck
 
-
-[ ] - timer precisa adicionar contador de horas apartir de 59:59, exemplo: 01:00, atualmente esta ficando 60:00.
+[x] - timer precisa adicionar contador de horas apartir de 59:59, exemplo: 01:00, atualmente esta ficando 60:00.
 
 Bugs & Melhorias Timer:
-[ ] - Permitir trocar modo (Pomodoro/Livre) mesmo após timer finalizar (corrigir bloqueio por sessão ativa).
-[ ] - Oferecer botões de "Continuar" ou "Encerrar sessão" ao finalizar o Pomodoro.
-[ ] - Corrigir sinal sonoro (beep) que não toca quando o usuário está em outra aba (migrar para background/offscreen).
+[x] - Permitir trocar modo (Pomodoro/Livre) mesmo após timer finalizar (corrigir bloqueio por sessão ativa).
+[x] - Oferecer botões de "Continuar", "Iniciar Pausa" ou "Encerrar sessão" ao finalizar o Pomodoro.
+[x] - Parâmetros de Pomodoro (foco, pausas, sessões) editáveis via teclado.
+[x] - Botão "Iniciar Pausa" (amarelo) e layout compacto em todas as versões (popup, fs, timer).
+[x] - ao terminar sessao muda cor para verdeno timer-indicator
+[x] - ao terminar todos os times da sessao iniciar cronometro de pausa longa
+[x] - Corrigir sinal sonoro (beep) que não toca quando o usuário está em outra aba (migrar para background/offscreen).
 
 

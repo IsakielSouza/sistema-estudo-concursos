@@ -64,7 +64,13 @@
       background: #475569;
     }
     .timer-indicator.active {
-      background: #ef4444;
+      background: #22c55e;
+    }
+    .timer-indicator.completed {
+      background: #22c55e;
+    }
+    .timer-indicator.break {
+      background: #eab308;
     }
 
     /* ── Toggle switch (padrão do sistema) ── */
@@ -191,10 +197,21 @@
       width: 16px;
     }
     .timer-config-input button:hover { color: #e2e8f0; }
-    .timer-config-input span {
+    .timer-config-input input {
+      background: none;
+      border: none;
+      color: #e2e8f0;
       font-size: 16px;
       font-weight: 700;
-      color: #e2e8f0;
+      width: 40px;
+      text-align: center;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .timer-config-input input::-webkit-outer-spin-button,
+    .timer-config-input input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
     .timer-reset-btn {
       width: 100%;
@@ -497,7 +514,7 @@
       <div class="timer-config-label">Foco</div>
       <div class="timer-config-input">
         <button data-action="decrease" data-field="focus">−</button>
-        <span id="timer-config-focus">25</span>
+        <input type="number" id="timer-config-focus" value="25" min="1" max="999">
         <button data-action="increase" data-field="focus">+</button>
       </div>
     </div>
@@ -505,7 +522,7 @@
       <div class="timer-config-label">Pausa C.</div>
       <div class="timer-config-input">
         <button data-action="decrease" data-field="shortBreak">−</button>
-        <span id="timer-config-shortbreak">5</span>
+        <input type="number" id="timer-config-shortbreak" value="5" min="1" max="999">
         <button data-action="increase" data-field="shortBreak">+</button>
       </div>
     </div>
@@ -513,7 +530,7 @@
       <div class="timer-config-label">Pausa L.</div>
       <div class="timer-config-input">
         <button data-action="decrease" data-field="longBreak">−</button>
-        <span id="timer-config-longbreak">15</span>
+        <input type="number" id="timer-config-longbreak" value="15" min="1" max="999">
         <button data-action="increase" data-field="longBreak">+</button>
       </div>
     </div>
@@ -521,7 +538,7 @@
       <div class="timer-config-label">Sessões</div>
       <div class="timer-config-input">
         <button data-action="decrease" data-field="sessions">−</button>
-        <span id="timer-config-sessions">4</span>
+        <input type="number" id="timer-config-sessions" value="4" min="1" max="99">
         <button data-action="increase" data-field="sessions">+</button>
       </div>
     </div>
@@ -547,12 +564,21 @@
     <button class="timer-play-btn" id="btn-continuar-estudo" style="background: #1e3a8a; border-color: #3b82f6; color: #93c5fd;">
       ▶ Continuar Estudo (Livre)
     </button>
-    <button class="timer-play-btn" id="btn-proximo-ciclo" style="background: #14532d; border-color: #22c55e; color: #4ade80; display: none;">
-      🍅 Próximo Ciclo
-    </button>
-    <button class="btn-encerrar" id="btn-encerrar-timer" style="padding: 10px; font-size: 13px;">
-      ⏹ Encerrar Sessão
-    </button>
+    
+    <div style="display: flex; gap: 8px;">
+      <button class="timer-play-btn" id="btn-iniciar-pausa" style="flex: 1; background: #92400e; border-color: #f59e0b; color: #fef3c7; font-size: 13px;">
+        ☕ Iniciar Pausa
+      </button>
+      <button class="timer-play-btn" id="btn-pular-pausa" style="flex: 1; background: #334155; border-color: #475569; color: #cbd5e1; font-size: 13px; display: none;">
+        ⏭️ Pular Pausa
+      </button>
+      <button class="timer-play-btn" id="btn-proximo-ciclo" style="flex: 1; background: #14532d; border-color: #22c55e; color: #4ade80; display: none; font-size: 13px;">
+        🍅 Próximo Ciclo
+      </button>
+      <button class="btn-encerrar" id="btn-encerrar-timer" style="flex: 1; padding: 8px; font-size: 11px;">
+        ⏹ Encerrar
+      </button>
+    </div>
   </div>
 
   <!-- Controles -->

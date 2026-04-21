@@ -1,0 +1,149 @@
+<h2>Timer: Fluxo de Configuração</h2>
+<p class="subtitle">Controlador aparece ao clicar no ícone de engrenagem</p>
+
+<div class="options">
+  <!-- Opção A: Estado padrão (resumido) -->
+  <div class="option" data-choice="resumido" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Estado Padrão</h3>
+      <p style="color: #64748b; font-size: 13px; margin-bottom: 12px;">Resumo minimalista - clique na engrenagem para configurar</p>
+      <div style="background: #080d1a; border: 1px solid #1e2d4d; border-radius: 12px; padding: 14px; max-width: 320px; margin: 0 auto;">
+
+        <!-- Header minimalista -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #1e2d4d;">
+          <!-- Ícone de engrenagem (clicável) -->
+          <button style="width: 32px; height: 32px; border-radius: 50%; background: #1a2540; border: 1px solid #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;" title="Clique para configurar">⚙</button>
+
+          <div style="flex: 1;">
+            <div style="font-size: 13px; font-weight: 600; color: #e2e8f0;">Sessão</div>
+          </div>
+
+          <!-- Indicador de qual pomodoro (pontinhos) -->
+          <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+          </div>
+        </div>
+
+        <!-- Abas -->
+        <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+          <button style="flex: 1; padding: 7px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">🍅 Pomodoro</button>
+          <button style="flex: 1; padding: 7px; background: #0f1729; color: #64748b; border: 1px solid #1e2d4d; border-radius: 6px; font-size: 11px; cursor: pointer;">⏱️ Tempo Livre</button>
+        </div>
+
+        <!-- Timer display -->
+        <div style="background: #0f1729; border: 1px solid #1e2d4d; border-radius: 8px; padding: 16px; text-align: center;">
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">Foco</div>
+          <div style="font-size: 32px; font-weight: 700; color: #22c55e; font-family: 'Courier New'; margin-bottom: 4px;">00:00</div>
+          <div style="font-size: 11px; color: #94a3b8;">Pausado</div>
+        </div>
+
+        <!-- Controles principais -->
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button style="flex: 1; width: 36px; height: 36px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 16px; cursor: pointer; transition: all 0.2s;" title="Modo Foco">⛶</button>
+
+          <button style="flex: 1; width: 36px; height: 36px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 16px; cursor: pointer; transition: all 0.2s;" title="Janela Flutuante">⊞</button>
+
+          <button style="flex: 2; height: 36px; border-radius: 50%; background: #22c55e; border: none; color: white; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Play">▶</button>
+        </div>
+      </div>
+      <p style="color: #475569; font-size: 12px; margin-top: 8px;">💡 Clique no ⚙ para abrir configurações</p>
+    </div>
+  </div>
+
+  <!-- Opção B: Estado com configuração aberta -->
+  <div class="option" data-choice="configurado" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Com Configuração Aberta</h3>
+      <p style="color: #64748b; font-size: 13px; margin-bottom: 12px;">Ao clicar no ⚙, expande os controles</p>
+      <div style="background: #080d1a; border: 1px solid #1e2d4d; border-radius: 12px; padding: 14px; max-width: 320px; margin: 0 auto;">
+
+        <!-- Header com engrenagem ativa -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #1e2d4d;">
+          <!-- Ícone de engrenagem (ativo/destaque) -->
+          <button style="width: 32px; height: 32px; border-radius: 50%; background: #f59e0b; border: 1px solid #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; color: white; flex-shrink: 0;" title="Clique para fechar">⚙</button>
+
+          <div style="flex: 1;">
+            <div style="font-size: 13px; font-weight: 600; color: #e2e8f0;">Sessão</div>
+          </div>
+
+          <!-- Indicador de qual pomodoro -->
+          <div style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #475569;"></div>
+          </div>
+        </div>
+
+        <!-- Abas -->
+        <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+          <button style="flex: 1; padding: 7px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">🍅 Pomodoro</button>
+          <button style="flex: 1; padding: 7px; background: #0f1729; color: #64748b; border: 1px solid #1e2d4d; border-radius: 6px; font-size: 11px; cursor: pointer;">⏱️ Tempo Livre</button>
+        </div>
+
+        <!-- Configuração Pomodoro (expandida) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <!-- FOCO -->
+          <div style="text-align: center;">
+            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Foco</div>
+            <div style="background: #0f1729; border: 1px solid #1e2d4d; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px;">
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">−</button>
+              <span style="font-size: 16px; font-weight: 700; color: #e2e8f0;">25</span>
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">+</button>
+            </div>
+          </div>
+
+          <!-- PAUSA C. -->
+          <div style="text-align: center;">
+            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Pausa C.</div>
+            <div style="background: #0f1729; border: 1px solid #1e2d4d; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px;">
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">−</button>
+              <span style="font-size: 16px; font-weight: 700; color: #e2e8f0;">5</span>
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">+</button>
+            </div>
+          </div>
+
+          <!-- PAUSA L. -->
+          <div style="text-align: center;">
+            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Pausa L.</div>
+            <div style="background: #0f1729; border: 1px solid #1e2d4d; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px;">
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">−</button>
+              <span style="font-size: 16px; font-weight: 700; color: #e2e8f0;">15</span>
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">+</button>
+            </div>
+          </div>
+
+          <!-- SESSÕES -->
+          <div style="text-align: center;">
+            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Sessões</div>
+            <div style="background: #0f1729; border: 1px solid #1e2d4d; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px;">
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">−</button>
+              <span style="font-size: 16px; font-weight: 700; color: #e2e8f0;">4</span>
+              <button style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; padding: 0; width: 16px;">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botão resetar -->
+        <button style="width: 100%; padding: 7px; background: transparent; border: 1px solid #1e2d4d; border-radius: 6px; color: #64748b; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: border-color 0.2s; margin-bottom: 12px;">
+          ↻ Resetar Sessões
+        </button>
+
+        <!-- Controles principais -->
+        <div style="display: flex; gap: 8px;">
+          <button style="flex: 1; width: 36px; height: 36px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 16px; cursor: pointer; transition: all 0.2s;" title="Modo Foco">⛶</button>
+
+          <button style="flex: 1; width: 36px; height: 36px; border-radius: 50%; background: #0f1729; border: 1px solid #1e2d4d; color: #64748b; font-size: 16px; cursor: pointer; transition: all 0.2s;" title="Janela Flutuante">⊞</button>
+
+          <button style="flex: 2; height: 36px; border-radius: 50%; background: #22c55e; border: none; color: white; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Play">▶</button>
+        </div>
+      </div>
+      <p style="color: #475569; font-size: 12px; margin-top: 8px;">💡 Configurações expandem ao clicar no ⚙</p>
+    </div>
+  </div>
+</div>

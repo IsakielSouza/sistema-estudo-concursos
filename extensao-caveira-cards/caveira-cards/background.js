@@ -32,13 +32,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'timerFinish') {
     chrome.storage.local.get(['timerState'], ({ timerState }) => {
       if (timerState && timerState.isRunning) {
-        // Notifica o usuário
-        showNotification();
-        // Toca o som (via offscreen)
+        const title = timerState.isBreak ? '☕ Pausa finalizada' : '⏱️ Foco finalizado';
+        const message = timerState.isBreak ? 'Hora de voltar aos estudos!' : 'Seu tempo de foco encerrou!';
+        showNotification(title, message);
         playBeepOffscreen();
-        
-        // Opcional: pausar o timer no storage (embora o timer.js já faça isso ao detectar 0)
-        // Mas o background garante se as páginas estiverem fechadas
       }
     });
   }
@@ -57,12 +54,12 @@ async function playBeepOffscreen() {
   chrome.runtime.sendMessage({ action: 'playBeep' });
 }
 
-function showNotification() {
+function showNotification(title, message) {
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'CaveiraCards.png',
-    title: '⏱️ Timer finalizado',
-    message: 'Seu tempo de foco encerrou!',
+    title: title || '⏱️ Timer finalizado',
+    message: message || 'Seu tempo de foco encerrou!',
     priority: 2
   });
 }

@@ -57,7 +57,13 @@
       background: #475569;
     }
     .fullscreen-indicator.active {
-      background: #ef4444;
+      background: #22c55e;
+    }
+    .fullscreen-indicator.completed {
+      background: #22c55e;
+    }
+    .fullscreen-indicator.break {
+      background: #eab308;
     }
     .fullscreen-close {
       margin-left: auto;
@@ -249,10 +255,28 @@
   </div>
 
   <!-- Controles -->
-  <div class="fullscreen-controls">
+  <div class="fullscreen-controls" id="fullscreen-standard-controls">
     <button class="fullscreen-btn" id="fullscreen-back-btn">←</button>
     <button class="fullscreen-btn fullscreen-play-btn" id="fullscreen-play-btn">▶</button>
     <button class="fullscreen-finish-btn" id="fullscreen-finish-btn">⏹ Encerrar sessão</button>
+  </div>
+
+  <!-- Ações ao finalizar Pomodoro (Fullscreen) -->
+  <div class="fullscreen-controls" id="fullscreen-finish-actions" style="display: none; flex-direction: column; gap: 16px;">
+    <button class="fullscreen-finish-btn" id="btn-fs-continuar-estudo" style="background: #1e3a8a; border-color: #3b82f6; color: #93c5fd; width: 280px; font-weight: 700;">
+      ▶ Continuar Estudo (Livre)
+    </button>
+    <div style="display: flex; gap: 12px;">
+      <button class="fullscreen-finish-btn" id="btn-fs-iniciar-pausa" style="background: #92400e; border-color: #f59e0b; color: #fef3c7; font-weight: 700;">
+        ☕ Iniciar Pausa
+      </button>
+      <button class="fullscreen-finish-btn" id="btn-fs-proximo-ciclo" style="background: #14532d; border-color: #22c55e; color: #4ade80; display: none; font-weight: 700;">
+        🍅 Próximo Ciclo
+      </button>
+      <button class="fullscreen-finish-btn" id="btn-fs-encerrar" style="background: #3b0a0a; border-color: #ef4444; color: #fca5a5; font-weight: 700;">
+        ⏹ Encerrar
+      </button>
+    </div>
   </div>
 
   <!-- Hint -->
