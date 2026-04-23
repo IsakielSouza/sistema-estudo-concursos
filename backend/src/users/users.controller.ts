@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Put,
   Param,
   Delete,
   UseGuards,
@@ -12,6 +13,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -27,15 +29,27 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getMe(@Request() req) {
+    return this.usersService.findOne(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return this.usersService.findOne(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('profile')
+  updateProfile(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(req.user.id, updateUserDto);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
-  }
-
-  @Get('profile/me')
-  getProfile(@Request() req) {
-    // TODO: Implementar guard de autenticação
-    return this.usersService.findOne(req.user?.id);
   }
 
   @Patch(':id')
@@ -47,4 +61,4 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
-} 
+}
