@@ -31,7 +31,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  async logout(@Request() req) {
+  logout(@Request() req) {
     // JWT é stateless: a invalidação real ocorre no client (apagar token do storage)
     // O backend confirma o logout e retorna o id do usuário para o client limpar dados locais
     return {
