@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     avatar_url TEXT,
+    google_id VARCHAR(255) UNIQUE,
     role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -157,6 +158,50 @@ CREATE TABLE IF NOT EXISTS material_tags (
     PRIMARY KEY (material_id, tag_id)
 );
 
+-- =============================================
+-- MÓDULO: CICLOS DE ESTUDO
+-- =============================================
+
+-- Tabela de ciclos de estudo
+CREATE TABLE IF NOT EXISTS ciclos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    nome VARCHAR(70) NOT NULL,
+    concurso VARCHAR(100) NOT NULL,
+    cargo VARCHAR(100) NOT NULL,
+    regiao VARCHAR(100) DEFAULT 'Nacional',
+    horas_semanais INTEGER NOT NULL DEFAULT 30,
+    revisao_percentual INTEGER DEFAULT 50 CHECK (revisao_percentual BETWEEN 0 AND 100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela de disciplinas de um ciclo
+CREATE TABLE IF NOT EXISTS disciplinas (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ciclo_id UUID REFERENCES ciclos(id) ON DELETE CASCADE NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+    peso INTEGER DEFAULT 1 CHECK (peso BETWEEN 1 AND 10),
+    nivel_usuario VARCHAR(20) DEFAULT 'medio' CHECK (nivel_usuario IN ('baixo', 'medio', 'alto')),
+    horas_alocadas DECIMAL(6,2) DEFAULT 0,
+    concluiu_edital BOOLEAN DEFAULT false,
+    concluida BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela de sessões de estudo
+CREATE TABLE IF NOT EXISTS sessoes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ciclo_id UUID REFERENCES ciclos(id) ON DELETE CASCADE NOT NULL,
+    disciplina_id UUID REFERENCES disciplinas(id) ON DELETE SET NULL,
+    tempo_iniciado TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    tempo_percorrido INTEGER DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'ativa' CHECK (status IN ('ativa', 'pausada', 'concluida')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_materials_category ON materials(category);
 CREATE INDEX IF NOT EXISTS idx_materials_exam_type ON materials(exam_type);
@@ -168,6 +213,18 @@ CREATE INDEX IF NOT EXISTS idx_user_exam_attempts_exam_id ON user_exam_attempts(
 CREATE INDEX IF NOT EXISTS idx_user_answers_user_id ON user_answers(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
+
+-- Índices para ciclos
+CREATE INDEX IF NOT EXISTS idx_ciclos_user_id ON ciclos(user_id);
+CREATE INDEX IF NOT EXISTS idx_ciclos_created_at ON ciclos(created_at);
+
+-- Índices para disciplinas
+CREATE INDEX IF NOT EXISTS idx_disciplinas_ciclo_id ON disciplinas(ciclo_id);
+
+-- Índices para sessoes
+CREATE INDEX IF NOT EXISTS idx_sessoes_ciclo_id ON sessoes(ciclo_id);
+CREATE INDEX IF NOT EXISTS idx_sessoes_disciplina_id ON sessoes(disciplina_id);
+CREATE INDEX IF NOT EXISTS idx_sessoes_created_at ON sessoes(created_at);
 
 -- Função para atualizar updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -185,6 +242,9 @@ CREATE TRIGGER update_video_lessons_updated_at BEFORE UPDATE ON video_lessons FO
 CREATE TRIGGER update_exams_updated_at BEFORE UPDATE ON exams FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_questions_updated_at BEFORE UPDATE ON questions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_progress_updated_at BEFORE UPDATE ON user_progress FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_ciclos_updated_at BEFORE UPDATE ON ciclos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_disciplinas_updated_at BEFORE UPDATE ON disciplinas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_sessoes_updated_at BEFORE UPDATE ON sessoes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Políticas de segurança RLS (Row Level Security)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -279,6 +339,40 @@ CREATE POLICY "Tags are deletable by everyone" ON tags FOR DELETE USING (true);
 CREATE POLICY "Material tags are viewable by everyone" ON material_tags FOR SELECT USING (true);
 CREATE POLICY "Material tags are insertable by everyone" ON material_tags FOR INSERT WITH CHECK (true);
 CREATE POLICY "Material tags are deletable by everyone" ON material_tags FOR DELETE USING (true);
+
+-- RLS para ciclos
+ALTER TABLE ciclos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own ciclos" ON ciclos FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own ciclos" ON ciclos FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own ciclos" ON ciclos FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own ciclos" ON ciclos FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS para disciplinas
+ALTER TABLE disciplinas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view disciplinas of their ciclos" ON disciplinas FOR SELECT USING (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
+);
+CREATE POLICY "Users can insert disciplinas in their ciclos" ON disciplinas FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
+);
+CREATE POLICY "Users can update disciplinas in their ciclos" ON disciplinas FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
+);
+CREATE POLICY "Users can delete disciplinas in their ciclos" ON disciplinas FOR DELETE USING (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
+);
+
+-- RLS para sessoes
+ALTER TABLE sessoes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view sessoes of their ciclos" ON sessoes FOR SELECT USING (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid())
+);
+CREATE POLICY "Users can insert sessoes in their ciclos" ON sessoes FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid())
+);
+CREATE POLICY "Users can update sessoes in their ciclos" ON sessoes FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid())
+);
 
 -- Inserir algumas tags padrão
 INSERT INTO tags (name, color) VALUES 
