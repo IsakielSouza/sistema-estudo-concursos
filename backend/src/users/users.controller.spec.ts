@@ -22,12 +22,25 @@ describe('UsersController', () => {
     controller = module.get<UsersController>(UsersController);
   });
 
+  afterEach(() => jest.clearAllMocks());
+
   it('getMe retorna usuário do req.user', async () => {
     const fakeUser = { id: 'uuid-1', email: 'a@b.com', name: 'Teste' };
     mockUsersService.findOne.mockResolvedValue(fakeUser);
 
     const req = { user: { id: 'uuid-1' } };
     const result = await controller.getMe(req as any);
+
+    expect(mockUsersService.findOne).toHaveBeenCalledWith('uuid-1');
+    expect(result).toEqual(fakeUser);
+  });
+
+  it('getProfile retorna o mesmo usuário que getMe', async () => {
+    const fakeUser = { id: 'uuid-1', email: 'a@b.com', name: 'Teste' };
+    mockUsersService.findOne.mockResolvedValue(fakeUser);
+
+    const req = { user: { id: 'uuid-1' } };
+    const result = await controller.getProfile(req as any);
 
     expect(mockUsersService.findOne).toHaveBeenCalledWith('uuid-1');
     expect(result).toEqual(fakeUser);
