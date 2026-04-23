@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS ciclos (
     concurso VARCHAR(100) NOT NULL,
     cargo VARCHAR(100) NOT NULL,
     regiao VARCHAR(100) DEFAULT 'Nacional',
-    horas_semanais INTEGER NOT NULL DEFAULT 30,
+    horas_semanais INTEGER NOT NULL DEFAULT 30 CHECK (horas_semanais BETWEEN 1 AND 168),
     revisao_percentual INTEGER DEFAULT 50 CHECK (revisao_percentual BETWEEN 0 AND 100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS sessoes (
     ciclo_id UUID REFERENCES ciclos(id) ON DELETE CASCADE NOT NULL,
     disciplina_id UUID REFERENCES disciplinas(id) ON DELETE SET NULL,
     tempo_iniciado TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    tempo_percorrido INTEGER DEFAULT 0,
+    tempo_percorrido INTEGER DEFAULT 0 CHECK (tempo_percorrido >= 0),
     status VARCHAR(20) DEFAULT 'ativa' CHECK (status IN ('ativa', 'pausada', 'concluida')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -344,7 +344,9 @@ CREATE POLICY "Material tags are deletable by everyone" ON material_tags FOR DEL
 ALTER TABLE ciclos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own ciclos" ON ciclos FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert their own ciclos" ON ciclos FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update their own ciclos" ON ciclos FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own ciclos" ON ciclos FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own ciclos" ON ciclos FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS para disciplinas
@@ -355,9 +357,9 @@ CREATE POLICY "Users can view disciplinas of their ciclos" ON disciplinas FOR SE
 CREATE POLICY "Users can insert disciplinas in their ciclos" ON disciplinas FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
 );
-CREATE POLICY "Users can update disciplinas in their ciclos" ON disciplinas FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
-);
+CREATE POLICY "Users can update disciplinas in their ciclos" ON disciplinas FOR UPDATE
+    USING (EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid()))
+    WITH CHECK (EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid()));
 CREATE POLICY "Users can delete disciplinas in their ciclos" ON disciplinas FOR DELETE USING (
     EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = disciplinas.ciclo_id AND ciclos.user_id = auth.uid())
 );
@@ -370,7 +372,11 @@ CREATE POLICY "Users can view sessoes of their ciclos" ON sessoes FOR SELECT USI
 CREATE POLICY "Users can insert sessoes in their ciclos" ON sessoes FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid())
 );
-CREATE POLICY "Users can update sessoes in their ciclos" ON sessoes FOR UPDATE USING (
+CREATE POLICY "Users can update sessoes in their ciclos" ON sessoes FOR UPDATE
+    USING (EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid()))
+    WITH CHECK (EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid()));
+
+CREATE POLICY "Users can delete sessoes in their ciclos" ON sessoes FOR DELETE USING (
     EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid())
 );
 
