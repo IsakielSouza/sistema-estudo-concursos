@@ -13,79 +13,79 @@ claude -m "Execute a tarefa: [SEÇÃO] - [NÚMERO DO ITEM]"
 
 ### Autenticação & OAuth Google
 
-- [ ] **BACKEND-1**: Corrigir inicialização múltipla do Google Sign-In
+- [x] **BACKEND-1**: Corrigir inicialização múltipla do Google Sign-In
   - Envolver `google.accounts.id.initialize()` em flag global
     - Refs: `FLUXO_COMPLETO.md`
       - Priority: CRÍTICA
 
-        - [ ] **BACKEND-2**: Configurar NextAuth.js com Google Provider
+        - [x] **BACKEND-2**: Configurar NextAuth.js com Google Provider
           - Instalar: `next-auth` e `next-auth/providers/google`
             - Criar arquivo: `pages/api/auth/[...nextauth].js`
               - Configurar variáveis de ambiente
 
-                - [ ] **BACKEND-3**: Obter Google OAuth Credentials
+                - [x] **BACKEND-3**: Obter Google OAuth Credentials
                   - Ir para: https://console.cloud.google.com/
                     - Criar OAuth 2.0 Client ID
                       - Adicionar Authorized Redirect URIs
                         - Salvar em `.env.local`
 
-                          - [ ] **BACKEND-4**: Implementar callback de autenticação
+                          - [x] **BACKEND-4**: Implementar callback de autenticação
                             - Endpoint: `/api/auth/google/callback`
                               - Validar token do Google
                                 - Criar ou atualizar usuário no banco
                                   - Retornar session token
 
-                                    - [ ] **BACKEND-5**: Implementar rota de logout
+                                    - [x] **BACKEND-5**: Implementar rota de logout
                                       - Endpoint: `/api/auth/logout`
                                         - Destruir sessão
                                           - Redirecionar para home
 
                                           ### Usuário & Sessão
 
-                                          - [ ] **BACKEND-6**: Criar modelo de Usuário no banco
+                                          - [x] **BACKEND-6**: Criar modelo de Usuário no banco
                                             - Campos: id, email, nome, foto, googleId, createdAt, updatedAt
                                               - Índice único em: email, googleId
 
-                                                - [ ] **BACKEND-7**: Implementar middleware de autenticação
+                                                - [x] **BACKEND-7**: Implementar middleware de autenticação
                                                   - Validar JWT/Session Token
                                                     - Retornar erro 401 se não autenticado
                                                       - Adicionar user ao contexto da request
 
-                                                        - [ ] **BACKEND-8**: Criar rota GET `/api/user/me`
+                                                        - [x] **BACKEND-8**: Criar rota GET `/api/user/me`
                                                           - Retornar dados do usuário logado
                                                             - Usado pelo frontend para validar sessão
 
-                                                              - [ ] **BACKEND-9**: Implementar rota de perfil
+                                                              - [x] **BACKEND-9**: Implementar rota de perfil
                                                                 - GET `/api/user/profile` - obter perfil
                                                                   - PUT `/api/user/profile` - atualizar perfil
                                                                     - Validar campos
 
                                                                     ### Ciclos de Estudo
 
-                                                                    - [ ] **BACKEND-10**: Criar modelo de Ciclo
+                                                                    - [x] **BACKEND-10**: Criar modelo de Ciclo
                                                                       - Campos: id, userId, nome, concurso, cargo, região, horasSemanais, criadoEm
                                                                         - Relação: 1 Usuário : N Ciclos
 
-                                                                          - [ ] **BACKEND-11**: Criar modelo de Matéria/Disciplina
+                                                                          - [x] **BACKEND-11**: Criar modelo de Matéria/Disciplina
                                                                             - Campos: id, cicloId, nome, peso, nivelUsuário, horasAlocadas, statusConcluído
                                                                               - Relação: 1 Ciclo : N Matérias
 
-                                                                                - [ ] **BACKEND-12**: Implementar rota de criação de ciclo (Wizard)
+                                                                                - [x] **BACKEND-12**: Implementar rota de criação de ciclo (Wizard)
                                                                                   - POST `/api/ciclos` com dados do wizard
                                                                                     - Validar e calcular distribuição de horas
                                                                                       - Retornar ciclo criado
 
-                                                                                        - [ ] **BACKEND-13**: Implementar rota de execução de ciclo
+                                                                                        - [x] **BACKEND-13**: Implementar rota de execução de ciclo
                                                                                           - GET `/api/ciclos/{id}` - obter detalhes
                                                                                             - Incluir todas as matérias e progresso
                                                                                               - Incluir sugestões do mentor
 
-                                                                                                - [ ] **BACKEND-14**: Implementar rota de divisão de tempo
+                                                                                                - [x] **BACKEND-14**: Implementar rota de divisão de tempo
                                                                                                   - POST `/api/ciclos/{id}/time-division`
                                                                                                     - Validar distribuição revisão/novo conteúdo
                                                                                                       - Salvar preferência do usuário
                                                                                                         
-                                                                                                        - [ ] **BACKEND-15**: Implementar rastreamento de tempo
+                                                                                                        - [x] **BACKEND-15**: Implementar rastreamento de tempo
                                                                                                           - POST `/api/sessoes` - iniciar sessão
                                                                                                             - PUT `/api/sessoes/{id}` - pausar/retomar
                                                                                                               - Registrar tempo percorrido
@@ -96,60 +96,60 @@ claude -m "Execute a tarefa: [SEÇÃO] - [NÚMERO DO ITEM]"
                                                                                                               
                                                                                                               ### Login & Autenticação
                                                                                                               
-                                                                                                              - [ ] **FRONTEND-1**: Corrigir hydration mismatch no Next.js
+                                                                                                              - [x] **FRONTEND-1**: Corrigir hydration mismatch no Next.js
                                                                                                                 - Envolver Google Sign-In em `useEffect`
                                                                                                                   - Usar `dynamic` com `ssr: false`
                                                                                                                     - Usar flag `isMounted` para SSR safety
                                                                                                                       
-                                                                                                                      - [ ] **FRONTEND-2**: Implementar componente GoogleSignInButton
+                                                                                                                      - [x] **FRONTEND-2**: Implementar componente GoogleSignInButton
                                                                                                                         - Arquivo: `components/GoogleSignInButton.tsx`
                                                                                                                           - Props: onSuccess, onError, loading
                                                                                                                             - Usar biblioteca `@react-oauth/google`
                                                                                                                               
-                                                                                                                              - [ ] **FRONTEND-3**: Criar página de login responsiva
+                                                                                                                              - [x] **FRONTEND-3**: Criar página de login responsiva
                                                                                                                                 - Página: `app/login/page.tsx`
                                                                                                                                   - Inputs: Email + Senha (alternativa)
                                                                                                                                     - Botão Google Sign-In
                                                                                                                                       - Link para cadastro
                                                                                                                                         
-                                                                                                                                        - [ ] **FRONTEND-4**: Implementar proteção de rotas
+                                                                                                                                        - [x] **FRONTEND-4**: Implementar proteção de rotas
                                                                                                                                           - HOC: `withAuth` para páginas protegidas
                                                                                                                                             - Redirecionar não-autenticados para `/login`
                                                                                                                                               - Verificar sessão via GET `/api/user/me`
                                                                                                                                                 
-                                                                                                                                                - [ ] **FRONTEND-5**: Criar componente de logout
+                                                                                                                                                - [x] **FRONTEND-5**: Criar componente de logout
                                                                                                                                                   - Botão no header/menu
                                                                                                                                                     - Confirmar logout
                                                                                                                                                       - Limpar localStorage/cookies
                                                                                                                                                       
                                                                                                                                                       ### Pages - Meus Ciclos
                                                                                                                                                       
-                                                                                                                                                      - [ ] **FRONTEND-6**: Criar página de listagem de ciclos
+                                                                                                                                                      - [x] **FRONTEND-6**: Criar página de listagem de ciclos
                                                                                                                                                         - Página: `app/meus-ciclos/page.tsx`
                                                                                                                                                           - Componente: Grid de ciclos
                                                                                                                                                             - Botão: "+ Novo ciclo"
                                                                                                                                                               - Cada card com: nome, progresso, botões Executar/Menu
                                                                                                                                                                 
-                                                                                                                                                                - [ ] **FRONTEND-7**: Implementar Wizard de criação (5 passos)
+                                                                                                                                                                - [x] **FRONTEND-7**: Implementar Wizard de criação (5 passos)
                                                                                                                                                                   - Página: `app/meus-ciclos/create/page.tsx`
                                                                                                                                                                     - Componentes de step (reutilizável)
                                                                                                                                                                       - Persistir dados entre steps no state/context
                                                                                                                                                                         - Validação em cada step
                                                                                                                                                                           
-                                                                                                                                                                          - [ ] **FRONTEND-8**: Criar página de execução de ciclo
+                                                                                                                                                                          - [x] **FRONTEND-8**: Criar página de execução de ciclo
                                                                                                                                                                             - Página: `app/meus-ciclos/[id]/page.tsx`
                                                                                                                                                                               - Cronômetro circular
                                                                                                                                                                                 - Divisão de tempo
                                                                                                                                                                                   - Tabela de sessões
                                                                                                                                                                                     - Grid de resumo
                                                                                                                                                                                       
-                                                                                                                                                                                      - [ ] **FRONTEND-9**: Implementar componente Cronômetro
+                                                                                                                                                                                      - [x] **FRONTEND-9**: Implementar componente Cronômetro
                                                                                                                                                                                         - Arquivo: `components/Timer/CircularTimer.tsx`
                                                                                                                                                                                           - SVG animado
                                                                                                                                                                                             - Botões Play/Pause
                                                                                                                                                                                               - Formato HH:MM:SS
                                                                                                                                                                                                 
-                                                                                                                                                                                                - [ ] **FRONTEND-10**: Implementar slider de distribuição de tempo
+                                                                                                                                                                                                - [x] **FRONTEND-10**: Implementar slider de distribuição de tempo
                                                                                                                                                                                                   - Arquivo: `components/TimeDistribution.tsx`
                                                                                                                                                                                                     - Slider 0-100%
                                                                                                                                                                                                       - Atualização em tempo real
@@ -157,26 +157,26 @@ claude -m "Execute a tarefa: [SEÇÃO] - [NÚMERO DO ITEM]"
                                                                                                                                                                                                         
                                                                                                                                                                                                         ### Componentes Reutilizáveis
                                                                                                                                                                                                         
-                                                                                                                                                                                                        - [ ] **FRONTEND-11**: Criar componente Card
+                                                                                                                                                                                                        - [x] **FRONTEND-11**: Criar componente Card
                                                                                                                                                                                                           - Props: title, children, onClick, variant
                                                                                                                                                                                                             - Variantes: default, hover, selected
                                                                                                                                                                                                               
-                                                                                                                                                                                                              - [ ] **FRONTEND-12**: Criar componente Button
+                                                                                                                                                                                                              - [x] **FRONTEND-12**: Criar componente Button
                                                                                                                                                                                                                 - Props: variant, size, loading, disabled
                                                                                                                                                                                                                   - Variantes: primary, secondary, ghost
                                                                                                                                                                                                                     - Tamanhos: sm, md, lg
                                                                                                                                                                                                                       
-                                                                                                                                                                                                                      - [ ] **FRONTEND-13**: Criar componente Modal
+                                                                                                                                                                                                                      - [x] **FRONTEND-13**: Criar componente Modal
                                                                                                                                                                                                                         - Props: isOpen, onClose, title, children
                                                                                                                                                                                                                           - Overlay + portal
                                                                                                                                                                                                                             - Animações
                                                                                                                                                                                                                               
-                                                                                                                                                                                                                              - [ ] **FRONTEND-14**: Criar componente Table
+                                                                                                                                                                                                                              - [x] **FRONTEND-14**: Criar componente Table
                                                                                                                                                                                                                                 - Props: columns, data, onRowClick
                                                                                                                                                                                                                                   - Responsivo
                                                                                                                                                                                                                                     - Sorting/Filtering (v2)
                                                                                                                                                                                                                                       
-                                                                                                                                                                                                                                      - [ ] **FRONTEND-15**: Criar componente Sidebar
+                                                                                                                                                                                                                                      - [x] **FRONTEND-15**: Criar componente Sidebar
                                                                                                                                                                                                                                         - Menu navegação
                                                                                                                                                                                                                                           - Links ativas
                                                                                                                                                                                                                                             - Perfil do usuário
@@ -321,13 +321,13 @@ claude -m "Execute a tarefa: [SEÇÃO] - [NÚMERO DO ITEM]"
                                                                                                                                                                                                                                                                                                                                                                                                   
                                                                                                                                                                                                                                                                                                                                                                                                   | Seção | Total | Completo | % |
                                                                                                                                                                                                                                                                                                                                                                                                   |-------|-------|----------|---|
-                                                                                                                                                                                                                                                                                                                                                                                                  | BACKEND | 15 | 0 | 0% |
-                                                                                                                                                                                                                                                                                                                                                                                                  | FRONTEND | 15 | 0 | 0% |
+                                                                                                                                                                                                                                                                                                                                                                                                  | BACKEND | 15 | 15 | 100% |
+                                                                                                                                                                                                                                                                                                                                                                                                  | FRONTEND | 15 | 15 | 100% |
                                                                                                                                                                                                                                                                                                                                                                                                   | DATABASE | 6 | 0 | 0% |
                                                                                                                                                                                                                                                                                                                                                                                                   | TESTES | 9 | 0 | 0% |
                                                                                                                                                                                                                                                                                                                                                                                                   | DEPLOY | 8 | 0 | 0% |
                                                                                                                                                                                                                                                                                                                                                                                                   | DOCS | 5 | 0 | 0% |
-                                                                                                                                                                                                                                                                                                                                                                                                  | **TOTAL** | **58** | **0** | **0%** |
+                                                                                                                                                                                                                                                                                                                                                                                                  | **TOTAL** | **58** | **30** | **52%** |
                                                                                                                                                                                                                                                                                                                                                                                                   
                                                                                                                                                                                                                                                                                                                                                                                                   ---
                                                                                                                                                                                                                                                                                                                                                                                                   

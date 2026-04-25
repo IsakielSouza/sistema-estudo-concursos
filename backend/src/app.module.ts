@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { MaterialsModule } from './materials/materials.module';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 import { MobileLoggingInterceptor } from './common/interceptors/mobile-logging.interceptor';
+import { SessoesModule } from './sessoes/sessoes.module';
+import { CiclosModule } from './ciclos/ciclos.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { MobileLoggingInterceptor } from './common/interceptors/mobile-logging.i
     UsersModule,
     AuthModule,
     MaterialsModule,
+    SessoesModule,
+    CiclosModule,
   ],
   controllers: [AppController],
   providers: [
