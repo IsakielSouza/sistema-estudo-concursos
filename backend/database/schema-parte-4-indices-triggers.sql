@@ -26,6 +26,13 @@ CREATE INDEX IF NOT EXISTS idx_routine_activities_type ON routine_activities(typ
 CREATE INDEX IF NOT EXISTS idx_routine_activity_days_activity_id ON routine_activity_days(activity_id);
 CREATE INDEX IF NOT EXISTS idx_routine_activity_days_day_of_week ON routine_activity_days(day_of_week);
 
+-- Índices para tabelas de matérias
+CREATE INDEX IF NOT EXISTS idx_edital_materia_concurso ON edital_materia(concurso);
+CREATE INDEX IF NOT EXISTS idx_edital_materia_materia_id ON edital_materia(materia_id);
+CREATE INDEX IF NOT EXISTS idx_cargo_materia_concurso ON cargo_materia(concurso);
+CREATE INDEX IF NOT EXISTS idx_cargo_materia_cargo ON cargo_materia(concurso, cargo);
+CREATE INDEX IF NOT EXISTS idx_cargo_materia_materia_id ON cargo_materia(materia_id);
+
 -- TRIGGERS
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_materials_updated_at BEFORE UPDATE ON materials FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -38,3 +45,6 @@ CREATE TRIGGER update_disciplinas_updated_at BEFORE UPDATE ON disciplinas FOR EA
 CREATE TRIGGER update_sessoes_updated_at BEFORE UPDATE ON sessoes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_routines_updated_at BEFORE UPDATE ON routines FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_routine_activities_updated_at BEFORE UPDATE ON routine_activities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_materias_updated_at BEFORE UPDATE ON materias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_edital_materia_updated_at BEFORE UPDATE ON edital_materia FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_cargo_materia_updated_at BEFORE UPDATE ON cargo_materia FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

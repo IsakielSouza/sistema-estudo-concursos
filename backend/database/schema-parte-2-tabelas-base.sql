@@ -154,3 +154,40 @@ CREATE TABLE IF NOT EXISTS material_tags (
     tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (material_id, tag_id)
 );
+
+-- Tabela de matérias (subjects) - lista master
+CREATE TABLE IF NOT EXISTS materias (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    nome VARCHAR(255) NOT NULL,
+    descricao TEXT,
+    horas_padrao DECIMAL(5,2) DEFAULT 0,
+    peso_padrao INTEGER DEFAULT 5,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(nome)
+);
+
+-- Tabela de relacionamento entre edital (concurso) e matérias
+CREATE TABLE IF NOT EXISTS edital_materia (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    concurso VARCHAR(100) NOT NULL,
+    materia_id UUID REFERENCES materias(id) ON DELETE CASCADE NOT NULL,
+    ordem INTEGER DEFAULT 0,
+    horas_recomendadas DECIMAL(5,2),
+    peso_sugerido INTEGER DEFAULT 5,
+    obrigatoria BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(concurso, materia_id)
+);
+
+-- Tabela de relacionamento entre cargo e matérias (para futura expansão)
+CREATE TABLE IF NOT EXISTS cargo_materia (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    concurso VARCHAR(100) NOT NULL,
+    cargo VARCHAR(100) NOT NULL,
+    materia_id UUID REFERENCES materias(id) ON DELETE CASCADE NOT NULL,
+    obrigatoria BOOLEAN DEFAULT true,
+    peso_sugerido INTEGER DEFAULT 5,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(concurso, cargo, materia_id)
+);

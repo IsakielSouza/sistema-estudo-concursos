@@ -176,6 +176,194 @@ export class CiclosService {
     return data;
   }
 
+  async getMateriasTemplate(concurso: string): Promise<any[]> {
+    const admin = this.supabaseService.getAdminClient();
+
+    const { data, error } = await admin
+      .from('edital_materia')
+      .select(`
+        id,
+        materia_id,
+        ordem,
+        horas_recomendadas,
+        peso_sugerido,
+        obrigatoria,
+        materias(
+          id,
+          nome,
+          descricao,
+          horas_padrao,
+          peso_padrao
+        )
+      `)
+      .eq('concurso', concurso)
+      .order('ordem');
+
+    if (error) {
+      throw new Error(`Erro ao buscar matérias: ${error.message}`);
+    }
+
+    return (data || []).map((item: any) => ({
+      id: item.materias.id,
+      nome: item.materias.nome,
+      descricao: item.materias.descricao,
+      horas_recomendadas: item.horas_recomendadas || item.materias.horas_padrao,
+      peso_sugerido: item.peso_sugerido || item.materias.peso_padrao,
+      obrigatoria: item.obrigatoria,
+    }));
+  }
+
+  async createDisciplina(cicloId: string, userId: string, createDisciplinaDto: any): Promise<any> {
+    const admin = this.supabaseService.getAdminClient();
+
+    // Verify user owns the cycle
+    const { data: ciclo, error: cicloError } = await admin
+      .from('ciclos')
+      .select('id')
+      .eq('id', cicloId)
+      .eq('user_id', userId)
+      .single();
+
+    if (cicloError || !ciclo) {
+      throw new NotFoundException(`Ciclo ${cicloId} não encontrado`);
+    }
+
+    // Check for duplicate discipline name in cycle
+    const { data: existingDisciplina } = await admin
+      .from('disciplinas')
+      .select('id')
+      .eq('ciclo_id', cicloId)
+      .eq('nome', createDisciplinaDto.nome)
+      .single();
+
+    if (existingDisciplina) {
+      throw new Error('Disciplina com este nome já existe neste ciclo');
+    }
+
+    const { data: disciplina, error } = await admin
+      .from('disciplinas')
+      .insert({
+        ciclo_id: cicloId,
+        nome: createDisciplinaDto.nome,
+        peso: createDisciplinaDto.peso || 5,
+        nivel_usuario: createDisciplinaDto.nivel_usuario || 'medio',
+        concluiu_edital: createDisciplinaDto.concluiu_edital || false,
+        horas_alocadas: 0,
+        concluida: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Erro ao criar disciplina: ${error.message}`);
+    }
+
+    return disciplina;
+  }
+
+  async updateDisciplina(cicloId: string, userId: string, disciplinaId: string, updateDisciplinaDto: any): Promise<any> {
+    const admin = this.supabaseService.getAdminClient();
+
+    // Verify user owns the cycle
+    const { data: ciclo, error: cicloError } = await admin
+      .from('ciclos')
+      .select('id')
+      .eq('id', cicloId)
+      .eq('user_id', userId)
+      .single();
+
+    if (cicloError || !ciclo) {
+      throw new NotFoundException(`Ciclo ${cicloId} não encontrado`);
+    }
+
+    // Check if discipline exists in this cycle
+    const { data: disciplina, error: discError } = await admin
+      .from('disciplinas')
+      .select('id')
+      .eq('id', disciplinaId)
+      .eq('ciclo_id', cicloId)
+      .single();
+
+    if (discError || !disciplina) {
+      throw new NotFoundException(`Disciplina ${disciplinaId} não encontrada`);
+    }
+
+    const { data: updated, error } = await admin
+      .from('disciplinas')
+      .update({
+        ...updateDisciplinaDto,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', disciplinaId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Erro ao atualizar disciplina: ${error.message}`);
+    }
+
+    return updated;
+  }
+
+  async deleteDisciplina(cicloId: string, userId: string, disciplinaId: string): Promise<void> {
+    const admin = this.supabaseService.getAdminClient();
+
+    // Verify user owns the cycle
+    const { data: ciclo, error: cicloError } = await admin
+      .from('ciclos')
+      .select('id')
+      .eq('id', cicloId)
+      .eq('user_id', userId)
+      .single();
+
+    if (cicloError || !ciclo) {
+      throw new NotFoundException(`Ciclo ${cicloId} não encontrado`);
+    }
+
+    const { error } = await admin
+      .from('disciplinas')
+      .delete()
+      .eq('id', disciplinaId)
+      .eq('ciclo_id', cicloId);
+
+    if (error) {
+      throw new Error(`Erro ao deletar disciplina: ${error.message}`);
+    }
+  }
+
+  async completeDisciplina(cicloId: string, userId: string, disciplinaId: string): Promise<any> {
+    const admin = this.supabaseService.getAdminClient();
+
+    // Verify user owns the cycle
+    const { data: ciclo, error: cicloError } = await admin
+      .from('ciclos')
+      .select('id')
+      .eq('id', cicloId)
+      .eq('user_id', userId)
+      .single();
+
+    if (cicloError || !ciclo) {
+      throw new NotFoundException(`Ciclo ${cicloId} não encontrado`);
+    }
+
+    const { data: updated, error } = await admin
+      .from('disciplinas')
+      .update({
+        concluida: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', disciplinaId)
+      .eq('ciclo_id', cicloId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Erro ao marcar disciplina como completa: ${error.message}`);
+    }
+
+    return updated;
+  }
+
   private distribuirHoras(horasSemanais: number, disciplinas: any[]): number[] {
     const totalPeso = disciplinas.reduce((acc, d) => acc + (d.peso || 1), 0);
     return disciplinas.map((d) =>
