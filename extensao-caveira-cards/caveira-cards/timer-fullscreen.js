@@ -128,7 +128,7 @@ function updateDisplay() {
   const secs = computeCurrentSeconds(timerState);
   displayText.textContent = formatMMSS(secs);
 
-  const circumference = 2 * Math.PI * 128;
+  const circumference = 2 * Math.PI * 145;
   let progress = 0;
   if (timerState.mode !== 'livre' && timerState.totalSeconds > 0) {
     progress = (timerState.totalSeconds - secs) / timerState.totalSeconds;

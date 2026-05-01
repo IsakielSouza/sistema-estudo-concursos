@@ -1,7 +1,10 @@
+// timer-floating.js — lógica do timer flutuante minimalista (estilo Deltinha)
+
 // Estado unificado (espelhado de timer.html)
 let timerState = {
   mode: 'pomodoro',
   isRunning: false,
+  isBreak: false,
   startedAt: null,
   remainingSeconds: 1500,
   totalSeconds: 1500,
@@ -15,22 +18,13 @@ let tickInterval = null;
 
 // Elements
 const displayText = document.getElementById('floating-display');
-const labelText = document.getElementById('floating-label');
-const statusText = document.getElementById('floating-status');
+const modeDisplay = document.getElementById('mode-display');
+const questoesCount = document.getElementById('questoes-count');
 const playBtn = document.getElementById('floating-play-btn');
-const backBtn = document.getElementById('floating-back-btn');
-const progressFill = document.getElementById('floating-progress-fill');
-const progressDot = document.getElementById('floating-progress-dot');
-const modeToggle = document.getElementById('mode-toggle');
-const modeToggleLabel = document.getElementById('mode-toggle-label');
-
-function atualizarModeToggle(mode) {
-  if (!modeToggle) return;
-  const isPomodoro = mode === 'pomodoro';
-  modeToggle.checked = isPomodoro;
-  modeToggleLabel.textContent = isPomodoro ? 'Modo: Pomodoro' : 'Modo: Livre';
-  modeToggleLabel.style.color = isPomodoro ? '#22c55e' : '#3b6ff5';
-}
+const closeBtn = document.getElementById('floating-close-btn');
+const eyeBtn = document.getElementById('floating-eye-btn');
+const resetBtn = document.getElementById('floating-reset-btn');
+const checkBtn = document.getElementById('floating-check-btn');
 
 function computeCurrentSeconds(state) {
   const base = state.mode === 'livre'
@@ -58,32 +52,64 @@ function updateDisplay() {
   const secs = computeCurrentSeconds(timerState);
   displayText.textContent = formatMMSS(secs);
 
-  let progress = 0;
-  if (timerState.mode !== 'livre' && timerState.totalSeconds > 0) {
-    progress = (timerState.totalSeconds - secs) / timerState.totalSeconds;
+  // Atualiza Modo
+  if (timerState.mode === 'livre') {
+    modeDisplay.textContent = 'LIVRE ⇅';
+    modeDisplay.className = 'mode-indicator mode-livre';
+  } else if (timerState.isBreak) {
+    modeDisplay.textContent = 'PAUSA ⇅';
+    modeDisplay.className = 'mode-indicator mode-pausa';
+  } else {
+    modeDisplay.textContent = 'FOCO ⇅';
+    modeDisplay.className = 'mode-indicator mode-foco';
   }
-  const progressPercent = Math.max(0, Math.min(100, progress * 100));
-  progressFill.style.width = `${progressPercent}%`;
-  progressDot.style.left = `${progressPercent}%`;
 
-  labelText.textContent = timerState.mode === 'pomodoro' ? 'Foco' : 'Livre';
-  statusText.textContent = sessaoEstaAtiva()
-    ? (timerState.isRunning ? 'Executando' : 'Pausado')
-    : 'Sem sessão';
+  // Atualiza Questões
+  const q = sessaoAtivaLocal?.questoes || 0;
+  const plural = q !== 1 ? 'QUESTÕES' : 'QUESTÃO';
+  questoesCount.textContent = `${q} ${plural}`;
+
+  // Botão Play/Pause
+  playBtn.innerHTML = timerState.isRunning ? '⏸' : '▶';
+  playBtn.className = timerState.isRunning ? 'control-btn active' : 'control-btn';
 
   if (timerState.mode !== 'livre' && timerState.isRunning && secs === 0) {
     pauseTimer();
   }
 }
 
-function setPlayUI() {
-  playBtn.innerHTML = timerState.isRunning ? '⏸' : '▶';
-}
-
 function startTimer() {
+  // Se não houver sessão ativa, inicia uma básica
+  if (!sessaoEstaAtiva()) {
+    const inicio = Date.now();
+    const sessao = { 
+      inicio, 
+      questoes: 0, 
+      acertos: 0, 
+      ativa: true, 
+      caderno: null, 
+      mode: timerState.mode,
+      ultimaAtividade: inicio,
+      detalhes: []
+    };
+    
+    timerState.startedAt = inicio;
+    timerState.isRunning = true;
+    
+    if (timerState.mode === 'pomodoro') {
+      timerState.totalSeconds = timerState.config.focus * 60;
+      timerState.remainingSeconds = timerState.totalSeconds;
+      timerState.isBreak = false;
+    } else {
+      timerState.elapsedSeconds = 0;
+    }
+    
+    chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
+    return;
+  }
+
   timerState.isRunning = true;
   timerState.startedAt = Date.now();
-  setPlayUI();
   if (tickInterval) clearInterval(tickInterval);
   tickInterval = setInterval(updateDisplay, 1000);
   chrome.storage.local.set({ timerState });
@@ -97,45 +123,60 @@ function pauseTimer() {
   }
   timerState.isRunning = false;
   timerState.startedAt = null;
-  setPlayUI();
   if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
   chrome.storage.local.set({ timerState });
 }
 
+// Event Listeners
 playBtn.addEventListener('click', () => {
-  if (!sessaoEstaAtiva()) return;
   if (timerState.isRunning) pauseTimer();
   else startTimer();
 });
 
-backBtn.addEventListener('click', () => {
+closeBtn.addEventListener('click', () => {
   window.close();
 });
 
-modeToggle.addEventListener('change', () => {
-  const isPomodoro = modeToggle.checked;
-  const mode = isPomodoro ? 'pomodoro' : 'livre';
-  
-  if (sessaoEstaAtiva()) {
-    atualizarModeToggle(timerState.mode); 
-    return;
-  }
+eyeBtn.addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('sessoes.html') });
+});
 
-  timerState.mode = mode;
-  if (mode === 'livre') {
+resetBtn.addEventListener('click', () => {
+  if (confirm('Deseja resetar o ciclo atual?')) {
+    timerState.isRunning = false;
+    timerState.startedAt = null;
+    if (timerState.mode === 'pomodoro') {
+      timerState.remainingSeconds = timerState.config.focus * 60;
+    } else {
+      timerState.elapsedSeconds = 0;
+    }
+    chrome.storage.local.set({ timerState });
+  }
+});
+
+checkBtn.addEventListener('click', () => {
+  // Abre o timer principal para encerrar a sessão com calma
+  chrome.tabs.create({ url: chrome.runtime.getURL('timer.html') });
+});
+
+modeDisplay.addEventListener('click', () => {
+  if (sessaoEstaAtiva()) return;
+
+  const newMode = timerState.mode === 'pomodoro' ? 'livre' : 'pomodoro';
+  timerState.mode = newMode;
+  
+  if (newMode === 'livre') {
     timerState.elapsedSeconds = 0;
   } else {
     timerState.totalSeconds = timerState.config.focus * 60;
     timerState.remainingSeconds = timerState.totalSeconds;
   }
-  atualizarModeToggle(mode);
+  
   updateDisplay();
   chrome.storage.local.set({ timerState });
 });
 
 function sincronizarUI() {
-  atualizarModeToggle(timerState.mode);
-  setPlayUI();
   updateDisplay();
   if (timerState.isRunning) {
     if (!tickInterval) tickInterval = setInterval(updateDisplay, 1000);
@@ -144,12 +185,14 @@ function sincronizarUI() {
   }
 }
 
+// Initial Load
 chrome.storage.local.get(['timerState', 'sessaoAtiva'], ({ timerState: stored, sessaoAtiva }) => {
   if (stored) timerState = { ...timerState, ...stored };
   sessaoAtivaLocal = sessaoAtiva || null;
   sincronizarUI();
 });
 
+// Sync from storage
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== 'local') return;
   if (changes.timerState && changes.timerState.newValue) {

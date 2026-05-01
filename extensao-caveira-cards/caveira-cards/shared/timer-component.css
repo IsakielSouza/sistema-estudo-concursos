@@ -1,0 +1,188 @@
+/* shared/timer-component.css — CaveiraCards Floating Timer Component */
+
+#cc-timer-floating-container {
+  position: fixed !important;
+  top: 40px !important;
+  right: 40px !important;
+  z-index: 2147483647 !important; /* Max z-index */
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+  user-select: none !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transition: opacity 0.3s ease !important;
+}
+
+#cc-timer-floating-container.cc-minimized {
+  width: auto;
+}
+
+.cc-timer-card {
+  background: #16162a;
+  border: 2px solid #2a2a4a;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  position: relative;
+  cursor: grab;
+}
+
+.cc-timer-card:active {
+  cursor: grabbing;
+}
+
+.cc-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cc-timer-display {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.cc-timer-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.cc-timer-btn {
+  background: #1e1e3a;
+  border: none;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.cc-timer-btn:hover {
+  background: #2a2a4a;
+  color: #ffffff;
+}
+
+.cc-timer-btn.active {
+  color: #22c55e;
+}
+
+.cc-timer-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #1e1e3a;
+}
+
+.cc-timer-mode {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.cc-timer-mode.mode-foco { color: #ef4444; }
+.cc-timer-mode.mode-livre { color: #3b82f6; }
+.cc-timer-mode.mode-pausa { color: #f59e0b; }
+
+.cc-timer-stats {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* Minimized State */
+#cc-timer-floating-container.cc-minimized .cc-timer-card {
+  min-width: auto;
+  flex-direction: row;
+  align-items: center;
+  padding: 4px 10px;
+  gap: 10px;
+}
+
+#cc-timer-floating-container.cc-minimized .cc-timer-info-row {
+  display: none;
+}
+
+#cc-timer-floating-container.cc-minimized .cc-timer-display {
+  font-size: 18px;
+}
+
+/* Close/Action buttons on hover */
+.cc-timer-drag-handle {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background: #16162a;
+  border: 1.5px solid #2a2a4a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#cc-timer-floating-container:hover .cc-timer-drag-handle {
+  opacity: 1;
+}
+
+.cc-timer-drag-handle:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.cc-timer-minimize-btn {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 24px;
+  height: 24px;
+  background: #16162a;
+  border: 1.5px solid #2a2a4a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#cc-timer-floating-container:hover .cc-timer-minimize-btn {
+  opacity: 1;
+}
+
+.cc-timer-minimize-btn:hover {
+  background: #3b6ff5;
+  color: white;
+  border-color: #3b6ff5;
+}
+
+.cc-timer-open-btn {
+  /* Now styled by .cc-timer-btn */
+}

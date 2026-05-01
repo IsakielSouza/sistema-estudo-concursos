@@ -346,11 +346,15 @@
     <!-- Estado: idle -->
     <div class="session-idle" id="session-idle" style="flex-direction: column; gap: 10px; align-items: stretch;">
       <span class="session-idle-label">📚 Nenhuma sessão ativa</span>
-      <div>
-        <div class="session-starting-label">🏷️ Tags para Anki (separadas por vírgula)</div>
-        <input type="text" id="input-caderno" placeholder="Ex: PRF, Simulado, Aula01" autocomplete="off" style="width: 100%; background: #080d1a; border: 1px solid #1e2d4d; border-radius: 6px; padding: 7px 10px; color: #e2e8f0; font-size: 12px; margin-bottom: 8px; outline: none;">
+      
+      <div style="display: flex; gap: 8px; align-items: flex-end;">
+        <div style="flex: 1;">
+          <div class="session-starting-label" style="font-size: 9px; margin-bottom: 4px;">🏷️ Tags Anki</div>
+          <input type="text" id="input-caderno" placeholder="Ex: PRF, Aula01" autocomplete="off" style="width: 100%; background: #080d1a; border: 1px solid #1e2d4d; border-radius: 6px; padding: 6px 10px; color: #e2e8f0; font-size: 11px; outline: none; margin-bottom: 0;">
+        </div>
+        <button class="btn-iniciar" id="btn-iniciar" style="height: 31px; padding: 0 16px;">Iniciar</button>
       </div>
-      <button class="btn-iniciar" id="btn-iniciar" style="width: 100%;">Iniciar</button>
+
       <button id="btn-historico-idle" class="btn" style="padding: 6px; font-size: 11px; margin-bottom: 0; justify-content: center; background: #0b1222; width: 100%;">
         📊 Ver Histórico
       </button>

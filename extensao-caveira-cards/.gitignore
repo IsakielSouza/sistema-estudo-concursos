@@ -1,33 +1,15 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
-
-# Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+# General
+node_modules/
+dist/
+build/
+tmp/
+.temp/
+.tmp/
+.DS_Store
+*.zip
+*.apkg
 
 # dotenv environment variable files
 .env
-.env.development
-.env.test
-.env.production
-
-# temp directory
-.temp
-.tmp
-
-# git worktrees
-.worktrees
-
-# Credenciais OAuth - nunca commitar
-client_secret*.json
-
-# macOS
-.DS_Store
+.env.*
+!.env.example

@@ -5,189 +5,179 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      width: 280px;
-      min-height: 280px;
-      background: linear-gradient(135deg, #0a0e1a 0%, #0f1729 100%);
+      width: 320px;
+      height: 100px;
+      background: #1a1a2e;
       color: #e2e8f0;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      padding: 24px 16px;
+      overflow: hidden;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      padding: 10px;
     }
 
-    /* ── Toggle switch (padrão do sistema) ── */
-    .toggle-wrap {
+    .main-container {
+      background: #16162a;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Top Row: Timer and Controls */
+    .top-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px 4px;
+      flex: 1;
+    }
+
+    .timer-display {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-right: auto;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      background: #1e1e3a;
+      border: none;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: #2a2a4a;
+      color: #ffffff;
+    }
+
+    .control-btn.active {
+      color: #22c55e;
+    }
+
+    /* Bottom Row: Info */
+    .bottom-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
-      background: #0f1729;
-      border: 1px solid #1e2d4d;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      width: 100%;
+      padding: 4px 12px 8px;
+      border-top: 1px solid #1e1e3a;
     }
-    .toggle-label-text { font-size: 11px; font-weight: 500; }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 32px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #334155;
-      transition: .2s;
-      border-radius: 20px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 12px; width: 12px;
-      left: 3px; bottom: 3px;
-      background: white;
-      transition: .2s;
-      border-radius: 50%;
-    }
-    input:checked + .slider { background: #22c55e; }
-    input:checked + .slider:before { transform: translateX(14px); }
 
-    /* Timer display */
-    .floating-label {
+    .mode-indicator {
       font-size: 12px;
-      color: #64748b;
-      margin-bottom: 8px;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .floating-timer {
-      font-size: 48px;
-      font-weight: 700;
-      color: #22c55e;
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.08em;
-      margin-bottom: 24px;
-    }
-
-    /* Progress bar */
-    .floating-progress-container {
-      width: 100%;
-      margin-bottom: 28px;
-    }
-    .floating-progress-bar {
-      width: 100%;
-      height: 4px;
-      background: #1e2d4d;
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-    .floating-progress-fill {
-      height: 100%;
-      background: #22c55e;
-      border-radius: 2px;
-      width: 65%;
-      transition: width 0.3s ease;
-    }
-    .floating-progress-indicator {
-      position: relative;
-      height: 0;
-    }
-    .floating-progress-dot {
-      position: absolute;
-      left: 65%;
-      transform: translateX(-50%);
-      top: -8px;
-      width: 12px;
-      height: 12px;
-      background: #f59e0b;
-      border-radius: 50%;
-      border: 2px solid #0f1729;
-    }
-
-    /* Status */
-    .floating-status {
-      font-size: 12px;
-      color: #94a3b8;
-      text-align: center;
-      margin-bottom: 28px;
-    }
-
-    /* Controles */
-    .floating-controls {
+      letter-spacing: 0.05em;
       display: flex;
-      gap: 12px;
-      width: 100%;
-    }
-    .floating-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #0f1729;
-      border: 1px solid #1e2d4d;
-      color: #64748b;
-      font-size: 18px;
+      align-items: center;
+      gap: 4px;
       cursor: pointer;
+    }
+
+    .mode-foco { color: #ef4444; }
+    .mode-livre { color: #3b82f6; }
+    .mode-pausa { color: #f59e0b; }
+
+    .questoes-count {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .brand img {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Power Off Button */
+    .power-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 32px;
+      height: 32px;
+      background: #16162a;
+      border: 2px solid #2a2a4a;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
-      flex: 1;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
-    .floating-btn:hover {
-      border-color: #3b6ff5;
-      color: #e2e8f0;
+
+    .power-btn:hover {
+      background: #ef4444;
+      border-color: #ef4444;
     }
-    .floating-play-btn {
-      background: #22c55e;
-      border: none;
-      color: white;
-      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
-    }
-    .floating-play-btn:hover {
-      background: #16a34a;
-    }
+
+    /* Hidden elements for logic */
+    #mode-toggle { display: none; }
   </style>
 </head>
 <body>
-  <!-- Modo (Toggle padrão do sistema) -->
-  <div class="toggle-wrap">
-    <span id="mode-toggle-label" class="toggle-label-text" style="color: #22c55e;">Modo: Pomodoro</span>
-    <label class="switch">
-      <input type="checkbox" id="mode-toggle" checked>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <!-- Timer display -->
-  <div class="floating-label" id="floating-label">Foco</div>
-  <div class="floating-timer" id="floating-display">00:00</div>
-
-  <!-- Progress bar -->
-  <div class="floating-progress-container">
-    <div class="floating-progress-bar">
-      <div class="floating-progress-fill" id="floating-progress-fill"></div>
+  <div class="power-btn" id="floating-close-btn" title="Fechar">⏻</div>
+  
+  <div class="main-container">
+    <div class="top-row">
+      <div class="timer-display" id="floating-display">25:00</div>
+      
+      <div class="controls">
+        <button class="control-btn" id="floating-eye-btn" title="Ver detalhes">👁</button>
+        <button class="control-btn" id="floating-play-btn" title="Iniciar/Pausar">▶</button>
+        <button class="control-btn" id="floating-reset-btn" title="Reset">↻</button>
+        <button class="control-btn" id="floating-check-btn" title="Finalizar">✓</button>
+      </div>
     </div>
-    <div class="floating-progress-indicator">
-      <div class="floating-progress-dot" id="floating-progress-dot"></div>
+    
+    <div class="bottom-row">
+      <div class="mode-indicator mode-foco" id="mode-display">
+        FOCO <span style="font-size: 10px;">⇅</span>
+      </div>
+      
+      <div class="questoes-count" id="questoes-count">
+        0 QUESTÕES
+      </div>
+      
+      <div class="brand">
+        <img src="CaveiraCards.png" alt="">
+        caveiracards
+      </div>
     </div>
   </div>
 
-  <!-- Status -->
-  <div class="floating-status" id="floating-status">Pausado</div>
-
-  <!-- Controles -->
-  <div class="floating-controls">
-    <button class="floating-btn" id="floating-back-btn">←</button>
-    <button class="floating-btn floating-play-btn" id="floating-play-btn">▶</button>
-  </div>
-
+  <input type="checkbox" id="mode-toggle">
   <script src="timer-floating.js"></script>
 </body>
 </html>
