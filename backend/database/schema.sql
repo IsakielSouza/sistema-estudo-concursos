@@ -482,4 +482,4 @@ INSERT INTO tags (name, color) VALUES
     ('Português', '#06B6D4'),
     ('Informática', '#84CC16'),
     ('Atualidades', '#F97316')
-ON CONFLICT (name) DO NOTHING; 
+ON CONFLICT (name) DO NOTHING;
