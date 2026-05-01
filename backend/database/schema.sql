@@ -380,8 +380,99 @@ CREATE POLICY "Users can delete sessoes in their ciclos" ON sessoes FOR DELETE U
     EXISTS (SELECT 1 FROM ciclos WHERE ciclos.id = sessoes.ciclo_id AND ciclos.user_id = auth.uid())
 );
 
+-- =============================================
+-- MÓDULO: ROTINAS (Estudos Agendados)
+-- =============================================
+
+-- Tabela de rotinas
+CREATE TABLE IF NOT EXISTS routines (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    status VARCHAR(20) DEFAULT 'inactive' CHECK (status IN ('active', 'inactive', 'scheduled')),
+    weekly_hour_limit INTEGER DEFAULT 40 CHECK (weekly_hour_limit > 0),
+    notifications_enabled BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela de atividades de rotina
+CREATE TABLE IF NOT EXISTS routine_activities (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    routine_id UUID REFERENCES routines(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    type VARCHAR(20) DEFAULT 'study' CHECK (type IN ('study', 'other')),
+    recurrence_enabled BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela de dias de recorrência das atividades
+CREATE TABLE IF NOT EXISTS routine_activity_days (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    activity_id UUID REFERENCES routine_activities(id) ON DELETE CASCADE NOT NULL,
+    day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(activity_id, day_of_week)
+);
+
+-- Índices para rotinas
+CREATE INDEX IF NOT EXISTS idx_routines_user_id ON routines(user_id);
+CREATE INDEX IF NOT EXISTS idx_routines_status ON routines(status);
+CREATE INDEX IF NOT EXISTS idx_routines_created_at ON routines(created_at);
+
+-- Índices para atividades de rotina
+CREATE INDEX IF NOT EXISTS idx_routine_activities_routine_id ON routine_activities(routine_id);
+CREATE INDEX IF NOT EXISTS idx_routine_activities_type ON routine_activities(type);
+
+-- Índices para dias de atividade
+CREATE INDEX IF NOT EXISTS idx_routine_activity_days_activity_id ON routine_activity_days(activity_id);
+CREATE INDEX IF NOT EXISTS idx_routine_activity_days_day_of_week ON routine_activity_days(day_of_week);
+
+-- Triggers para atualizar updated_at em rotinas
+CREATE TRIGGER update_routines_updated_at BEFORE UPDATE ON routines FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_routine_activities_updated_at BEFORE UPDATE ON routine_activities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS para rotinas
+ALTER TABLE routines ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own routines" ON routines FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own routines" ON routines FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own routines" ON routines FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own routines" ON routines FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS para atividades de rotina
+ALTER TABLE routine_activities ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view activities of their routines" ON routine_activities FOR SELECT USING (
+    EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_activities.routine_id AND routines.user_id = auth.uid())
+);
+CREATE POLICY "Users can insert activities in their routines" ON routine_activities FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_activities.routine_id AND routines.user_id = auth.uid())
+);
+CREATE POLICY "Users can update activities in their routines" ON routine_activities FOR UPDATE
+    USING (EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_activities.routine_id AND routines.user_id = auth.uid()))
+    WITH CHECK (EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_activities.routine_id AND routines.user_id = auth.uid()));
+CREATE POLICY "Users can delete activities in their routines" ON routine_activities FOR DELETE USING (
+    EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_activities.routine_id AND routines.user_id = auth.uid())
+);
+
+-- RLS para dias de atividade
+ALTER TABLE routine_activity_days ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view activity days of their routines" ON routine_activity_days FOR SELECT USING (
+    EXISTS (SELECT 1 FROM routine_activities ra JOIN routines r ON ra.routine_id = r.id WHERE ra.id = routine_activity_days.activity_id AND r.user_id = auth.uid())
+);
+CREATE POLICY "Users can insert activity days in their routines" ON routine_activity_days FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM routine_activities ra JOIN routines r ON ra.routine_id = r.id WHERE ra.id = routine_activity_days.activity_id AND r.user_id = auth.uid())
+);
+CREATE POLICY "Users can delete activity days in their routines" ON routine_activity_days FOR DELETE USING (
+    EXISTS (SELECT 1 FROM routine_activities ra JOIN routines r ON ra.routine_id = r.id WHERE ra.id = routine_activity_days.activity_id AND r.user_id = auth.uid())
+);
+
 -- Inserir algumas tags padrão
-INSERT INTO tags (name, color) VALUES 
+INSERT INTO tags (name, color) VALUES
     ('Direito Constitucional', '#EF4444'),
     ('Direito Administrativo', '#F59E0B'),
     ('Direito Penal', '#10B981'),

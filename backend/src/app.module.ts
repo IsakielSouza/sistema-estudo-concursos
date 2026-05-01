@@ -11,6 +11,7 @@ import { ApiResponseInterceptor } from './common/interceptors/api-response.inter
 import { MobileLoggingInterceptor } from './common/interceptors/mobile-logging.interceptor';
 import { SessoesModule } from './sessoes/sessoes.module';
 import { CiclosModule } from './ciclos/ciclos.module';
+import { RoutinesModule } from './routines/routines.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CiclosModule } from './ciclos/ciclos.module';
     MaterialsModule,
     SessoesModule,
     CiclosModule,
+    RoutinesModule,
   ],
   controllers: [AppController],
   providers: [
