@@ -1,5 +1,30 @@
 # 📋 TODO - Sistema de Estudo para Concursos
 
+## 🚀 INTEGRAÇÃO SUPABASE (Maio 2026)
+
+**Status**: ⏳ Aguardando aplicação do schema SQL
+
+### ✅ Configuração Completa
+- [x] Backend (NestJS) rodando em http://localhost:3001
+- [x] Frontend (Next.js) rodando em http://localhost:3000
+- [x] Supabase credenciais configuradas em backend/.env
+- [x] API Client frontend configurado (.env.local)
+- [x] Swagger Docs disponível em http://localhost:3001/docs
+- [x] RLS policies definidas no schema.sql
+
+### ⏳ Próximo Passo
+- [ ] **Aplicar schema.sql no SQL Editor do Supabase** ← VOCÊ PRECISA FAZER ISSO
+  - Leia: `CHECKLIST_SUPABASE.md` (passo a passo)
+  - Leia: `GUIA_INTEGRACAO_SUPABASE.md` (detalhado)
+
+### Após aplicar schema:
+- [ ] Testar autenticação com Google OAuth
+- [ ] Testar CRUD de Rotinas
+- [ ] Validar RLS (usuários só veem dados próprios)
+- [ ] Testar Upload de Materiais
+
+---
+
 ## 🎯 Prioridade Atual
 
 Use este arquivo para rastrear tarefas usando Claude CLI:
