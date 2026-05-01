@@ -43,3 +43,13 @@ Bugs & Melhorias Timer:
 [x] - Corrigir sinal sonoro (beep) que não toca quando o usuário está em outra aba (migrar para background/offscreen).
 
 
+[x] - na notificao que aparece ao final de um pomodoro verificar se é possivel mostrar os controladores de iniciar pausa, ou continuar estudos, caso nao seja posivel, mostrar opcao para ir para tela de timer para poder usuario realizar essas acoes
+[x] - ao clicar para pular pausa, nao mostrou a sessao seguinte do pomodoro que seria mais minuos de estudos conforme sessao
+[x] - revisar a funcao de pausa de 1 hora, para o pomodoro nao se aplica, apenas para timer livre
+[x] corrigir link de cafe no popup de adicionar questao no anki
+[x] - diminuir todos os componentes da tela flutuante, deixar minimanista igual pirnt (deltinha)
+[x] - reviser control de sessao do pomodro e a contagem de questoes respondidas, quando uma sessao de pomodor acaba exemplo 25 minutos, deve ser registrando uma sessao como concluida e registrar todas as questoes igual é feito hoje tudo normal, realizei um teste de fiz duas sessoes, inicie uma com 25 minustos, respond umas 10 questoes, apos primeira sessao acabar inicei a pausa de 5 minustos, ate ai tudo bem, nesse momento caso usuario responda alguma questao, precisa alertar que timer esta em pausa e se quer continuar estudos, fazendo com que ele decida pular a pausa e continuar pomodoro nova sessao, nesse caso a nova questao deve ir para segunda sessao do pomodoro iniciado mais uma sessao, nesses caso sempre terar no historicos sessoes de 25 minutos se foi o tempo usado na configuracao de sessao.
+
+
+
+[ ] ao iniciar sessao pelo popup que add questao ao anki, mostrar togle de se é timer Livre ou Pomodoro, input ao lado do butao de iniciar para digitar tag, assim como é feito na popup da extensa principal e verificar se por que relogio nao comeca contar

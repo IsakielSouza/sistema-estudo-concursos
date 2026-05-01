@@ -158,12 +158,16 @@ function atualizarModeToggle(mode) {
   modeToggle.checked = isPomodoro;
   modeToggleLabel.textContent = isPomodoro ? 'Modo: Pomodoro' : 'Modo: Livre';
   modeToggleLabel.style.color = isPomodoro ? '#22c55e' : '#3b6ff5';
+  
+  // Mostrar/ocultar config e indicadores baseado no modo
+  if (configBtn) configBtn.style.display = isPomodoro ? 'flex' : 'none';
+  if (indicators) indicators.style.display = isPomodoro ? 'flex' : 'none';
 }
 
 function updateDisplay() {
   const secs = computeCurrentSeconds(timerState);
   displayText.textContent = formatMMSS(secs);
-  const circumference = 2 * Math.PI * 62;
+  const circumference = 2 * Math.PI * 75;
   let progress = 0;
   if (timerState.mode !== 'livre' && timerState.totalSeconds > 0) {
     progress = (timerState.totalSeconds - secs) / timerState.totalSeconds;
@@ -178,20 +182,29 @@ function updateDisplay() {
 
     // Se acabou o FOCO, mostra as opções de PAUSA ou CONTINUAR
     if (!timerState.isBreak) {
-      const isLongBreak = (timerState.currentSession % timerState.config.sessions === 0);
-      const breakMinutes = isLongBreak ? timerState.config.longBreak : timerState.config.shortBreak;
-      
-      // Prepara visualmente o tempo da pausa
-      timerState.remainingSeconds = breakMinutes * 60;
-      timerState.totalSeconds = breakMinutes * 60;
-      
-      if (finishActions) {
-        finishActions.style.display = 'flex';
-        if (btnIniciarPausa) {
-          btnIniciarPausa.textContent = isLongBreak ? '☕ Pausa Longa' : '☕ Iniciar Pausa';
+      // Registrar sessão concluída automaticamente ao fim do foco
+      finalizarSessao(() => {
+        const isLongBreak = (timerState.currentSession % timerState.config.sessions === 0);
+        const breakMinutes = isLongBreak ? timerState.config.longBreak : timerState.config.shortBreak;
+        
+        // Prepara visualmente o tempo da pausa
+        timerState.isBreak = true;
+        timerState.remainingSeconds = breakMinutes * 60;
+        timerState.totalSeconds = breakMinutes * 60;
+        
+        if (finishActions) {
+          finishActions.style.display = 'flex';
+          if (btnIniciarPausa) {
+            btnIniciarPausa.textContent = isLongBreak ? '☕ Pausa Longa' : '☕ Iniciar Pausa';
+            btnIniciarPausa.style.display = 'block';
+          }
+          if (btnProximoCiclo) btnProximoCiclo.style.display = 'none';
+          if (btnContinuarLivre) btnContinuarLivre.style.display = 'block';
         }
-        if (btnProximoCiclo) btnProximoCiclo.style.display = 'none';
-      }
+        updateIndicators();
+        updateDisplay();
+        saveState();
+      });
     } else {
       // Se acabou a PAUSA, volta pro foco ou próximo ciclo
       timerState.isBreak = false;
@@ -255,7 +268,7 @@ if (btnProximoCiclo) {
     timerState.remainingSeconds = timerState.totalSeconds;
     updateIndicators();
     updateDisplay();
-    startTimer();
+    iniciarSessao(); // Inicia nova sessão para o novo ciclo de foco
     saveState();
   });
 }
@@ -263,7 +276,7 @@ if (btnProximoCiclo) {
 if (btnEncerrarTimer) {
   btnEncerrarTimer.addEventListener('click', () => {
     if (finishActions) finishActions.style.display = 'none';
-    document.getElementById('btn-encerrar').click();
+    finalizarSessao();
   });
 }
 
@@ -454,11 +467,8 @@ fullscreenBtn.addEventListener('click', () => {
   window.location.href = 'timer-fullscreen.html';
 });
 floatingBtn.addEventListener('click', () => {
-  chrome.windows.create({
-    url: chrome.runtime.getURL('timer-floating.html'),
-    type: 'popup',
-    width: 320,
-    height: 380
+  chrome.storage.local.get("timerFloatingVisible", (data) => {
+    chrome.storage.local.set({ timerFloatingVisible: !data.timerFloatingVisible });
   });
 });
 
@@ -491,6 +501,7 @@ async function iniciarSessao() {
   } else {
     timerState.totalSeconds = timerState.config.focus * 60;
     timerState.remainingSeconds = timerState.totalSeconds;
+    timerState.isBreak = false; // Garante que não está em pausa ao iniciar sessão
   }
   timerState.isRunning = true;
   timerState.startedAt = inicio;
@@ -498,7 +509,7 @@ async function iniciarSessao() {
   chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
 }
 
-document.getElementById('btn-encerrar').addEventListener('click', () => {
+function finalizarSessao(callback) {
   if (timerState.isRunning) {
     const secs = computeCurrentSeconds(timerState);
     if (timerState.mode === 'livre') timerState.elapsedSeconds = secs;
@@ -509,6 +520,10 @@ document.getElementById('btn-encerrar').addEventListener('click', () => {
   if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
 
   chrome.storage.local.get(['sessaoAtiva', 'historicoSessoes'], ({ sessaoAtiva, historicoSessoes = [] }) => {
+    if (!sessaoAtiva || !sessaoAtiva.ativa) {
+      if (typeof callback === 'function') callback();
+      return;
+    }
     const agora = Date.now();
     const duracaoMs = agora - (sessaoAtiva?.inicio || agora);
     const questoes = sessaoAtiva?.questoes || 0;
@@ -543,8 +558,14 @@ document.getElementById('btn-encerrar').addEventListener('click', () => {
       sessaoAtiva: { ativa: false, resumo, inicio: sessaoAtiva.inicio, fim: agora, questoes, acertos, caderno: sessaoAtiva.caderno || null },
       historicoSessoes: [novaSessao, ...historicoSessoes],
       timerState
+    }, () => {
+      if (typeof callback === 'function') callback();
     });
   });
+}
+
+document.getElementById('btn-encerrar').addEventListener('click', () => {
+  finalizarSessao();
 });
 
 document.getElementById('btn-nova-sessao').addEventListener('click', () => {

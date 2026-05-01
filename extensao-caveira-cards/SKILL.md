@@ -36,3 +36,16 @@ O: acesa o comentário do professo da respetiva questão.
 
 
 
+# Regras de Negocio: Retomada de Atividade (Relógio Pausado/Pausa)
+
+O sistema monitora a atividade do usuário (resolução de questões). Caso uma questão seja respondida enquanto o timer está parado ou em intervalo, as seguintes regras se aplicam:
+
+### Caso 1: Inatividade maior que 1 hora
+*   **Modo Pomodoro:** Retoma a contagem de tempo automaticamente (unpause) e continua a sessão atual, pois o Pomodoro gerencia seus próprios ciclos de encerramento.
+*   **Modo Livre:** Exibe um diálogo perguntando se o usuário deseja **Iniciar uma nova sessão** (zerando estatísticas) ou **Continuar** a atual.
+
+### Caso 2: Inatividade menor que 1 hora
+*   **Modo Pomodoro & Livre:** Retoma a contagem de tempo automaticamente (unpause) assim que a atividade é detectada, sem exibir interrupções.
+
+### Regra Especial: Pausa de Descanso (Break) no Pomodoro
+*   Se o usuário responder uma questão durante o intervalo (Short/Long Break), o sistema entende que ele deseja voltar a estudar. A pausa é encerrada automaticamente e um **novo ciclo de foco** é iniciado imediatamente, sincronizando uma nova sessão de estudos.

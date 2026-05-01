@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CaveiraCards",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Integração com plataformas de questões e Anki — TEC Concursos, Gran Questões e mais.",
   "author": "@isakielsouza",
   "homepage_url": "https://www.instagram.com/isakielsouza/",
@@ -30,10 +30,11 @@
       "js": [
         "shared/anki.js",
         "shared/card-builder.js",
+        "shared/timer-component.js",
         "sites/tec.js",
         "content.js"
       ],
-      "css": ["shared/overlay.css"],
+      "css": ["shared/overlay.css", "shared/timer-component.css"],
       "run_at": "document_idle"
     },
     {
@@ -41,10 +42,11 @@
       "js": [
         "shared/anki.js",
         "shared/card-builder.js",
+        "shared/timer-component.js",
         "sites/gran.js",
         "content.js"
       ],
-      "css": ["shared/overlay.css"],
+      "css": ["shared/overlay.css", "shared/timer-component.css"],
       "run_at": "document_idle"
     },
     {
@@ -55,10 +57,11 @@
       "js": [
         "shared/anki.js",
         "shared/card-builder.js",
+        "shared/timer-component.js",
         "sites/qconcurso.js",
         "content.js"
       ],
-      "css": ["shared/overlay.css"],
+      "css": ["shared/overlay.css", "shared/timer-component.css"],
       "run_at": "document_idle"
     },
     {
@@ -66,10 +69,11 @@
       "js": [
         "shared/anki.js",
         "shared/card-builder.js",
+        "shared/timer-component.js",
         "sites/deltinha.js",
         "content.js"
       ],
-      "css": ["shared/overlay.css"],
+      "css": ["shared/overlay.css", "shared/timer-component.css"],
       "run_at": "document_idle"
     },
     {
@@ -77,10 +81,11 @@
       "js": [
         "shared/anki.js",
         "shared/card-builder.js",
+        "shared/timer-component.js",
         "sites/projetocaveira.js",
         "content.js"
       ],
-      "css": ["shared/overlay.css"],
+      "css": ["shared/overlay.css", "shared/timer-component.css"],
       "run_at": "document_idle"
     },
     {
@@ -88,10 +93,11 @@
       "js": [
         "shared/anki.js",
         "shared/card-builder.js",
+        "shared/timer-component.js",
         "sites/focus.js",
         "content.js"
       ],
-      "css": ["shared/overlay.css"],
+      "css": ["shared/overlay.css", "shared/timer-component.css"],
       "run_at": "document_idle"
     }
   ],
@@ -113,7 +119,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["CaveiraCards.png", "icons/*", "libs/*", "CaveiraCards.apkg", "timer.html", "timer.js", "timer-fullscreen.html", "timer-fullscreen.js", "timer-floating.html", "timer-floating.js"],
+      "resources": ["CaveiraCards.png", "icons/*", "libs/*", "CaveiraCards.apkg", "timer.html", "timer.js", "timer-fullscreen.html", "timer-fullscreen.js", "timer-floating.html", "timer-floating.js", "doacao.html", "doacao.js"],
       "matches": [
         "https://www.tecconcursos.com.br/*",
         "https://*.grancursosonline.com.br/*",

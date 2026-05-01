@@ -130,9 +130,21 @@ function atualizarDisplayTempo() {
 // ─── Listeners para Ações de Fim de Pomodoro (Popup) ───
 if (btnPopupContinuar) {
   btnPopupContinuar.addEventListener('click', () => {
-    chrome.storage.local.get(["timerState"], ({ timerState: current }) => {
-      const newState = { ...(current || timerState), mode: 'livre', isBreak: false, isRunning: true, startedAt: Date.now(), elapsedSeconds: 0 };
-      chrome.storage.local.set({ timerState: newState });
+    chrome.storage.local.get(["timerState", "sessaoAtiva"], ({ timerState: current, sessaoAtiva }) => {
+      const state = current || timerState;
+      const newState = { ...state, mode: 'livre', isBreak: false, isRunning: true, startedAt: Date.now(), elapsedSeconds: 0 };
+      
+      const novaSessao = { 
+        inicio: Date.now(), 
+        questoes: 0, 
+        acertos: 0, 
+        ativa: true, 
+        caderno: sessaoAtiva?.caderno || null,
+        mode: 'livre',
+        ultimaAtividade: Date.now(),
+        detalhes: []
+      };
+      chrome.storage.local.set({ timerState: newState, sessaoAtiva: novaSessao });
     });
   });
 }
@@ -151,10 +163,22 @@ if (btnPopupPausa) {
 
 if (btnPopupProximo) {
   btnPopupProximo.addEventListener('click', () => {
-    chrome.storage.local.get(["timerState"], ({ timerState: current }) => {
+    chrome.storage.local.get(["timerState", "sessaoAtiva"], ({ timerState: current, sessaoAtiva }) => {
       const state = current || timerState;
-      const newState = { ...state, currentSession: state.currentSession + 1, isBreak: false, isRunning: true, startedAt: Date.now(), remainingSeconds: (state.config?.focus ?? 25) * 60, totalSeconds: (state.config?.focus ?? 25) * 60 };
-      chrome.storage.local.set({ timerState: newState });
+      const focusSecs = (state.config?.focus ?? 25) * 60;
+      const newState = { ...state, currentSession: state.currentSession + 1, isBreak: false, isRunning: true, startedAt: Date.now(), remainingSeconds: focusSecs, totalSeconds: focusSecs };
+      
+      const novaSessao = { 
+        inicio: Date.now(), 
+        questoes: 0, 
+        acertos: 0, 
+        ativa: true, 
+        caderno: sessaoAtiva?.caderno || null,
+        mode: 'pomodoro',
+        ultimaAtividade: Date.now(),
+        detalhes: []
+      };
+      chrome.storage.local.set({ timerState: newState, sessaoAtiva: novaSessao });
     });
   });
 }
@@ -213,29 +237,44 @@ async function preencherCadernoSeVazio() {
 
 // Iniciar sessão — direto, usa o que estiver no input
 async function iniciarSessao() {
-  let caderno = inputCaderno?.value.trim() || "";
-  if (!caderno) {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.url && tab.url.includes("tecconcursos.com.br")) {
-        const resp = await chrome.tabs.sendMessage(tab.id, { action: "getCadernoName" });
-        caderno = resp?.caderno || "";
-      }
-    } catch { /* silencioso */ }
-  }
-  const inicio = Date.now();
-  const sessao = { inicio, questoes: 0, acertos: 0, ativa: true, caderno: caderno || null, mode: timerState.mode };
+  chrome.storage.local.get(["timerState", "sessaoAtiva"], async ({ timerState: storedTimer, sessaoAtiva }) => {
+    let state = storedTimer || timerState;
+    let caderno = inputCaderno?.value.trim() || "";
+    
+    if (!caderno) {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && tab.url && tab.url.includes("tecconcursos.com.br")) {
+          const resp = await chrome.tabs.sendMessage(tab.id, { action: "getCadernoName" });
+          caderno = resp?.caderno || "";
+        }
+      } catch { /* silencioso */ }
+    }
+    
+    const inicio = Date.now();
+    const sessao = { 
+      inicio, 
+      questoes: 0, 
+      acertos: 0, 
+      ativa: true, 
+      caderno: caderno || null, 
+      mode: state.mode, 
+      ultimaAtividade: inicio, 
+      detalhes: [] 
+    };
 
-  if (timerState.mode === "livre") {
-    timerState.elapsedSeconds = 0;
-  } else {
-    timerState.totalSeconds = (timerState.config?.focus ?? 25) * 60;
-    timerState.remainingSeconds = timerState.totalSeconds;
-  }
-  timerState.isRunning = true;
-  timerState.startedAt = inicio;
+    if (state.mode === "livre") {
+      state.elapsedSeconds = 0;
+    } else {
+      state.totalSeconds = (state.config?.focus ?? 25) * 60;
+      state.remainingSeconds = state.totalSeconds;
+      state.isBreak = false;
+    }
+    state.isRunning = true;
+    state.startedAt = inicio;
 
-  chrome.storage.local.set({ sessaoAtiva: sessao, timerState });
+    chrome.storage.local.set({ sessaoAtiva: sessao, timerState: state });
+  });
 }
 
 document.getElementById("btn-iniciar").addEventListener("click", iniciarSessao);

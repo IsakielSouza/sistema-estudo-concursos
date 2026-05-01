@@ -393,24 +393,46 @@
   async function verificarInatividade() {
     if (!contextoValido()) return;
     return new Promise((resolve) => {
-      try { chrome.storage.local.get("sessaoAtiva", async ({ sessaoAtiva }) => {
+      try { chrome.storage.local.get(["sessaoAtiva", "timerState"], async ({ sessaoAtiva, timerState }) => {
         if (!sessaoAtiva || !sessaoAtiva.ativa) { resolve(); return; }
 
+        const agora = Date.now();
         const ultima = sessaoAtiva.ultimaAtividade || sessaoAtiva.inicio;
-        const inativo = Date.now() - ultima;
+        const inativo = agora - ultima;
 
-        if (inativo < 3_600_000) { resolve(); return; } // menos de 1h → ok
+        // Se o timer estiver pausado, retoma automaticamente se houver atividade
+        if (timerState && !timerState.isRunning) {
+          console.log("[CaveiraCards] Retomando timer por atividade detectada.");
+          timerState.isRunning = true;
+          timerState.startedAt = agora;
+          chrome.storage.local.set({ timerState });
+        }
 
-        // Mais de 1h inativo — perguntar ao usuário
-        const escolha = await mostrarDialogSessaoInativa(sessaoAtiva);
-
-        if (escolha === "nova") {
-          const nova = { inicio: Date.now(), questoes: 0, acertos: 0, ativa: true, ultimaAtividade: Date.now() };
-          chrome.storage.local.set({ sessaoAtiva: nova }, resolve);
-        } else {
-          // Continuar: só atualiza o timestamp de atividade
-          sessaoAtiva.ultimaAtividade = Date.now();
+        // Regra de Inatividade > 1h
+        if (inativo >= 3_600_000) {
+          // Se for modo LIVRE, pergunta o que fazer
+          if (sessaoAtiva.mode === 'livre') {
+            const escolha = await mostrarDialogSessaoInativa(sessaoAtiva);
+            if (escolha === "nova") {
+              const nova = { 
+                inicio: agora, 
+                questoes: 0, 
+                acertos: 0, 
+                ativa: true, 
+                ultimaAtividade: agora,
+                mode: 'livre',
+                detalhes: []
+              };
+              chrome.storage.local.set({ sessaoAtiva: nova }, resolve);
+              return;
+            }
+          }
+          // Para Pomodoro ou se escolheu continuar no Livre:
+          // Apenas atualiza o timestamp de atividade para não perguntar de novo imediatamente
+          sessaoAtiva.ultimaAtividade = agora;
           chrome.storage.local.set({ sessaoAtiva }, resolve);
+        } else {
+          resolve();
         }
       }); } catch { resolve(); }
     });
@@ -422,7 +444,35 @@
     if (mostrandoOverlay) return;
     mostrandoOverlay = true;
 
-    // Verifica inatividade antes de mostrar — exibe dialog se > 1h parado
+    // Verifica se está em pausa de descanso (Pomodoro Break)
+    const { timerState, sessaoAtiva } = await chrome.storage.local.get(["timerState", "sessaoAtiva"]);
+    if (timerState && timerState.mode === 'pomodoro' && timerState.isBreak) {
+      console.log("[CaveiraCards] Atividade detectada durante pausa do Pomodoro. Iniciando novo ciclo.");
+      // Pula pausa e inicia novo ciclo automaticamente
+      const newState = { 
+        ...timerState, 
+        currentSession: timerState.currentSession + 1, 
+        isBreak: false, 
+        isRunning: true, 
+        startedAt: Date.now(), 
+        remainingSeconds: (timerState.config?.focus ?? 25) * 60, 
+        totalSeconds: (timerState.config?.focus ?? 25) * 60 
+      };
+      
+      const novaSessao = { 
+        inicio: Date.now(), 
+        questoes: 0, 
+        acertos: 0, 
+        ativa: true, 
+        caderno: sessaoAtiva?.caderno || null,
+        mode: 'pomodoro',
+        ultimaAtividade: Date.now(),
+        detalhes: []
+      };
+      await chrome.storage.local.set({ timerState: newState, sessaoAtiva: novaSessao });
+    }
+
+    // Verifica inatividade e retoma timer se necessário
     await verificarInatividade();
 
     const antigo = document.getElementById("cc-overlay");
