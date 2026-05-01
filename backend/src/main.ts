@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
@@ -40,10 +41,33 @@ async function bootstrap() {
   // Configurar prefixo global da API
   app.setGlobalPrefix('api/v1');
 
+  // Configurar Swagger/OpenAPI
+  const config = new DocumentBuilder()
+    .setTitle('Sistema de Estudo para Concursos')
+    .setDescription('API para gerenciar ciclos de estudo, materiais e rotinas de estudo')
+    .setVersion('1.0.0')
+    .addTag('Auth', 'Autenticação e OAuth Google')
+    .addTag('Users', 'Gerenciamento de Usuários')
+    .addTag('Materials', 'Materiais de Estudo')
+    .addTag('Ciclos', 'Ciclos de Estudo')
+    .addTag('Sessoes', 'Sessões de Estudo')
+    .addTag('Routines', 'Rotinas de Estudo Agendadas')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayOperationId: true,
+    },
+  });
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(`🚀 Aplicação rodando na porta ${port}`);
   console.log(`📱 API preparada para aplicações móveis`);
   console.log(`🌐 CORS configurado para múltiplas origens`);
+  console.log(`📚 Swagger/OpenAPI disponível em http://localhost:${port}/docs`);
 }
 bootstrap();
