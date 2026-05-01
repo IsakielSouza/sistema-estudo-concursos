@@ -211,7 +211,7 @@ export class RoutinesService {
     this.validateActivityTimes(activity.start_time, activity.end_time);
 
     // Verificar overlapping
-    await this.checkOverlap(routineId, activity.start_time, activity.end_time, null);
+    await this.checkOverlap(routineId, activity.start_time, activity.end_time);
 
     const { data: createdActivity, error } = await admin
       .from('routine_activities')
