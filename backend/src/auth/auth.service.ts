@@ -53,20 +53,38 @@ export class AuthService {
     };
   }
 
-  async loginWithGoogle(googleToken: string) {
+  private async resolveGoogleTokenPayload(googleToken: string): Promise<{ email: string; name?: string; picture?: string; googleId: string }> {
+    // Try as ID token first
     try {
-      // Verificar o token do Google
       const ticket = await this.googleClient.verifyIdToken({
         idToken: googleToken,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
-
       const payload = ticket.getPayload();
-      if (!payload) {
-        throw new UnauthorizedException('Token do Google inválido');
+      if (payload?.email && payload?.sub) {
+        return { email: payload.email, name: payload.name, picture: payload.picture, googleId: payload.sub };
       }
+    } catch {
+      // Not an ID token, try as access token
+    }
 
-      const { email, name, picture, sub: googleId } = payload;
+    // Fall back to access token via userinfo endpoint
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${googleToken}` },
+    });
+    if (!res.ok) {
+      throw new UnauthorizedException('Token do Google inválido');
+    }
+    const data = await res.json() as { email?: string; name?: string; picture?: string; sub?: string };
+    if (!data.email || !data.sub) {
+      throw new UnauthorizedException('Token do Google inválido');
+    }
+    return { email: data.email, name: data.name, picture: data.picture, googleId: data.sub };
+  }
+
+  async loginWithGoogle(googleToken: string) {
+    try {
+      const { email, name, picture, googleId } = await this.resolveGoogleTokenPayload(googleToken);
 
       if (!email) {
         throw new UnauthorizedException('Email não encontrado no token do Google');
