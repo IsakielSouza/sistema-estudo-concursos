@@ -219,10 +219,14 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-    const user = await this.usersService.findOne(userId);
-    if (!user) {
+    try {
+      const user = await this.usersService.findOne(userId);
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+      return user;
+    } catch {
       throw new UnauthorizedException('Usuário não encontrado');
     }
-    return user;
   }
 } 
